@@ -57,7 +57,7 @@ Before calling submit_patch, run the presubmit check: call run_skill_script with
 - the verify command passes,
 - no `[ ]` line is still open.
 
-Its last lines are READY, or NOT READY followed by every reason. On NOT READY, fix what it names and run it again. On READY, call submit_patch.
+Its first line is READY or NOT READY, and a NOT READY output ends with every reason. On NOT READY, fix what it names and run it again. On READY, call submit_patch.
 
 An accepted submit_patch takes the tree as it stands. Anything after it does not count.
 

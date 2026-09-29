@@ -1,6 +1,6 @@
 ---
 name: presubmit
-description: The check to run right before submit_patch. It reads /tmp/plan.md, checks the diff, and runs the verify command. It ends with READY or NOT READY and the reasons.
+description: The check to run right before submit_patch. It reads /tmp/plan.md, checks the diff, and runs the verify command. Its first line is READY or NOT READY, and the reasons come at the end.
 ---
 Run it with run_skill_script, passing skill_name "presubmit" and file_path "scripts/check.py". Pass no other arguments. It costs one tool call.
 
