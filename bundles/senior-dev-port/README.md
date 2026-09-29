@@ -31,7 +31,7 @@ It is a draft. It has not been run on any tasks yet.
 ## What was left out, and why
 
 - **Compaction and re-pinning the spec.** senior-dev re-pins `spec.md` after compaction. In the scorer, ADK compaction never fires within a task. It runs only after an invocation completes, and its 32k-token trigger is past vLLM's `max_model_len`. The prompt says nothing is dropped and output must be kept short.
-- **The harness-side refusal.** senior-dev's `submit` tool enforces its checks in code. Here `submit_patch` is fixed, and callbacks come only from a closed registry, so the checks are a self-check the prompt requires. A `skills/presubmit/` script could run them in one call. That is the next thing to try; see below.
+- **The harness-side refusal.** senior-dev's `submit` tool enforces its checks in code. Here `submit_patch` is fixed, and callbacks come only from a closed registry, so the checks are a self-check the prompt requires. The presubmit variant runs them as one skill script; see below.
 - **The nudges.** senior-dev's continuation messages list facts it observed. The scorer's three nudges are fixed and can't be changed from a bundle.
 - **Web access, grep/glob tools and `apply_patch`.** None exist in the sandbox. Reading uses `grep -n` plus `sed -n` through `run_command`, because the scorer's parser turns `read_file`'s integer arguments into strings.
 
@@ -49,9 +49,9 @@ The hypothesis under test is that senior-dev's mechanics-only prompt beats the v
    - Did the rate of runs ending on the budget or the context window rather than `submit_patch` go down?
 4. If the plan file helps but the free-form exploration doesn't, merge the two: keep v4.3's procedure and add the plan file and presubmit check.
 
-### Next variant: presubmit as a skill
+### Presubmit as a skill
 
-Move the check into `skills/presubmit/SKILL.md` and `scripts/check.py`, declared with `skills: [skills/presubmit]` in `agent.yaml`. The script would do the following:
+Built in [`../senior-dev-presubmit/`](../senior-dev-presubmit/). The check lives in `skills/presubmit/SKILL.md` and `scripts/check.py`, declared with `skills: [skills/presubmit]` in `agent.yaml`. The script does the following:
 
 - read `/tmp/plan.md`,
 - run the verify command,
