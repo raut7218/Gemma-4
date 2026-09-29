@@ -10,7 +10,33 @@ This compares three arms on the fixed holdout split in `gemma-swe-agent/experime
 
 All three use the same tools, sampling settings (temperature 0.2, thinking off) and budget (4.5 min, 30 calls, 60 turns). Only the prompt differs, plus the skill in the presubmit arm.
 
-## Requirements
+## On Kaggle
+
+Use [`kaggle/holdout_ab.ipynb`](../kaggle/holdout_ab.ipynb). It runs on Kaggle's free T4 x2 with the real 31B model. The notebook's first cell explains the setup. In short:
+- add the competition data,
+- set GPU T4 x2 and turn Internet on,
+- choose `ARMS`,
+- use *Save & Run All*.
+
+One arm takes about 4 hours, so run one or two arms per session. A last session with `REPORT_ONLY = True` and the earlier outputs attached prints the report.
+
+The notebook embeds the bundles and helper files. After changing any of them, rebuild it with `python3 kaggle/build_notebook.py`.
+
+## Skill calls under swelite
+
+Stock swelite gives skills a sandbox environment, so its `run_skill_script` requires a `command` argument. The official scorer gives them a code executor instead, and there `run_skill_script` takes only `skill_name` and `file_path`. The presubmit arm's prompt follows the scorer, so under stock swelite every skill call would fail.
+
+[`swelite_official_skills.py`](swelite_official_skills.py) swaps in an executor that behaves like the scorer's `AdkSandboxCodeExecutor`. It writes `.adk_exec_<hex>.py` into `/workspace`, runs it with `python3`, charges one tool call and deletes the file. Both `run_holdout_ab.sh` and the notebook load it.
+
+It was tested in swelite's subprocess sandbox:
+- the check sees the real sandbox paths,
+- the verify line fails before the fix,
+- a stray file is caught,
+- READY appears after cleanup,
+- each check costs one tool call,
+- the final patch holds only the fix.
+
+## Requirements (own GPU host)
 
 - A GPU host serving Gemma 4 31B through an OpenAI-compatible endpoint. `gemma-swe-agent/serve/` has vLLM scripts for this; use the `gemma4` tool and reasoning parsers and `max_model_len` 32768.
 - A clone of [happyc0der/gemma-swe-agent](https://github.com/happyc0der/gemma-swe-agent) with its harness installed. That means `harness/.venv/bin/swelite`, built with `swelite build-image`.

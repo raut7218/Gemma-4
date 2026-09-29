@@ -23,7 +23,10 @@ REPEATS=${REPEATS:-1}          # temperature is 0.2, so repeats measure run-to-r
 CONCURRENCY=${CONCURRENCY:-2}
 SPLIT=${SPLIT:-holdout}
 DATA=${DATA:-$HARNESS/data/competition}
-SWELITE=${SWELITE:-$HARNESS/harness/.venv/bin/swelite}
+PYTHON=${PYTHON:-$HARNESS/harness/.venv/bin/python}
+# Stock swelite runs skills differently from the scorer; this entry point loads
+# ab/swelite_official_skills.py first so the presubmit arm's skill call works.
+ENTRY="import sys; sys.path.insert(0, '$HERE/ab'); import swelite_official_skills; from swelite.cli import app; app()"
 RUN=${RUN:-$(date -u +%Y%m%d-%H%M)-$SPLIT}
 OUT=$HERE/ab/results/$RUN
 
@@ -38,7 +41,7 @@ ORDER=(v43 port presubmit)
 for arm in "${ORDER[@]}"; do
   [ -f "${ARMS[$arm]}/agent.yaml" ] || { echo "missing bundle for $arm: ${ARMS[$arm]}" >&2; exit 1; }
 done
-[ -x "$SWELITE" ] || { echo "swelite not found at $SWELITE" >&2; exit 1; }
+"$PYTHON" -c "$ENTRY" --help > /dev/null 2>&1 || { echo "swelite (with the skill patch) does not run under $PYTHON" >&2; exit 1; }
 [ -d "$DATA" ] || { echo "competition data not found at $DATA" >&2; exit 1; }
 curl -sf -m 10 "$API_BASE/models" > /dev/null || { echo "no model server at $API_BASE" >&2; exit 1; }
 
@@ -62,7 +65,7 @@ for r in $(seq 1 "$REPEATS"); do
     dir=$OUT/$arm-r$r
     echo "[$(date -u +%H:%M)] $arm repeat $r -> $dir"
     # Budgets come from each bundle's eval_config.yaml; none are overridden here.
-    (cd "$HARNESS/harness" && "$SWELITE" eval --data-dir "$DATA" --submission-dir "${ARMS[$arm]}" \
+    (cd "$HARNESS/harness" && "$PYTHON" -c "$ENTRY" eval --data-dir "$DATA" --submission-dir "${ARMS[$arm]}" \
       --results-dir "$dir" --api-base "$API_BASE" --served-model "$SERVED_MODEL" \
       --concurrency "$CONCURRENCY" $IDS) > "$dir.console" 2>&1 || echo "  swelite exited non-zero; see $dir.console"
   done
