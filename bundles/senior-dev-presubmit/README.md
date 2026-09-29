@@ -12,7 +12,7 @@ The tools, sampling settings and budget are unchanged.
 
 ## What the check does
 
-`skills/presubmit/scripts/check.py` takes no arguments. Its output ends with `READY: call submit_patch now`, or with `NOT READY:` and a list of every reason. The reasons it can give:
+`skills/presubmit/scripts/check.py` takes no arguments. Its first line is the verdict, `READY: call submit_patch now` or `NOT READY (n to fix …)`. That keeps the verdict visible even in logs that truncate tool output. A NOT READY output ends with a list of every reason. The reasons it can give:
 
 | Check | Why |
 | --- | --- |

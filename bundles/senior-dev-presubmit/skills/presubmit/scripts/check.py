@@ -1,8 +1,8 @@
 """Presubmit check: the bundle's stand-in for senior-dev's refusing submit tool.
 
 Reads /tmp/plan.md, inspects `git status` of /workspace, compiles the
-changed Python files, runs the plan's verify command, and ends with one line:
-READY, or NOT READY followed by every reason. It takes no arguments, because the
+changed Python files and runs the plan's verify command. The first line is the verdict,
+READY or NOT READY, and a NOT READY output ends with every reason. It takes no arguments, because the
 scorer's tool-call parser turns non-string arguments into strings.
 
 The harness runs this file from a temporary copy with a temporary directory as
@@ -102,31 +102,38 @@ def tail(text, n=TAIL_LINES):
     return "\n".join(lines[-n:])
 
 
+OUT = []
+
+
+def emit(line=""):
+    OUT.append(line)
+
+
 def main():
     reasons = []
     notes = []
 
     if not os.path.isdir(os.path.join(WORKSPACE, ".git")):
-        print(f"NOT READY: {WORKSPACE} is not a git checkout")
-        return
+        reasons.append(f"{WORKSPACE} is not a git checkout")
+        return reasons, notes
 
     cleaned = clean_caches()
     if cleaned:
-        print(f"(deleted {cleaned} untracked cache files)")
+        emit(f"(deleted {cleaned} untracked cache files)")
     modified, untracked = changed_paths()
     changed = modified + untracked
 
-    print("== changes")
+    emit("== changes")
     if not changed:
         reasons.append("the diff is empty: an empty patch cannot pass")
     else:
         listing = [f"  M {p}" for p in modified] + [f"  + {p}" for p in untracked]
-        print("\n".join(listing[:15]))
+        emit("\n".join(listing[:15]))
         if len(listing) > 15:
-            print(f"  ... and {len(listing) - 15} more")
+            emit(f"  ... and {len(listing) - 15} more")
         stat = git("diff", "--shortstat", "HEAD").stdout.strip()
         if stat:
-            print(f"  ({stat}, not counting new files)")
+            emit(f"  ({stat}, not counting new files)")
 
     touched_tests = [
         p for p in changed if TEST_PATH.search(p) or os.path.basename(p) in CONFIG_NAMES
@@ -171,7 +178,7 @@ def main():
         if verify is None:
             reasons.append(f"{PLAN} has no verify: line")
         elif not broken:
-            print(f"== verify: {verify}")
+            emit(f"== verify: {verify}")
             try:
                 # pipefail: a verify line ending in "| tail" must still fail when pytest does.
                 # The env keeps the run from leaving caches in the workspace.
@@ -183,8 +190,8 @@ def main():
                 )
                 output = tail((res.stdout or "") + (res.stderr or ""))
                 if output:
-                    print(output)
-                print(f"(exit {res.returncode})")
+                    emit(output)
+                emit(f"(exit {res.returncode})")
                 if res.returncode != 0:
                     reasons.append(
                         f"the verify command exits {res.returncode}. If that failure predates "
@@ -200,18 +207,25 @@ def main():
             if leftovers:
                 reasons.append("the verify command created files in /workspace; delete them: " + ", ".join(leftovers[:10]))
 
-    for note in notes:
-        print(f"note: {note}")
+    return reasons, notes
+
+
+def render(reasons, notes):
+    """Verdict first (log viewers and truncated tool output keep it), details, then reasons."""
     if reasons:
-        print("NOT READY:")
-        for reason in reasons:
-            print(f"  - {reason}")
+        lines = [f"NOT READY ({len(reasons)} to fix, listed at the end)"]
     else:
-        print("READY: call submit_patch now")
+        lines = ["READY: call submit_patch now"]
+    lines += OUT
+    lines += [f"note: {note}" for note in notes]
+    if reasons:
+        lines.append("NOT READY:")
+        lines += [f"  - {reason}" for reason in reasons]
+    print("\n".join(lines))
 
 
 if __name__ == "__main__":
     try:
-        main()
+        render(*main())
     except Exception as exc:  # the check must never crash the turn
         print(f"NOT READY: presubmit check failed to run: {type(exc).__name__}: {exc}")
