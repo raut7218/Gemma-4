@@ -16,8 +16,8 @@
   const P = (o) => Object.assign({}, GRID, { reveal: 1, gold: GOLD, goldGlow: 1, ring: 1, dim: 0, sweep: 0, split: 0, lock: 0 }, o);
 
   // 1 (4.5) — frame one: a finished issue card, close
-  c(4.5, { ...K.issue('issue', { x: 960, y: 540 }),
-    errLine: { type: 'rect', x: 1241, y: 563, w: 462, h: 5, fill: T.RED, rad: 2, in: 'grow', at: 0.05, dur: 1.6, ease: 'power3.out', z: 3 },
+  c(4.5, { ...K.issue('issue', { x: 960, y: 540, in: 'fade', from: { o: 1, s: 0.94 }, dur: 3.2, ease: 'power2.out' }),
+    errLine: { type: 'rect', x: 1241, y: 563, w: 462, h: 5, fill: T.RED, rad: 2, in: 'grow', from: { w: 0 }, at: 0.05, dur: 1.6, ease: 'power3.out', z: 3 },
   }, { cam: { x: 960, y: 540, s: 1.5 } });
   // 2 (3) — the issue steps left
   c(3, { errLine: 'quick', issue: { x: 430, y: 540, s: 0.58 } }, { cam: { x: 960, y: 540, s: 1 } });

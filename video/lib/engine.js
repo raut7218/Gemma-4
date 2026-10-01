@@ -463,7 +463,12 @@
           if (k === 0 && !c.animateFirst) {
             // frame one is a finished picture
             const tv0 = Object.assign({}, tv); delete tv0.params; // never replace the params object
-            tl.set(rec.proxy, tv0, 0);
+            if (st.from) {
+              // an explicit `from` on frame one: start finished-looking from those values and settle
+              const pv0 = Object.assign({}, startVals); delete pv0.params;
+              tl.set(rec.proxy, pv0, 0);
+              tl.to(rec.proxy, Object.assign({ duration: st.dur ?? en.dur, ease: st.ease ?? 'power2.out' }, tv0), 0.0002 + (st.at ?? 0));
+            } else tl.set(rec.proxy, tv0, 0);
             if (st.params) tl.set(rec.proxy.params, st.params, 0);
           } else {
             const pv = Object.assign({}, startVals); delete pv.params;

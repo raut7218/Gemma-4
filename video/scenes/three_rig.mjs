@@ -189,6 +189,7 @@ window.THREE_SCENES.rig = {
       AN['card' + i] = P(boardX(i), CARD.h * Math.max(0.01, sm(ci * 2.2 - i * 0.4)) + 0.05, CARD.zc - CARD.d / 2);
       AN['block' + i] = P(blocks[i].position.x, SLAB.h, blocks[i].position.z);
     }
+    AN.cardsMid = P((boardX(1) + boardX(2)) / 2, CARD.h * Math.max(0.01, sm(ci * 2.2 - 0.6)) + 0.05, CARD.zc - CARD.d / 2);
     AN.cardsL = P(cardX(0) - 0.55, CARD.h + 0.1, CARD.zc - CARD.d / 2);
     AN.cardsR = P(boardX(3) + 0.1, CARD.h + 0.1, CARD.zc - CARD.d / 2);
     AN.film = P(0, SLAB.h + nf * FILM_GAP, SLAB.z);

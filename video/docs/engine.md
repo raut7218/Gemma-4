@@ -67,3 +67,6 @@ If your chapter uses a 3D module, list it first: `--scenes three_rig.mjs,ch04_mo
 
 ## Reading beats
 `F.beat(beats, {id, mode: 'push' | 'underline', w, dy, under, color, scale})` — a reading beat on an element that is already on screen. `push` moves the camera onto it (×1.28) and lifts it slightly; `underline` grows a rule of width `w` px under it (`under` = offset below its centre, default 0.72 × its size). The next comp clears the underline and returns the camera automatically. Use them only where the storyboard has a "reading beat" row.
+
+## Frame one
+Elements in the film's first comp are set finished at t = 0. Give one an explicit `from: {...}` (e.g. `from: {o: 1, s: 0.94}`) to start it in that finished-looking state and settle it over `dur` (power2.out) so the first second is not frozen.

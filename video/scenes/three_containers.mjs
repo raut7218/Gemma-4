@@ -51,10 +51,10 @@ window.THREE_SCENES.containers = {
     const A = makeCase(T.BLUE); scene.add(A);
     const B = makeCase(T.GREEN); scene.add(B);
     // A's parts
-    const ws = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.9, 1.5, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x3b4a5a, roughness: 0.6, metalness: 0.1 }));
+    const ws = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.9, 1.5, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x3b4a5a, roughness: 0.6, metalness: 0.1, emissive: C(T.BLUE), emissiveIntensity: 0 }));
     ws.position.set(-0.55, 0.53, 0.1); ws.castShadow = true; ws.receiveShadow = true; A.add(ws);
     const tray = new THREE.Group();
-    const trayBase = new THREE.Mesh(new RoundedBoxGeometry(1.1, 0.08, 0.9, 2, 0.03), new THREE.MeshStandardMaterial({ color: 0x4a5560, roughness: 0.7 }));
+    const trayBase = new THREE.Mesh(new RoundedBoxGeometry(1.1, 0.08, 0.9, 2, 0.03), new THREE.MeshStandardMaterial({ color: 0x4a5560, roughness: 0.7, emissive: C(T.DIM), emissiveIntensity: 0 }));
     tray.add(trayBase);
     const lip = new THREE.MeshStandardMaterial({ color: 0x56636f, roughness: 0.6 });
     for (const [x, z, w, d] of [[0, 0.43, 1.1, 0.05], [0, -0.43, 1.1, 0.05], [0.53, 0, 0.05, 0.9], [-0.53, 0, 0.05, 0.9]]) {
@@ -72,6 +72,9 @@ window.THREE_SCENES.containers = {
     const file = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.08, 0.44, 2, 0.02), fileMat); A.add(file);
     // B's parts: its own /workspace block, hidden test bars
     const wsB = ws.clone(); wsB.material = ws.material.clone(); B.add(wsB);
+    // an edited test file on B's workspace: red when edited, flips back to the baseline (grey)
+    const testFile = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.08, 0.5, 2, 0.02), new THREE.MeshStandardMaterial({ color: 0x8fa3b5, roughness: 0.5, emissive: C(T.RED), emissiveIntensity: 0 }));
+    testFile.castShadow = true; B.add(testFile);
     const bars = [];
     for (let i = 0; i < 5; i++) {
       const b = new THREE.Mesh(new RoundedBoxGeometry(1.0, 0.09, 0.22, 2, 0.03), new THREE.MeshStandardMaterial({ color: 0x5b6672, roughness: 0.5, emissive: C(T.GREEN), emissiveIntensity: 0 }));
@@ -83,7 +86,7 @@ window.THREE_SCENES.containers = {
     // B's verdict rim (a thin ring of light under the case)
     const rimRing = new THREE.Mesh(new RoundedBoxGeometry(3.8, 0.04, 2.8, 2, 0.02), new THREE.MeshStandardMaterial({ color: 0x111111, emissive: C(T.GREEN), emissiveIntensity: 0 }));
     rimRing.position.y = 0.03; B.add(rimRing);
-    this.s = { r, scene, cam, A, B, ws, tray, plaques, file, wsB, bars, chip, rimRing, spec };
+    this.s = { r, scene, cam, A, B, ws, tray, trayBase, plaques, file, wsB, testFile, bars, chip, rimRing, spec };
     return Promise.resolve();
   },
   render(p, rec) {
@@ -97,11 +100,23 @@ window.THREE_SCENES.containers = {
     s.A.visible = (p.aIn ?? 1) > 0.01;
     s.A.position.y = lerp(-2.6, 0, cl(p.aIn ?? 1));
     // plaque warning glow
-    s.plaques.forEach((m) => { m.material.emissiveIntensity = 0.9 * cl(p.plaqueGlow || 0); });
+    // parts light up (lit*): workspace blue, tray grey, plaques white; plaques glow red as a warning
+    // lit 0..3 lights them in turn (or litWs / litTray / litPlq individually)
+    const lit = p.lit || 0;
+    s.ws.material.emissiveIntensity = 0.35 * cl(p.litWs ?? lit);
+    s.trayBase.material.emissiveIntensity = 0.35 * cl(p.litTray ?? lit - 1);
+    const pg = cl(p.plaqueGlow || 0), pl = cl(p.litPlq ?? lit - 2);
+    s.plaques.forEach((m) => { m.material.emissive.set(C(pg > 0.01 ? T.RED : T.INK)); m.material.emissiveIntensity = pg > 0.01 ? 0.9 * pg : 0.3 * pl; });
+    // B's test file: appears edited (red), flips back to the baseline
+    const tf = cl(p.testIn || 0), fl = cl(p.testFlip || 0);
+    s.testFile.visible = tf > 0.01;
+    s.testFile.position.set(0.0, 0.98 + 0.04 + (1 - tf) * 0.5 + Math.sin(Math.PI * fl) * 0.35, 0.35);
+    s.testFile.rotation.x = Math.PI * fl;
+    s.testFile.material.emissiveIntensity = 0.7 * tf * (1 - fl);
     // file: appears in /workspace, turns gold, slides into the /tmp tray
     const f = cl(p.fileIn || 0), mv = cl(p.fileMove || 0);
     s.file.visible = f > 0.01;
-    s.file.position.set(lerp(-0.55, 1.05, mv), lerp(1.02, 0.22, mv) + (1 - f) * 0.4, lerp(0.1, 0.45, mv));
+    s.file.position.set(lerp(-0.55, 1.05, mv), lerp(1.02, 0.22, mv) + (1 - f) * 0.4, lerp(0.3, 0.45, mv));
     s.file.material.emissiveIntensity = 0.8 * cl(p.fileGold || 0) * (1 - mv);
     // B: test bars drop in and light
     s.bars.forEach((b, i) => {
@@ -115,7 +130,8 @@ window.THREE_SCENES.containers = {
     const ch = cl(p.chipIn || 0), arc = cl(p.chipArc || 0);
     s.chip.visible = ch > 0.01 && (p.chipGone || 0) < 0.99;
     const ax = s.A.position.x - 0.55, bx = s.B.position.x - 0.55;
-    s.chip.position.set(lerp(ax, bx, arc), 1.15 + Math.sin(Math.PI * arc) * 1.8 - (p.chipGone || 0) * 0.15, 0.1);
+    // rests on top of the workspace block (top at y 0.98), sinks into B's block when applied
+    s.chip.position.set(lerp(ax, bx, arc), 1.04 + Math.sin(Math.PI * arc) * 1.8 - (p.chipGone || 0) * 0.12 + (1 - ch) * 0.3, lerp(-0.3, -0.35, arc));
     s.chip.scale.setScalar(0.4 + 0.6 * ch);
     // camera
     const yaw = p.yaw ?? 0.45, el = ((p.pitch ?? 40) * Math.PI) / 180, d = p.dist ?? 12;
@@ -130,6 +146,8 @@ window.THREE_SCENES.containers = {
     AN.ws = P(a.x - 0.55, a.y + 1.05, a.z + 0.1); AN.tray = P(a.x + 1.05, a.y + 0.3, a.z + 0.45);
     AN.plaques = P(a.x + 1.07, a.y + 0.75, a.z - 0.75);
     AN.aBase = P(a.x, a.y - 0.1, a.z + 1.4); AN.bBase = P(b.x, b.y - 0.1, b.z + 1.4);
-    AN.bWs = P(b.x - 0.55, b.y + 1.05, b.z + 0.1); AN.bBars = P(b.x + 1.0, b.y + 0.9, b.z + 0.2);
+    AN.bWs = P(b.x - 0.55, b.y + 1.05, b.z + 0.1); AN.bTest = P(b.x, b.y + 1.1, b.z + 0.35);
+    AN.chip = P(s.chip.position.x, s.chip.position.y + 0.2, s.chip.position.z);
+    AN.aRight = P(a.x + 1.9, a.y + 1.1, a.z); AN.bRight = P(b.x + 1.9, b.y + 1.1, b.z); AN.bBars = P(b.x + 1.0, b.y + 0.9, b.z + 0.2);
   },
 };
