@@ -349,6 +349,8 @@
       if (prev && prev.ul && els[prev.ul] && !(prev.ul in delta)) delete els[prev.ul];
       // after a push beat, the camera returns to where it was before the beat
       if (prev && prev.beatCam && !opts.cam) opts = Object.assign({}, opts, { cam: prev.beatCam });
+      // after a push beat the HUD rail fades back in (it fades out during the push so content never slides under it)
+      if (prev && prev.railHidden && prev.els.rail && !('rail' in delta)) delta = Object.assign({}, delta, { rail: { o: 1, dur: 0.5 } });
       if (prev && opts.clear && opts.keep) for (const k of opts.keep) if (prev.els[k]) els[k] = prev.els[k];
       for (const id in delta) {
         if (delta[id] === null) { delete els[id]; continue; }
@@ -378,13 +380,16 @@
       const el = prev.els[o.id];
       if (!el) throw new Error('beat: no element ' + o.id);
       const cam0 = prev.cam || { x: 960, y: 540, s: 1 };
-      const ex = (el.x ?? 960) + (o.dx || 0), ey = (el.y ?? 540) + (o.dy || 0);
+      // visual centre: left/top-anchored elements are offset by half their (given or estimated) size
+      const hw = o.w || el.w || el.maxw || 600, hh = el.h || (el.size || 48) * 1.3;
+      const ex = (el.x ?? 960) + (0.5 - (el.ax ?? 0.5)) * hw + (o.dx || 0), ey = (el.y ?? 540) + (0.5 - (el.ay ?? 0.5)) * hh + (o.dy || 0);
       const delta = {};
       let opts = { drift: 0.4, beatCam: cam0 };
       if (o.mode === 'push') {
-        const s1 = (cam0.s || 1) * (o.scale || 1.28);
-        opts.cam = { x: (cam0.x ?? 960) + (ex - (cam0.x ?? 960)) * 0.85, y: (cam0.y ?? 540) + (ey - (cam0.y ?? 540)) * 0.85, s: s1 };
+        const s1 = (cam0.s || 1) * (o.scale || 1.22);
+        opts.cam = { x: (cam0.x ?? 960) + (ex - (cam0.x ?? 960)) * 0.7, y: (cam0.y ?? 540) + (ey - (cam0.y ?? 540)) * 0.7, s: s1 };
         delta[o.id] = { s: (el.s ?? 1) * 1.05 };
+        if (prev.els.rail) { delta.rail = { o: 0, dur: 0.35 }; opts.railHidden = true; }
       } else {
         const id = '_ul' + COMPS.length;
         delta[id] = { type: 'rect', x: ex, y: ey + (o.under || ((el.size || 48) * 0.72)), w: o.w || 420, h: 5, rad: 3, fill: o.color || T.GOLD, in: 'grow', dur: 0.9, z: (el.z || 1) + 1 };

@@ -59,3 +59,8 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 
 ## Component critic — ch00 Cold open (render 1) — VERDICT: one more pass
 1 exit0 lift-off glitch (duplicate text, warped bars, stray edge, clipped type) · 2 exit 0 never fills frame · 3 chip collides with exit 0 · 4 17 s static container layout, timing drift · 5 no "illustrative" tag on tests · 6 title flies through "One open model." · 7 title over full-bright grid and chip · 8 text over lock pattern 63–81 s · 9 "THE BUG" flies through code · 10 fold is shrink+crossfade · 11 small card in empty space 3.8–5.8 · 12 code tab crowds top · 13 grid label at bottom edge · 14 colour meaning (bugs gold, red year) · 15 rail hand-off tick lost.
+
+## Component critics — round 1
+- ch06: one more pass (10 items) — docs/critic/ch06_r1.md
+- ch10: one more pass (10 items) — docs/critic/ch10_r1.md
+- Engine fix from ch10 #1/#2: push beats centre on the element's visual centre (anchor-aware), scale 1.22, 70% travel; the HUD rail fades during push beats and returns after.
