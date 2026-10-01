@@ -50,7 +50,7 @@
 
   // 239 (2.5) — stage 1 compile: the bundle's YAML becomes an agent tree
   const toChip = (i) => ({
-    contA: { x: SX(i), y: SY, w: 292, h: 72, o: 0, dur: 0.8, ease: 'power3.in' },
+    contA: { x: SX(i), y: SY, w: 292, h: 72, o: 0, dur: 0.5, ease: 'power2.in' },
     contA_hd: { x: SX(i), y: SY, w: 280, h: 60, o: 0, dur: 0.6 }, contA_ht: { x: SX(i), y: SY, o: 0, dur: 0.4 },
   });
   const YL = [
@@ -61,7 +61,7 @@
   ];
   c(2.5, {
     ...toChip(2), ...lightStage(0),
-    ...K.file('c07_yaml', 'agent.yaml', YL, { x: 560, y: 600, w: 820, size: 29 }),
+    ...K.file('c07_yaml', 'agent.yaml', YL, { x: 560, y: 600, w: 820, size: 29, frame: { at: 0.4 }, text: { at: 0.6 } }),
     c07_ytag: { type: 'text', html: cap('illustrative'), size: 24, color: T.DIM, align: 'right', ax: 1, x: 950, y: 395, in: 'fade', at: 0.6 },
     c07_yarr: { type: 'arrow', x1: 995, y1: 600, x2: 1120, y2: 600, color: T.DIM, sw: 4, head: 18, in: 'draw', at: 0.6 },
     c07_n0: { type: 'box', w: 300, h: 84, x: 1450, y: 440, stroke: T.BLUE, fill: 'rgba(88,196,221,0.10)', rad: 16, html: 'LlmAgent', size: 38, in: 'pop', at: 0.8 },

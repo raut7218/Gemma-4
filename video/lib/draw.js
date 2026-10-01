@@ -30,7 +30,7 @@
       const s = 0.6 + 0.4 * k;
       ctx.save();
       ctx.translate(x + cw / 2, y + ch / 2); ctx.scale(s, s);
-      const isGold = i === p.gold && (p.dim || 0) < 0.9;
+      const isGold = i === p.gold && (p.dim || 0) < 0.9 && (p.goldA ?? 1) >= 0.5;  // goldA 0 hides the gold cell (it lands later)
       ctx.globalAlpha = k * (1 - (p.dim || 0) * (isGold ? 0.95 : 0.8));
       rr(ctx, -cw / 2, -ch / 2, cw, ch, 9);
       ctx.fillStyle = isGold ? `rgba(240,172,95,${0.18 + 0.25 * (p.goldGlow || 0)})` : 'rgba(88,196,221,0.05)';

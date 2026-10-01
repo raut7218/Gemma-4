@@ -241,14 +241,14 @@
   c(4.5, {
     c15_flow: { params: FK({ flow: 7, ra: 0.33, fa: 0, gate: 0, wind: 1, sx: 900, sy: 500 }), pdur: 1.6, pease: 'power2.inOut' },
     c15_model: 'fade', c15_mt: 'fade', c15_ill: 'fade', c15_ms: 'fade', c15_cnt: 'fade', c15_ge: 'fade', c15_cntL: 'fade',
-    c15_spool: SPOOL({ x: 900, y: 500, in: 'scale', at: 1.0 }),
+    spool: SPOOL({ x: 900, y: 500, in: 'scale', at: 1.0 }),
     c15_wind: { type: 'canvas', draw: 'c15_wind', x: 960, y: 540, in: 'fade', at: 1.0, params: { x: 900, y: 500, spin: 1.2, a: 1 }, pease: 'none' },
     c15_sd: txt('SFT data&ensp;·&ensp;<span class="c-blue">Gemma</span>-only', { x: 900, y: 690, size: 54, at: 1.6 }),
   }, { cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 1.1, kind: 'pop' }] });
   // 508 (4.5) the spool feeds a purple sheet: LoRA · rank 16 · on a subset of layers
   c(4.5, {
     c15_flow: null,
-    c15_spool: { x: 520, dur: 1.0, ease: 'expo.inOut' }, c15_sd: { x: 520, dur: 1.0, ease: 'expo.inOut' },
+    spool: { x: 520, dur: 1.0, ease: 'expo.inOut' }, c15_sd: { x: 520, dur: 1.0, ease: 'expo.inOut' },
     c15_wind: { params: { x: 520, y: 500, spin: 2.0, a: 1 }, pdur: 1.0, pease: 'expo.inOut' },
     c15_feed: { type: 'arrow', x1: 660, y1: 500, x2: 1170, y2: 500, color: T.GREEN, sw: 4, head: 18, flow: 2, at: 0.8 },
     c15_sheet: { type: 'box', x: 1400, y: 500, w: 400, h: 250, stroke: T.PURPLE, fill: 'rgba(180,142,219,0.16)', sw: 4, rad: 14, html: '<span class="c-purple">LoRA</span>', size: 64, in: 'scale', at: 1.2 },
@@ -282,7 +282,7 @@
   // 512 (4.5) the held-out block with two empty bars; the spool settles toward its corner
   c(4.5, {
     c15_warn: 'left', c15_cards: 'fade', c15_rigL: 'fade', c15_smoke: 'fade', c15_wind: 'fade', c15_sd: 'fade',
-    c15_spool: SPOOL({ dur: 1.4, ease: 'expo.inOut' }),
+    spool: SPOOL({ dur: 1.4, ease: 'expo.inOut' }),
     c15_sheet: { x: 1560, y: 260, w: 300, h: 80, size: 34, dur: 1.2, ease: 'expo.inOut' },
     c15_ho: txt('held-out repository: <span class="m">rich</span>', { x: 560, y: 220, size: 50, at: 0.4 }),
     c15_hoT: tag('example', { x: 560, y: 285, size: 24, at: 0.6 }),
@@ -306,7 +306,7 @@
     tree: 'fade', c15_thl: 'fade', c15_sheet: 'fade',
     c15_rl: txt('RL comes after SFT, if at all', { x: 820, y: 470, size: 72, at: 0.45 }),
     c15_rl2: txt('<span class="c-dim">highest ceiling,</span> <span class="c-red">highest cost</span>', { x: 820, y: 590, size: 56, at: 1.1 }),
-    c15_spool: SPOOL(),
+    spool: SPOOL(),
     rail: { ver: 16, at: 0.6 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();

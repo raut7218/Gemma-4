@@ -9,7 +9,7 @@
 
   // ---- the TAPE (hand-off from chapter 4); params accumulate
   const H = { x: X0, y: TY, w: TW, h: 86, first: 0, n: 0, ticks: 0, sliver: 1, crack: 0 };
-  let TP = Object.assign({ think: 0, short: 0, edgeGlow: 0, a: 1 }, H);
+  let TP = Object.assign({}, H);
   const tp = (o, extra = {}) => { TP = Object.assign({}, TP, o); return Object.assign({ params: TP }, extra); };
 
   // ---- chapter-local drawings
@@ -74,9 +74,9 @@
   // 171 (4.5) — CLOSE: the block opens like a drawer: problem statement · hints, if any
   const DR = ['problem statement', 'hints, if any', 'budget', 'environment rules', 'tool notes', '150-entry file listing'];
   const drawer = (i, at) => ({ ['c05_dr' + i]: { type: 'box', x: X0 + 230, y: 650 + i * 74, w: 460, h: 62, stroke: T.BLUE, fill: 'rgba(88,196,221,0.10)', sw: 2.5, rad: 10, size: 34, html: DR[i], in: 'none', from: { y: TY, o: 0, s: 0.4 }, at, dur: 0.9, ease: 'expo.out', z: 2 } });
-  c(4.5, { ...drawer(0, 0.3), ...drawer(1, 0.7) }, { cam: { x: 560, y: 650, s: 1.42 }, sfx: [{ at: 0.4, kind: 'tick' }, { at: 0.8, kind: 'tick' }] });
+  c(4.5, { tape: tp({ ticks: 0 }, { pdur: 0.5 }), ...drawer(0, 0.3), ...drawer(1, 0.7) }, { cam: { x: 560, y: 650, s: 1.42 }, sfx: [{ at: 0.4, kind: 'tick' }, { at: 0.8, kind: 'tick' }] });
   // 172 (3.5) — budget · environment rules
-  c(3.5, { ...drawer(2, 0.2), ...drawer(3, 0.6) }, { cam: { x: 560, y: 700, s: 1.42 }, sfx: [{ at: 0.3, kind: 'tick' }, { at: 0.7, kind: 'tick' }] });
+  c(3.5, { c05_fm2: 'fade', ...drawer(2, 0.2), ...drawer(3, 0.6) }, { cam: { x: 560, y: 700, s: 1.42 }, sfx: [{ at: 0.3, kind: 'tick' }, { at: 0.7, kind: 'tick' }] });
   // 173 (4.5) — tool notes · 150-entry file listing
   c(4.5, { ...drawer(4, 0.2), ...drawer(5, 0.6) }, { cam: { x: 560, y: 760, s: 1.42 }, sfx: [{ at: 0.3, kind: 'tick' }, { at: 0.7, kind: 'tick' }] });
 
@@ -84,8 +84,8 @@
   const drIn = {};
   for (let i = 0; i < 6; i++) drIn['c05_dr' + i] = { y: TY, s: 0.3, o: 0, at: 0.05 * (5 - i), dur: 0.55, ease: 'power3.in' };
   c(4.5, {
-    ...drIn, c05_fm: 'fade', c05_fm2: 'fade',
-    tape: tp({ n: 1, sliver: 0 }, { pdur: 1.4, pease: 'expo.out', at: 0.8 }),
+    ...drIn, c05_fm: 'fade',
+    tape: tp({ n: 1, sliver: 0, ticks: 1 }, { pdur: 1.4, pease: 'expo.out', at: 0.8 }),
     ...note('c05_o1', '<span class="c-teal">one full-size tool output</span> (5,000 chars) ≈ <span class="c-yellow">1.3k</span>', tx(S.FIRST) - 20, 440, { align: 'left', ax: 0, at: 1.4, size: 48 }),
   }, { cam: { x: 960, y: 520, s: 1 }, sfx: [{ at: 1.0, kind: 'click' }] });
 
@@ -122,13 +122,13 @@
   }, { cam: { x: 960, y: 560, s: 1 }, sfx: [{ at: 0.5, kind: 'click' }] });
 
   // 182 (2.5) — reading beat: "≈20 full-size outputs" stays bright, the rest sinks to a third
-  c(2.5, { tape: tp({ a: 0.33 }, { pdur: 0.6 }), c05_cnt: { o: 0.33 }, c05_ov: { s: 1.06 } }, { drift: 0.4 });
+  c(2.5, { tape: { o: 0.33, dur: 0.6 }, c05_cnt: { o: 0.33 }, c05_ov: { s: 1.06 } }, { drift: 0.4 });
 
   // 183 (2.5) — a brace under the first block: 3.5k
   const BR = [[X0, tx(S.FIRST), '3.5k', T.BLUE], [tx(S.FIRST), X0 + TW, '+ 20 × 1.3k = 26k', T.TEAL]];
   c(2.5, {
-    c05_ov: 'up', c05_cnt: 'fade',
-    tape: tp({ a: 1, ticks: 0 }, { pdur: 0.6 }),
+    c05_ov: 'fade', c05_cnt: 'fade',
+    tape: tp({ ticks: 0 }, { o: 1, pdur: 0.6 }),
     c05_br: { type: 'canvas', draw: 'c05_brace', x: 960, y: 540, braces: BR, by: 606, params: { k0: 1, k1: 0 }, paramsFrom: { k0: 0 }, in: 'fade', dur: 0.2, at: 0.3, pdur: 1.2 },
     c05_der: { type: 'text', html: '<span class="cap" style="font-size:1em">derived</span>', size: 26, color: T.YELLOW, x: 1760, ax: 1, align: 'right', y: 420, in: 'fade', at: 0.6 },
   });
@@ -153,18 +153,18 @@
   // 188 (4.5) — FULL: Inside a task, the context only grows. The tape empties.
   c(4.5, {
     chip: 'down', c05_gr: 'down',
-    tape: tp({ n: 0, crack: 0, edgeGlow: 0, a: 0.4 }, { pdur: 1.0, pease: 'power2.inOut' }),
+    tape: tp({ n: 0, crack: 0, edgeGlow: 0 }, { o: 0.4, pdur: 1.0, pease: 'power2.inOut' }),
     c05_grow: { type: 'text', html: 'Inside a task, <span class="c-yellow">the context only grows</span>.', size: 84, x: 960, y: 300, in: 'wipe', at: 0.5 },
     c05_find: { type: 'text', html: '<span class="cap" style="font-size:1em">in practice · participant finding (google-adk 2.9.2)</span>', size: 28, color: T.DIM, x: 960, y: 400, in: 'fade', at: 1.3 },
   }, { cut: true, cam: { x: 960, y: 480, s: 1 } });
 
   // 189 (2.5) — reading beat: push in on "the context only grows"
-  F.beat(2.5, { id: 'c05_grow', mode: 'push', dx: 170 });
+  F.beat(2.5, { id: 'c05_grow', mode: 'push', scale: 1.12 });
 
   // 190 (4.5) — WIDE: the tape refills with thinking blocks between steps
   c(4.5, {
     c05_grow: { y: TY, s: 0.3, o: 0, dur: 0.7, ease: 'power3.in' }, c05_find: 'fade',
-    tape: tp({ a: 1, think: 2, n: 5 }, { pdur: 3.2, pease: 'power1.inOut', at: 0.4 }),
+    tape: tp({ think: 2, n: 5 }, { o: 1, pdur: 3.2, pease: 'power1.inOut', at: 0.4 }),
     ...note('c05_th', '<span style="color:#8FA7D9">thinking</span> competes for the same space', 960, 400, { at: 0.9, size: 54 }),
   }, { cam: { x: 960, y: 540, s: 1 } });
 
@@ -199,7 +199,7 @@
     c05_tH: { params: Object.assign({}, H, { y: 820, think: 2, n: 5.3, first: 1, edgeGlow: 1, crack: 1 }), pdur: 0.8 },
     tape: tp({ n: 10 }, { pdur: 3.0, at: 0.6 }),
     c05_tL: { params: Object.assign({}, H, { y: 560, think: 0.6, n: 10, first: 1, edgeGlow: 1 }), pdur: 3.0, at: 0.6 },
-    c05_meas: { type: 'text', html: '<span class="plate"><span style="color:#8FA7D9">NONE</span> fits the most steps · <span class="c-dim">measure it on your own runs</span></span>', size: 42, x: 960, y: 440, in: 'wipe', at: 1.6, z: 4 },
+    c05_meas: { type: 'text', html: '<span class="plate"><span style="color:#8FA7D9">NONE</span> fits the most steps · <span class="c-dim">measure it on your own runs</span></span>', size: 42, x: 960, y: 960, in: 'wipe', at: 1.6, z: 4 },
   }, { sfx: [{ at: 0.3, kind: 'click' }] });
 
   // 196 (2) — the tapes merge back into one: short teal slivers instead of full blocks

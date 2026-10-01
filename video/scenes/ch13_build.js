@@ -315,7 +315,7 @@
   const ring = {};
   TOOLS.forEach((n, i) => {
     const a = -Math.PI / 2 + (i / 9) * Math.PI * 2;
-    ring['c13_t' + i] = { type: 'text', html: `<span class="m">${n}</span>`, size: 32, color: LIT[n] ? T.TEAL : '#56616D', x: 960 + Math.cos(a) * 600, y: 530 + Math.sin(a) * 215, in: 'pop', at: 0.6 + 0.07 * i };
+    ring['c13_t' + i] = { type: 'text', html: `<span class="m">${n}</span>`, size: 32, color: LIT[n] ? T.TEAL : '#56616D', x: 960 + Math.cos(a) * 600, y: 550 + Math.sin(a) * 205, in: 'pop', at: 0.6 + 0.07 * i };
   });
   const PIPE = (o) => ({ type: 'canvas', draw: 'c13_pipe', layout: 'h', x: 960, y: 540, in: 'fade', params: Object.assign({ cx: 1000, cy: 175, s: 0.92, act: 0, a: 1, all: 0 }, o) });
   c(4.5, {
