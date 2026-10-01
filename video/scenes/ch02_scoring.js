@@ -155,16 +155,17 @@
     }
     ctx.restore();
     rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#3A4654'; ctx.lineWidth = 2.5; ctx.stroke();
-    [['October', day(1, 10), day(1, 11)], ['November', day(1, 11), day(1, 12)]].forEach(([s, a, b]) => {
-      const k = clamp((bx + bw - (a + b) / 2) / 160);
-      if (k > 0) DRAW.text(ctx, s, (a + b) / 2, y - 54, { size: 34, color: T.DIM, a: k });
+    // month names sit just after each month's first day (left-aligned), clear of the pins at 12 Nov / 23 Sep
+    [['October', day(1, 10)], ['November', day(1, 11)]].forEach(([s, a]) => {
+      const k = clamp((bx + bw - a - 80) / 160);
+      if (k > 0) DRAW.text(ctx, s, a + 22, y - 54, { size: 34, color: T.DIM, a: k, align: 'left' });
     });
     ctx.restore();
   };
   // four recap stamps, two rows: press in, settle slowly, then drop into the calendar band and flash
   // (k 0..1 across the comp)
   const STAMPS = [['≈120 private tasks', T.INK, false], ['pytest exit 0', T.GREEN, true], ['≈6 min a task, if sequential', T.YELLOW, false], ['1 a day', T.YELLOW, false]];
-  const STAMP_TX = [430, 790, 1150, 1510], STAMP_R = [-2.5, 1.8, -1.2, 2.2], STAMP_ROW = [0, 0, 1, 1], STAMP_Y = [270, 420];
+  const STAMP_TX = [430, 790, 1150, 1510], STAMP_R = [-2.5, 1.8, -1.2, 2.2], STAMP_ROW = [0, 0, 1, 1], STAMP_Y = [235, 380];
   DRAW.c02_stamps = (ctx, p) => {
     const k = p.k || 0, FS = 58, SH = 116;
     const ws = STAMPS.map(([s, , m]) => { ctx.font = `400 ${FS}px ${m ? 'CMT' : 'CM'}`; return ctx.measureText(s).width + 84; });
@@ -316,7 +317,7 @@
   F.beat(2.5, { id: 'c02_eC', mode: 'underline', w: 620, dx: 25, under: 58, color: T.YELLOW });
 
   // ---------------------------------------------------------------- 78 (4.5) the ruler returns: setup eats into it
-  const R1Y = 500;   // ruler content y after it rises (element offset moves the canvas)
+  const R1Y = 560;   // ruler content y after it rises (element offset moves the canvas)
   c(4.5, {
     c02_eA: 'up', c02_eB: 'up', c02_eC: 'up', c02_dv: 'fade', c02_six: 'fade',
     c02_ruler: { y: 540 + (R1Y - RU.y), params: Object.assign({}, RU, { draw: 1, ticks: 1, grey: 1, show: 0, over: 0, stretch: 0, a: 1 }), at: 0.2, dur: 1.1, ease: 'power3.inOut', pdur: 2.6, pease: 'power2.inOut' },
@@ -326,8 +327,8 @@
 
   // ---------------------------------------------------------------- 79 (4.5) honesty about the estimate
   c(4.5, {
-    c02_cv1: cap('if tasks run one at a time', 28, T.INK, { x: 850, y: 630, at: 0.3, in: 'rise' }),
-    c02_cv2: cap('concurrency not documented', 28, T.DIM, { x: 850, y: 680, at: 1.7, in: 'rise' }),
+    c02_cv1: cap('if tasks run one at a time', 28, T.INK, { x: 850, y: 690, at: 0.3, in: 'rise' }),
+    c02_cv2: cap('concurrency not documented', 28, T.DIM, { x: 850, y: 740, at: 1.7, in: 'rise' }),
   });
 
   // ---------------------------------------------------------------- 80 (2) the LOOP rolls onto the ruler
@@ -395,7 +396,7 @@
   c(2, { c02_cfg: { ver: 1, at: 0.1, dur: 0.9 } });
 
   // ---------------------------------------------------------------- 88 (4.5) four dials; you set these
-  const DP = (o) => Object.assign({ x: 1310, y0: LINE0, pitch: PITCH, r: 50, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
+  const DP = (o) => Object.assign({ x: 1310, y0: LINE0, pitch: PITCH, r: 54, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
   c(4.5, {
     c02_dials: { type: 'canvas', draw: 'c02_dials', x: 960, y: 540, in: 'fade', dur: 0.2, params: DP({}), paramsFrom: { a: 0, v0: 0, v1: 0, v2: 0, v3: 0 }, pdur: 2.4, pease: 'power2.out' },
     c02_dcap: { type: 'text', html: '<span class="cap" style="font-size:1em">per-task budgets&ensp;—&ensp;<span class="c-ink">you set these</span></span>', size: 28, color: T.DIM, x: 820, y: 118, in: 'fade', at: 1.4 },
@@ -471,7 +472,7 @@
     c02_locn: cap('built in chapter 10', 26, T.DIM, { x: 960, y: 965, at: 1.8 }),
     c02_ag1: { type: 'arrow', x1: 900, y1: 420, x2: 900, y2: 670, color: T.INK, sw: 4, head: 18, in: 'draw', at: 2.0, dur: 0.6 },
     c02_ag2: { type: 'arrow', x1: 1020, y1: 670, x2: 1020, y2: 420, color: T.INK, sw: 4, head: 18, in: 'draw', at: 2.2, dur: 0.6 },
-    c02_agree: { type: 'text', html: 'must agree', size: 50, color: T.YELLOW, align: 'left', ax: 0, x: 1070, y: 545, in: 'left', at: 2.5 },
+    c02_agree: { type: 'text', html: 'must agree', size: 50, color: T.YELLOW, align: 'left', ax: 0, x: 1070, y: 545, in: 'rise', at: 2.5 },
   });
 
   // ---------------------------------------------------------------- 98 (4.5) recap stamps drop into the calendar → chapter 3

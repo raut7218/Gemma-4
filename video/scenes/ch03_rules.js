@@ -42,9 +42,10 @@
     }
     ctx.restore();
     rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#3A4654'; ctx.lineWidth = 2.5; ctx.stroke();
-    [['October', day(1, 10), day(1, 11)], ['November', day(1, 11), day(1, 12)]].forEach(([s, a, b]) => {
-      const k = clamp((bx + bw - (a + b) / 2) / 160);
-      if (k > 0) DRAW.text(ctx, s, (a + b) / 2, y - 54, { size: 34, color: T.DIM, a: k });
+    // month names sit just after each month's first day (left-aligned), clear of the pins at 12 Nov / 23 Sep
+    [['October', day(1, 10)], ['November', day(1, 11)]].forEach(([s, a]) => {
+      const k = clamp((bx + bw - a - 80) / 160);
+      if (k > 0) DRAW.text(ctx, s, a + 22, y - 54, { size: 34, color: T.DIM, a: k, align: 'left' });
     });
     ctx.restore();
   };
@@ -142,17 +143,25 @@
   const ICON_FLAGS = flag('#F4D35E') + '&ensp;' + flag('#F4D35E');
   const fig = '<svg width="34" height="80" viewBox="0 0 34 80"><circle cx="17" cy="14" r="11" fill="#ECE9E2"/><path d="M3 76 L3 44 Q3 30 17 30 Q31 30 31 44 L31 76 Z" fill="#ECE9E2"/></svg>';
   const ICON_TEAM = Array(5).fill(fig).join('&nbsp;');
-  const token = (id, x, icon, text, at) => ({ [id]: { type: 'box', x, y: 540, w: 420, h: 420, rad: 210, stroke: '#4A5664', fill: 'rgba(27,33,41,0.97)', sw: 3, size: 48, lh: 1.15, html: `<div style="margin-bottom:18px">${icon}</div>${text}`, in: 'down', at, dur: 1.0, ease: 'back.out(1.3)' } });
+  // tokens are 560 px discs: each lands big at centre (s 1.25 ≈ 700 px), then the row spreads across the full width
+  const TK = 560, TX = [330, 960, 1590];
+  const token = (id, x, icon, text, at, sc) => ({ [id]: { type: 'box', x, y: 540, s: sc, w: TK, h: TK, rad: TK / 2, stroke: '#4A5664', fill: 'rgba(27,33,41,0.97)', sw: 3.5, size: 66, lh: 1.12, html: `<div style="margin-bottom:34px;transform:scale(1.5);transform-origin:50% 100%">${icon}</div>${text}`, in: 'down', at, dur: 1.0, ease: 'back.out(1.3)' } });
   c(4.5, {
     c03_o1: 'up', c03_o2: 'up',
-    ...token('c03_t1', 420, ICON_CAL, '<span class="c-yellow">1</span> submission<br>a day', 0.35),
+    ...token('c03_t1', 960, ICON_CAL, '<span class="c-yellow">1</span> submission<br>a day', 0.35, 1.25),
   }, { cut: true, cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 0.75, kind: 'pop' }] });
 
-  // 110 (4) — the second token: "2 final selections"
-  c(4, { ...token('c03_t2', 960, ICON_FLAGS, '<span class="c-yellow">2</span> final<br>selections', 0.25) }, { sfx: [{ at: 0.65, kind: 'pop' }] });
+  // 110 (4) — the first token slides to the left third; the second lands at centre: "2 final selections"
+  c(4, {
+    c03_t1: { x: TX[0], s: 1, at: 0, dur: 1.0, ease: 'power3.inOut' },
+    ...token('c03_t2', 960, ICON_FLAGS, '<span class="c-yellow">2</span> final<br>selections', 0.9, 1.15),
+  }, { sfx: [{ at: 1.3, kind: 'pop' }] });
 
-  // 111 (4.5) — the third token: "teams of up to 5"
-  c(4.5, { ...token('c03_t3', 1500, ICON_TEAM, 'teams of<br>up to <span class="c-yellow">5</span>', 0.25) }, { sfx: [{ at: 0.65, kind: 'pop' }] });
+  // 111 (4.5) — the second settles into the row; the third lands on the right: "teams of up to 5"
+  c(4.5, {
+    c03_t2: { s: 1, at: 0, dur: 0.9, ease: 'power3.inOut' },
+    ...token('c03_t3', TX[2], ICON_TEAM, 'teams of<br>up to <span class="c-yellow">5</span>', 0.35, 1),
+  }, { sfx: [{ at: 0.75, kind: 'pop' }] });
 
   // 112 (3.5) — "2 final selections" opens: a row of past submissions, two get flagged
   const subs = {};
@@ -166,8 +175,8 @@
     flagsUp['c03_fl' + k] = { type: 'text', html: flag('#F4D35E'), size: 40, x: 285 + i * 150 + 8, y: 560, in: 'pop', at: 1.4 + 0.35 * k };
   });
   c(3.5, {
-    c03_t1: { o: 0.3, s: 0.62, x: 420, y: 300 }, c03_t3: { o: 0.3, s: 0.62, x: 1500, y: 300 },
-    c03_t2: { s: 0.62, y: 300 },
+    c03_t1: { o: 0.3, s: 0.48, x: 420, y: 300 }, c03_t3: { o: 0.3, s: 0.48, x: 1500, y: 300 },
+    c03_t2: { s: 0.48, y: 300 },
     c03_subs: { type: 'text', html: '<span class="cap" style="font-size:1em">your daily submissions · you pick two to count</span>', size: 26, color: T.DIM, x: 960, y: 830, in: 'fade', at: 0.6 },
     ...subs, ...flagsUp,
   }, { cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 1.45, kind: 'click' }, { at: 1.8, kind: 'click' }] });
@@ -175,14 +184,22 @@
   // 113 (4.5) — the tokens slide left; a gate: external data and models allowed
   const rowOut = Object.fromEntries(Object.keys(subs).map((k) => [k, 'left']));
   const G1 = { l: 560, r: 860, top: 380, bot: 800 };
-  const gatePath = (g) => `M${g.l},${g.bot} L${g.l},${g.top} L${g.r},${g.top} L${g.r},${g.bot}`;
+  const GATE_IDS = (id) => [id + '_pl', id + '_pr', id + '_lt', id + '_bl', id + '_br'];
+  const gate = (id, g, col, at, pw = 34) => ({
+    [id + '_bl']: { type: 'rect', x: g.l, y: g.bot + 14, w: pw + 46, h: 28, fill: '#4A5664', rad: 6, in: 'grow', at, dur: 0.6, z: 5 },
+    [id + '_br']: { type: 'rect', x: g.r, y: g.bot + 14, w: pw + 46, h: 28, fill: '#4A5664', rad: 6, in: 'grow', at: at + 0.05, dur: 0.6, z: 5 },
+    [id + '_pl']: { type: 'rect', x: g.l, y: g.bot, ay: 1, w: pw, h: g.bot - g.top, fill: col, rad: 6, in: 'growh', at: at + 0.15, dur: 0.9, z: 5 },
+    [id + '_pr']: { type: 'rect', x: g.r, y: g.bot, ay: 1, w: pw, h: g.bot - g.top, fill: col, rad: 6, in: 'growh', at: at + 0.25, dur: 0.9, z: 5 },
+    [id + '_lt']: { type: 'rect', x: (g.l + g.r) / 2, y: g.top, w: g.r - g.l + pw + 56, h: pw + 4, fill: col, rad: 8, in: 'grow', at: at + 0.75, dur: 0.8, z: 5 },
+  });
   const data = {};
   for (let i = 0; i < 4; i++) {
-    data['c03_d' + i] = { type: 'box', x: 1120 + (i % 2) * 40, y: 520 + i * 70, w: 170, h: 54, stroke: '#6F7883', fill: 'rgba(111,120,131,0.18)', sw: 2, rad: 8, size: 24, html: '<span class="cap c-dim" style="font-size:1em">data</span>', in: 'fade', from: { x: 180 - i * 60 }, at: 0.5 + 0.28 * i, dur: 2.4, ease: 'power2.inOut' };
+    data['c03_d' + i] = { type: 'box', x: 1120 + (i % 2) * 40, y: 520 + i * 70, w: 170, h: 54, stroke: T.DIM, fill: '#1E252E', sw: 2, rad: 8, size: 26, html: '<span class="cap c-ink" style="font-size:1em">data</span>', in: 'fade', from: { x: 180 - i * 60 }, at: 0.5 + 0.28 * i, dur: 2.4, ease: 'power2.inOut', z: 2 };
   }
   c(4.5, {
     c03_t1: 'left', c03_t2: 'left', c03_t3: 'left', c03_subs: 'left', c03_fl0: 'left', c03_fl1: 'left', c03_hl0: 'left', c03_hl1: 'left', ...rowOut,
-    c03_g1: { type: 'path', d: gatePath(G1), fill: 'rgba(0,0,0,0)', sw: 8, color: T.GREEN, in: 'draw', dur: 0.9 },
+    c03_gfl: { type: 'rect', x: 1000, y: G1.bot + 30, w: 1500, h: 4, fill: '#3A4654', rad: 2, in: 'grow', at: 0, dur: 0.9 },
+    ...gate('c03_g1', G1, T.GREEN, 0),
     c03_g1t: { type: 'text', html: 'external data and models: <span class="c-green">allowed</span><br><span class="c-dim">if freely accessible to all</span>', size: 52, lh: 1.25, x: 960, y: 220, in: 'wipe', at: 0.3 },
     ...data,
   }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
@@ -190,7 +207,7 @@
   // 114 (4.5) — a smaller second gate with a question mark: distillation from proprietary APIs
   const G2 = { l: 1420, r: 1640, top: 520, bot: 800 };
   c(4.5, {
-    c03_g2: { type: 'path', d: gatePath(G2), fill: 'rgba(0,0,0,0)', sw: 6, color: T.YELLOW, in: 'draw', dur: 0.8 },
+    ...gate('c03_g2', G2, T.YELLOW, 0, 28),
     c03_q: { type: 'text', html: '?', size: 150, color: T.YELLOW, x: (G2.l + G2.r) / 2, y: 650, in: 'pop', at: 0.7 },
     c03_d3: { x: 1290, y: 730, at: 0.9, dur: 1.6, ease: 'power3.out' },
     c03_g2t: { type: 'text', html: 'distillation from proprietary APIs:<br><span class="c-yellow">an open question at launch</span>', size: 46, lh: 1.25, x: 1300, y: 920, in: 'wipe', at: 0.9 },
@@ -198,10 +215,18 @@
 
   // 115 (3.5) — "One open model." re-enters from the left exactly as in the cold open; a blue block thickens behind it
   c(3.5, {
-    c03_g1: 'undraw', c03_g2: 'undraw', c03_q: 'quick', c03_g1t: 'up', c03_g2t: 'down',
-    c03_d0: 'right', c03_d1: 'right', c03_d2: 'right', c03_d3: 'right',
+    // explicit exits at the comp start (named exits are staggered by the engine per element and would trail ~0.7 s);
+    // the invisible states are cleared by chapter 4's first comp
+    ...Object.fromEntries([...GATE_IDS('c03_g1'), ...GATE_IDS('c03_g2'), 'c03_gfl'].map((k, i) => {
+      const st = FILM.COMPS[FILM.COMPS.length - 1].els[k];
+      return [k, { y: st.y + 300, o: 0, at: 0.015 * i, dur: 0.55, ease: 'power3.in' }];
+    })),
+    c03_q: { o: 0, s: 0.6, at: 0, dur: 0.3, ease: 'power2.in' },
+    c03_g1t: { y: 220 - 300, o: 0, at: 0, dur: 0.55, ease: 'power3.in' },
+    c03_g2t: { y: 920 + 300, o: 0, at: 0.03, dur: 0.55, ease: 'power3.in' },
+    ...Object.fromEntries([0, 1, 2, 3].map((i) => [`c03_d${i}`, { x: (i === 3 ? 1290 : 1120 + (i % 2) * 40) + 900, o: 0, at: 0.02 * i, dur: 0.55, ease: 'power3.in' }])),
     c03_blk: { type: 'rect', x: 960, y: 540, w: 1060, h: 210, rad: 18, fill: 'rgba(88,196,221,0.22)', in: 'grow', at: 1.1, dur: 1.4, ease: 'power3.inOut', z: 0 },
-    oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 540, color: T.INK, in: 'left', at: 0.25 },
+    oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 540, color: T.INK, in: 'left', at: 0.45 },
     rail: { ver: 4, at: 1.4, dur: 0.8 },
   }, { cut: true, cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 

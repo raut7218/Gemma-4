@@ -8,7 +8,7 @@ Shared constants: `GRID120 = { cols: 12, rows: 10, cw: 112, ch: 64, gap: 14 }` c
 |---|---|---|
 | 0 → 1 | `rail` (HUD) | `K.rail(1)` — x 96, y 66, size 27, ver 1. Nothing else on screen. |
 | 1 → 2 | `grid` | `{type:'canvas', draw:'grid', x:960, y:500, params:{...GRID120, reveal:1, gold:55, goldGlow:1, dim:0, sweep:0, split:0}}`; camera `{x: cellX(55), y: cellY(55), s: 6}` (use `DRAW.gridCell(55, {w:1920,h:1080}, GRID120, 960, 500)`), drift 0. |
-| 2 → 3 | `calendar` | `{type:'canvas', draw:'calendar', x:960, y:540, spans:[], params:{x:210, y:560, w:1500, draw:1, dot:-1}}`. |
+| 2 → 3 | `calendar` | `{type:'canvas', draw:'calendar', x:960, y:540, spans:[], params:{x:210, y:560, w:1500, draw:1, dot:-1}}`. Under it, at the same pixels, a chapter-local opaque 60 px band (`c02_band` → `c03_band`, draw `c02_calband`/`c03_calband`, z 0, same params + `sheen:0`); ch3's first comp creates `c03_band` (`in:'none', at:-0.17`) and removes `c02_band` with `'quick'`. |
 | 3 → 4 | `oneopen` | `{type:'text', html:'One open model.', size:120, x:960, y:540, color:T.INK}`; ch4's first comp removes it with `'zoom'` while the 3D rig enters `'behind'`. |
 | 4 → 5 | `tape` | `{type:'canvas', draw:'tape', x:960, y:540, params:{x:160, y:540, w:1600, h:86, first:0, n:0, ticks:0, sliver:1, crack:0}}`. |
 | 5 → 6 | `loop` | `{type:'canvas', draw:'loop', x:960, y:540, params:{cx:960, cy:560, r:240, draw:1, labels:1, ring:1, dot:-1, exit:0, hi:-1}}`. |

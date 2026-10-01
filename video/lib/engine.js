@@ -450,8 +450,8 @@
           else to[kk] = ex.to[kk];
         }
         const lead = c.exitLead ?? 0.12;
-        tl.to(rec.proxy, to, Math.max(0, t0 - lead + exIdx * 0.025));
-        tl.set(rec.proxy, { o: 0 }, Math.max(0, t0 - lead + exIdx * 0.025 + ex.dur));
+        tl.to(rec.proxy, to, Math.max(0, t0 - lead + Math.min(exIdx, 6) * 0.025));
+        tl.set(rec.proxy, { o: 0 }, Math.max(0, t0 - lead + Math.min(exIdx, 6) * 0.025 + ex.dur));
         exIdx++;
         delete prev[id];
       }
