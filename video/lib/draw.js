@@ -295,7 +295,7 @@
       const over = bx + bw > x + w;
       rr(ctx, bx, y - 44, Math.max(3, bw - 4), 30, 6);
       ctx.fillStyle = rgba(over ? T.RED : b[2], 0.85); ctx.fill();
-      if (b[3] && k > 0.6) D.text(ctx, b[3], bx + bw / 2, y - 72, { size: 22, color: T.DIM, a: (k - 0.6) / 0.4 });
+      if (b[3] && k > 0.6) D.text(ctx, b[3], bx + bw / 2, y - 72, { size: 24, color: T.DIM, a: (k - 0.6) / 0.4 });
     });
     if ((p.over || 0) > 0) {
       ctx.fillStyle = rgba(T.RED, 0.8 * p.over); rr(ctx, x + w - 8, y - 60, 16, 120, 6); ctx.fill();

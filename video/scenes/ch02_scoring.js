@@ -178,7 +178,7 @@
     c02_h1: { type: 'text', hud: true, html: '<span class="plate">one task</span>', size: 110, x: 960, y: 470, in: 'wipe', at: 0.2, dur: 1.0 },
     c02_h2: { type: 'text', hud: true, html: '<span class="plate">= one <span class="c-ink">issue</span> + one <span class="c-ink">repository</span></span>', size: 60, x: 960, y: 640, maxw: 1700, in: 'wipe', at: 1.0, dur: 1.8 },
     c02_h3: cap('the unit of scoring', 28, T.DIM, { hud: true, x: 960, y: 778, at: 2.6 }),
-  }, { cam: { x: gx, y: gy, s: 6 }, drift: 0, animateFirst: true });
+  }, { cam: { x: gx, y: gy, s: 6 }, drift: 0.3, animateFirst: true });
 
   // ---------------------------------------------------------------- 64 (4.5) WIDE the hidden set
   c(4.5, {
@@ -298,7 +298,7 @@
   });
 
   // ---------------------------------------------------------------- 80 (2) the LOOP rolls onto the ruler
-  const px = RU.w / 6, LY = 300, LS = 0.4, CIRC = 2 * Math.PI * 113;
+  const px = RU.w / 6, LY = 275, LS = 0.4, CIRC = 2 * Math.PI * 113;
   const xAt = (m) => RU.x + m * px;
   const rot = (x) => ((x - xAt(0.6)) / CIRC) * 360;
   c(2, {

@@ -43,7 +43,7 @@
             <div style="display:flex; align-items:center; gap:18px; margin-bottom:26px">
               <span style="display:inline-block;width:26px;height:26px;border-radius:50%;border:4px solid #83C167"></span>
               <span class="cap" style="font-size:24px;color:#9AA3AD">Issue · open</span>
-              <span class="cap" style="font-size:20px;color:#F4D35E;margin-left:auto">illustrative example</span></div>
+              <span class="cap" style="font-size:24px;color:#9AA3AD;margin-left:auto">illustrative example</span></div>
             <div style="font-size:1.12em; line-height:1.25"><span class="m" style="color:#ECE9E2">${esc(title)}</span></div>
             <div style="margin-top:26px; font-size:0.86em; color:#9AA3AD">${esc(body)}</div></div>`,
         }, o),
@@ -110,7 +110,7 @@
       return {
         [id]: Object.assign({ type: 'box', w, h, x, y, stroke: col, fill: which === 'B' ? 'rgba(131,193,103,0.05)' : 'rgba(88,196,221,0.05)', sw: 3.5, rad: 26, html: '', in: 'draw' }, o.box || {}),
         [id + '_hd']: Object.assign({ type: 'rect', x, y: y - h / 2 + 30, w: w - 7, h: 56, fill: which === 'B' ? 'rgba(131,193,103,0.16)' : 'rgba(88,196,221,0.16)', rad: 22, in: 'fade', at: 0.4 }, o.hdr || {}),
-        [id + '_ht']: Object.assign({ type: 'text', html: `<span class="cap" style="font-size:1em; letter-spacing:0.12em">${head}</span>`, size: Math.min(24, Math.round((w - 60) / (head.length * 0.82))), color: col, x, y: y - h / 2 + 30, in: 'fade', at: 0.5 }, o.text || {}),
+        [id + '_ht']: Object.assign({ type: 'text', html: `<span class="cap" style="font-size:1em; letter-spacing:0.12em">${head}</span>`, size: Math.max(24, Math.min(28, Math.round((w - 60) / (head.length * 0.82)))), color: col, x, y: y - h / 2 + 30, in: 'fade', at: 0.5 }, o.text || {}),
       };
     },
     // ---- the bundle TREE (mono lines; lit = per-line colour index)
