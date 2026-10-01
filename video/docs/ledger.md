@@ -71,3 +71,5 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - ch00 fixes for re-check items 2 (exit 0 now ~83% of frame width), 10 (lines converge onto one row and the chip grows out of them), 12 (camera lowered ~30 px on the code panel).
 - ch01 fixes for film round 1 items 2, 3, 4/5, 6, 12, 15, 16 applied by a fixer agent (literal 'multiplies into a row' not built: grid grows around the card).
 - ch02/ch03 fixes for film round 1 items 1, 4, 7, 8, 9, 10, 11, 13, 14 applied by a fixer agent. Engine: exit stagger capped at 0.15 s (many simultaneous exits had trailed up to 0.7 s).
+
+## Film critic — chapters 4–6, round 1 — one more pass (15 items; ch06_r1: 6 fixed, 3 partly, 1 not) — docs/critic/f04_06_r1.md
