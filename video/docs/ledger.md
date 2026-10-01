@@ -73,3 +73,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - ch02/ch03 fixes for film round 1 items 1, 4, 7, 8, 9, 10, 11, 13, 14 applied by a fixer agent. Engine: exit stagger capped at 0.15 s (many simultaneous exits had trailed up to 0.7 s).
 
 ## Film critic — chapters 4–6, round 1 — one more pass (15 items; ch06_r1: 6 fixed, 3 partly, 1 not) — docs/critic/f04_06_r1.md
+- ch05/ch06 fixes for film round 1 items 1, 4, 5, 6, 7, 8, 11, 12, 13 applied by a fixer agent. Engine: morph stagger now counts only changed elements, capped at 0.3 s (it had counted every element on stage, delaying morphs by up to ~1.5 s).

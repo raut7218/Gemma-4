@@ -35,6 +35,18 @@
     }
   };
 
+  // the tape's scale, readable: marks + labels under a tape of height p.h (follows the tape's growth)
+  DRAW.c05_ticks = (ctx, p) => {
+    const y = TY + (p.h ?? 86) / 2;
+    [0, 8192, 16384, 24576, 32768].forEach((m, i) => {
+      const k = clamp((p.k ?? 0) * 5 - i); if (k <= 0) return;
+      const x = tx(m);
+      ctx.strokeStyle = DRAW.rgba(T.DIM, 0.85 * k); ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(x, y + 8); ctx.lineTo(x, y + 8 + 22 * ease(k)); ctx.stroke();
+      DRAW.text(ctx, m.toLocaleString('en-US'), x, y + 58, { size: 34, color: T.DIM, a: k, align: i === 0 ? 'left' : i === 4 ? 'right' : 'center' });
+    });
+  };
+
   const chip = (id, x, col, label, at) => ({
     [id + 's']: { type: 'rect', x, y: 780, w: 34, h: 34, rad: 6, fill: col, in: 'pop', at },
     [id]: { type: 'text', html: label, size: 40, align: 'left', ax: 0, x: x + 32, y: 780, in: 'rise', at: at + 0.1 },
@@ -42,14 +54,17 @@
   const note = (id, html, x, y, o = {}) => ({ [id]: Object.assign({ type: 'text', html, size: 46, x, y, in: 'wipe' }, o) });
 
   // 165 (4) — WIDE: the tape across the frame; ticks 0 … 32,768 beneath
+  // From the first frame the carried tape grows taller (86 → 150) while its scale ticks in; the camera
+  // pushes in so the tape spans the frame.
   c(4, {
     ...K.rail(5),
-    tape: { type: 'canvas', draw: 'tape', x: 960, y: 540, ...tp({ ticks: 1 }), paramsFrom: { ticks: 0 }, in: 'none', pdur: 2.4, pease: 'power2.out' },
-    c05_win: { type: 'text', html: '<span class="cap" style="font-size:1em">one context window · 32,768 tokens</span>', size: 28, color: T.DIM, x: 960, y: 440, in: 'fade', at: 1.0 },
-  }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0.6, animateFirst: true });
+    tape: { type: 'canvas', draw: 'tape', x: 960, y: 540, ...tp({ h: 150 }), paramsFrom: { h: 86 }, in: 'none', at: 0, pdur: 2.2, pease: 'power2.out' },
+    c05_tk: { type: 'canvas', draw: 'c05_ticks', x: 960, y: 540, params: { k: 1, h: 150 }, paramsFrom: { k: 0, h: 86 }, in: 'none', at: 0, pdur: 2.2, pease: 'power2.out' },
+    c05_win: { type: 'text', html: 'one context window · <span class="c-yellow">32,768 tokens</span>', size: 60, x: 960, y: 380, in: 'wipe', at: 0.7 },
+  }, { clear: true, cam: { x: 960, y: 560, s: 1.1 }, drift: 0.6, animateFirst: true });
 
   // 166 (2) — legend: prompt (blue) · tool outputs (teal)
-  c(2, { ...chip('c05_k0', 210, T.BLUE, 'prompt', 0.1), ...chip('c05_k1', 520, T.TEAL, 'tool outputs', 0.4) }, { cam: { x: 960, y: 600, s: 1 } });
+  c(2, { ...chip('c05_k0', 210, T.BLUE, 'prompt', 0.1), ...chip('c05_k1', 520, T.TEAL, 'tool outputs', 0.4) }, { cam: { x: 960, y: 600, s: 1.04 } });
 
   // 167 (4.5) — the agent's own turns (ink) · thinking (periwinkle): everything shares one window
   c(4.5, {
@@ -62,7 +77,8 @@
   const legendOut = { c05_k0: 'down', c05_k0s: 'down', c05_k1: 'down', c05_k1s: 'down', c05_k2: 'down', c05_k2s: 'down', c05_k3: 'down', c05_k3s: 'down' };
   c(4.5, {
     ...legendOut, c05_all: 'up', c05_win: null,
-    tape: tp({ first: 1 }, { pdur: 1.6, pease: 'expo.out', at: 0.3 }),
+    tape: tp({ first: 1, h: 86 }, { pdur: 1.6, pease: 'expo.out', at: 0.3 }),
+    c05_tk: { params: { k: 1, h: 86 }, pdur: 1.6, pease: 'expo.out', at: 0.3 },
     ...note('c05_fm', '<span class="c-blue">first message</span> ≈ <span class="c-yellow">3.5k</span>', X0, 440, { align: 'left', ax: 0, at: 1.2, size: 50 }),
   }, { cut: true, cam: { x: 960, y: 520, s: 1 }, sfx: [{ at: 0.6, kind: 'click' }] });
 
@@ -74,8 +90,10 @@
 
   // 171 (4.5) — CLOSE: the block opens like a drawer: problem statement · hints, if any
   const DR = ['problem statement', 'hints, if any', 'budget', 'environment rules', 'tool notes', '150-entry file listing'];
-  const drawer = (i, at) => ({ ['c05_dr' + i]: { type: 'box', x: X0 + 230, y: 650 + i * 74, w: 460, h: 62, stroke: T.BLUE, fill: 'rgba(88,196,221,0.10)', sw: 2.5, rad: 10, size: 34, html: DR[i], in: 'none', from: { y: TY, o: 0, s: 0.4 }, at, dur: 0.9, ease: 'expo.out', z: 2 } });
-  c(4.5, { tape: tp({ ticks: 0 }, { pdur: 0.5 }), ...drawer(0, 0.3), ...drawer(1, 0.7) }, { cam: { x: 560, y: 650, s: 1.42 }, sfx: [{ at: 0.4, kind: 'tick' }, { at: 0.8, kind: 'tick' }] });
+  // each strip slides down out from under the one above it (opaque fill, lower z), so no strip crosses a label
+  const drawer = (i, at) => ({ ['c05_dr' + i]: { type: 'box', x: X0 + 230, y: 650 + i * 74, w: 460, h: 62, stroke: T.BLUE, fill: '#16232A', sw: 2.5, rad: 10, size: 34, html: DR[i], in: 'none',
+    from: i === 0 ? { y: TY, o: 0, s: 0.4 } : { y: 650 + (i - 1) * 74, o: 1 }, at, dur: 0.9, ease: i === 0 ? 'expo.out' : 'power3.out', z: 9 - i } });
+  c(4.5, { tape: tp({ ticks: 0 }, { pdur: 0.5 }), c05_tk: 'fade', ...drawer(0, 0.3), ...drawer(1, 0.7) }, { cam: { x: 560, y: 650, s: 1.42 }, sfx: [{ at: 0.4, kind: 'tick' }, { at: 0.8, kind: 'tick' }] });
   // 172 (3.5) — budget · environment rules
   c(3.5, { c05_fm2: 'fade', ...drawer(2, 0.2), ...drawer(3, 0.6) }, { cam: { x: 560, y: 700, s: 1.42 }, sfx: [{ at: 0.3, kind: 'tick' }, { at: 0.7, kind: 'tick' }] });
   // 173 (4.5) — tool notes · 150-entry file listing
@@ -234,11 +252,13 @@
   }, { sfx: [{ at: 2.4, kind: 'click' }] });
 
   // 200 (2) — the teal blocks lift off and fan out, each stamped with the tool that produced it
+  // the final arc (shared with chapter 6's first frame): k = 0 settled, 1 = end of the chapter (a slow drift)
+  DRAW.c05_arc = (i, k) => { const y = 160 + i * 95 - 10 * k; return [1150 + 470 * Math.sqrt(1 - ((y - 540) / 560) ** 2) - 14 * k, y]; };
   const TOOLS = ['run_command', 'read_file', 'edit_file', 'write_file', 'get_status', 'submit_patch', 'get_code_neighbors', 'search_similar_code', 'get_code_subgraph'];
   const [nx, ny] = DRAW.loopGeom(LP).pos[1];
   const tiles = {};
   TOOLS.forEach((t, i) => {
-    tiles['c05_tt' + i] = { type: 'box', x: 1520 - (i % 2) * 40, y: 150 + i * 92, w: 400, h: 70, stroke: T.TEAL, fill: 'rgba(92,208,179,0.14)', sw: 2.5, rad: 10, size: 30, html: `<span class="m">${t}</span>`, in: 'none', from: { x: 1560, y: 980 - i * 60, s: 0.3, o: 0 }, at: 0.05 * i, dur: 0.9, ease: 'expo.out', z: 4 };
+    tiles['c05_tt' + i] = { type: 'box', x: 1520 - (i % 2) * 40, y: 150 + i * 92, w: 400, h: 70, stroke: T.TEAL, fill: 'rgba(92,208,179,0.14)', sw: 2.5, rad: 10, size: 30, html: `<span class="m" style="white-space:nowrap;color:${T.TEAL}">${t}</span>`, in: 'none', from: { x: 1560, y: 980 - i * 60, s: 0.3, o: 0 }, at: 0.05 * i, dur: 0.9, ease: 'expo.out', z: 4 };
   });
   c(2, {
     c05_bud: 'fade', c05_mk: 'fade',
@@ -247,23 +267,25 @@
     ...tiles,
   }, { cam: { x: 1060, y: 540, s: 1 } });
 
-  // 201 (3.5) — the stamps settle into a ring of nine tiles around "call a tool"
+  // 201 (3.5) — the stamps settle into an arc of nine labelled tiles around "call a tool" (they stay
+  // readable across the cut: chapter 6 starts from exactly this arc, CH6_ARC)
   const settle = {};
   TOOLS.forEach((t, i) => {
-    const a = -Math.PI / 2 + (i / 9) * Math.PI * 2;
-    settle['c05_tt' + i] = { x: nx + Math.cos(a) * 150, y: ny + Math.sin(a) * 92, s: 0.065, o: 0, at: 0.1 + 0.06 * i, dur: 1.1, ease: 'power3.inOut' };
+    const [x, y] = DRAW.c05_arc(i, 0);
+    settle['c05_tt' + i] = { x, y, w: 390, h: 60, rad: 12, size: 30, fill: 'rgba(92,208,179,0.10)', s: 1, o: 1, at: 0.1 + 0.06 * i, dur: 1.3, ease: 'power3.inOut' };
   });
   c(3.5, {
     tape: null,
     ...settle,
     loop: { params: Object.assign({}, LP, { ring: 1 }), pdur: 1.6, pease: 'power2.inOut', at: 0.6 },
-    c05_src: { type: 'text', html: 'the tools are where context comes from', size: 50, x: 960, y: 960, in: 'wipe', at: 1.4 },
+    c05_src: { type: 'text', html: 'the tools are where context comes from', size: 50, x: 740, y: 960, in: 'wipe', at: 1.4 },
   }, { cam: { x: 960, y: 560, s: 1.04 }, sfx: [{ at: 1.0, kind: 'tick' }] });
 
   // 202 (4.5) — the RAIL rewrites to "06 The nine tools" (hand-off: the loop with its tool ring)
-  const gone = Object.fromEntries(TOOLS.map((t, i) => ['c05_tt' + i, null]));
+  // the tiles keep drifting gently along the arc and are handed to chapter 6 (c06_t*) at the cut
+  const drift = Object.fromEntries(TOOLS.map((t, i) => { const [x, y] = DRAW.c05_arc(i, 1); return ['c05_tt' + i, { x, y, at: 0, dur: 3.375, ease: 'sine.inOut' }]; }));
   c(4.5, {
-    ...gone,
+    ...drift,
     rail: { ver: 6, at: 0.3, dur: 0.9 },
     loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { cx: 960, cy: 560, r: 240, draw: 1, labels: 1, ring: 1, dot: -1, exit: 0, hi: -1, stopped: 0 }, pdur: 0.1 },
     c05_src: { y: 1010, o: 0, at: 0, dur: 3.3, ease: 'power2.in' },

@@ -33,9 +33,9 @@
   const CALL1 = [CALL[0] + LOFF[0], CALL[1] + LOFF[1]];
   const FAN = (i) => { const a = (-70 + i * 17.5) * Math.PI / 180; return [CALL1[0] + 720 * Math.cos(a), CALL1[1] + 450 * Math.sin(a)]; };
   // the return: the nine tiles as a true ring around a centred loop
-  const RC = [720, 540];
+  const RC = [770, 540];
   const RANG = [-90, -50, -10, 30, 62, 118, 150, 190, 230];
-  const RING2 = (i) => { const a = RANG[i] * Math.PI / 180; return [RC[0] + 470 * Math.cos(a), RC[1] + 340 * Math.sin(a)]; };
+  const RING2 = (i) => { const a = RANG[i] * Math.PI / 180; return [RC[0] + 425 * Math.cos(a), RC[1] + 315 * Math.sin(a)]; };
   const RL_ = () => ({ cx: 960, cy: 560, r: 170, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 });
   // close-ups keep the toolbar pinned: almost no camera drift
   const cc = (b, d, o = {}) => c(b, d, Object.assign({ drift: 0.15 }, o));
@@ -48,7 +48,8 @@
   // toolbar layout; act = list of active tile indices
   const bar = (act, o = {}) => tilesAt((i) => Object.assign({ x: TB(i)[0] + (act.includes(i) ? 22 : 0), y: TB(i)[1], s: act.includes(i) ? 0.8 : 0.74, o: act.includes(i) ? 1 : 0.36 }, o));
   // fold the given view elements back into tile i
-  const fold = (ids, i) => Object.fromEntries(ids.map((id) => [id, { x: TB(i)[0] + 22, y: TB(i)[1], s: 0.06, o: 0, dur: 0.55, ease: 'power3.in' }]));
+  // explicit at: without it the engine staggers morphs by the element's index in the whole comp (≈1 s late)
+  const fold = (ids, i, at = 0) => Object.fromEntries(ids.map((id, j) => [id, { x: TB(i)[0] + 22, y: TB(i)[1], s: 0.06, o: 0, at: at + Math.min(j, 6) * 0.02, dur: 0.45, ease: 'power3.in' }]));
   const drop = (ids) => Object.fromEntries(ids.map((id) => [id, null]));
 
   // view region (right of the toolbar)
@@ -193,7 +194,7 @@
 
   // extension rings (dashed arcs outside the tool arc)
   DRAW.c06_ext = (ctx, p) => {
-    [[640, 440, p.a1 ?? 0, T.TEAL], [700, 500, p.a2 ?? 0, T.BLUE]].forEach(([rx, ry, k, col]) => {
+    [[600, 410, p.a1 ?? 0, T.TEAL], [652, 455, p.a2 ?? 0, T.BLUE]].forEach(([rx, ry, k, col]) => {
       if (k <= 0) return;
       const pts = [];
       for (let j = 0; j <= 120; j++) { const a = -Math.PI / 2 + (j / 60 - 1) * Math.PI; pts.push([RC[0] + rx * Math.cos(a), RC[1] + ry * Math.sin(a)]); }
@@ -208,13 +209,17 @@
   // The loop arrives exactly as handed over (ring of nine squares drawn by DRAW.loop). From the first
   // frame it slides up-left while nine tile elements, sitting exactly on the drawn squares, fan out to
   // the right of "call a tool" and grow into readable labelled tiles.
+  // Chapter 5 ends with the nine tiles as a labelled arc right of the loop (c05_tt*, ARC5 at k = 1); the
+  // c06 tiles take over at exactly those pixels on the first frame (exitLead 0, enterDelay 0, exit 'none').
+  // Everything eases IN from rest (power2.inOut) and keeps moving through the whole composition.
+  const ARC5 = (i) => { const y = 160 + i * 95 - 10; return [1150 + 470 * Math.sqrt(1 - ((y - 540) / 560) ** 2) - 14, y]; };
   c(4.5, {
     ...K.rail(6),
-    loop: { type: 'canvas', draw: 'loop', x: 960 + LOFF[0], y: 540 + LOFF[1], params: { ...L0, ring: 0 }, pdur: 0.25, pease: 'none', from: { x: 960, y: 540, o: 1, s: 1 }, at: 0, dur: 2.0, ease: 'power3.out' },
+    loop: { type: 'canvas', draw: 'loop', x: 960 + LOFF[0], y: 540 + LOFF[1], params: { ...L0, ring: 0 }, pdur: 0.9, pease: 'power2.inOut', from: { x: 960, y: 540, o: 1, s: 1 }, at: 0, dur: 3.0, ease: 'power2.inOut' },
     ...tilesAt((i) => ({ type: 'box', x: FAN(i)[0], y: FAN(i)[1], w: 390, h: 60, rad: 12, sw: 2.5, stroke: T.TEAL, fill: FILL0, versions: tileHtml(i), ver: 0, size: 30, z: 5, in: 'fade',
-      from: { x: RING(i)[0], y: RING(i)[1], w: 26, h: 26, rad: 6, size: 2, ver: 1, fill: rgba(T.TEAL, 0.85), o: 1, s: 1 }, at: i * 0.035, dur: 1.9, ease: 'power3.out' })),
+      from: { x: ARC5(i)[0], y: ARC5(i)[1], o: 1, s: 1 }, at: 0, dur: 2.9 + i * 0.05, ease: 'power2.inOut' })),
     c06_cap: { type: 'text', html: 'Nine tools. <span class="c-dim">A fixed set.</span>', size: 64, x: 560, y: 840, in: 'wipe', from: { reveal: 0 }, at: 1.3, dur: 1.2 },
-  }, { clear: true, keep: ['rail'], cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [{ at: 0.3, kind: 'tick' }] });
+  }, { clear: true, keep: ['rail'], cam: { x: 960, y: 540, s: 1 }, drift: 0.5, out: 'none', exitLead: 0, enterDelay: 0, sfx: [{ at: 0.3, kind: 'tick' }] });
 
   // 204 (4) — the ring opens into an arc; group 1 labels itself
   const gLabel = (g, html) => {
@@ -364,14 +369,14 @@
   cc(4.5, {
     ...fold(VIEW4, 3),
     ...bar([4], { dur: 0.9 }),
-    c06_gs: { type: 'mono', html: `${m('get_status()', T.TEAL)}&ensp;<span class="c-dim">→ budget and patch status</span>`, size: 44, x: VX, y: 220, in: 'wipe', at: 0.5 },
-    c06_tcN: { type: 'num', val: 3, size: 220, color: T.YELLOW, x: 640, y: 530, in: 'fade', at: 0.6 },
-    c06_tcL: { type: 'text', html: cap('tool calls'), size: 28, color: T.DIM, x: 640, y: 690, in: 'fade', at: 0.7 },
+    c06_gs: { type: 'mono', html: `${m('get_status()', T.TEAL)}&ensp;<span class="c-dim">→ budget and patch status</span>`, size: 44, x: VX, y: 220, in: 'wipe', at: 0.75 },
+    c06_tcN: { type: 'num', val: 3, size: 220, color: T.YELLOW, x: 640, y: 530, in: 'fade', at: 0.8 },
+    c06_tcL: { type: 'text', html: cap('tool calls'), size: 28, color: T.DIM, x: 640, y: 690, in: 'fade', at: 0.9 },
     c06_tc0: { type: 'text', html: '+0', size: 64, color: T.TEAL, x: 760, y: 400, in: 'rise', at: 1.4 },
-    c06_ttg: { type: 'text', html: cap('example'), size: 24, color: T.DIM, align: 'right', ax: 1, x: 1800, y: 330, in: 'fade', at: 0.9 },
-    c06_ctx: { type: 'canvas', draw: 'c06_ctx', bx: 840, by: 530, bw: 960, bh: 96, v0: 0.38, z: 4, in: 'fade', at: 0.7, params: { v: 0.41, tick: 1 }, paramsFrom: { v: 0.38, tick: 0 }, pdur: 2.2, pease: 'power2.inOut' },
+    c06_ttg: { type: 'text', html: cap('example'), size: 24, color: T.DIM, align: 'right', ax: 1, x: 1800, y: 330, in: 'fade', at: 1.0 },
+    c06_ctx: { type: 'canvas', draw: 'c06_ctx', bx: 840, by: 530, bw: 960, bh: 96, v0: 0.38, z: 4, in: 'fade', at: 0.85, params: { v: 0.41, tick: 1 }, paramsFrom: { v: 0.38, tick: 0 }, pdur: 2.2, pease: 'power2.inOut' },
     c06_free2: { type: 'text', html: '<span class="c-teal">free</span> = not counted as a tool call', size: 56, x: VX, y: 820, in: 'wipe', at: 2.0 },
-  }, { cut: true, sfx: [{ at: 0.6, kind: 'click' }] });
+  }, { cut: true, sfx: [{ at: 0.8, kind: 'click' }] });
 
   // 224 (4.5) — CLOSE submit_patch: git diff HEAD pours into the gold chip
   const VIEW5 = ['c06_gs', 'c06_tcN', 'c06_tcL', 'c06_tc0', 'c06_ttg', 'c06_ctx', 'c06_free2'];
@@ -404,11 +409,11 @@
   // 226 (4.5) — WIDE a code graph (concept)
   const VIEW6 = ['c06_sp', 'c06_d1', 'c06_d2', 'c06_dtag', 'c06_end', 'c06_stop', 'c06_stopL', 'c06_trk', 'c06_trkL', 'c06_tk0', 'c06_tk1', 'c06_tk2'];
   cc(4.5, {
-    ...fold(VIEW6, 5),
+    ...fold(VIEW6.filter((id) => id !== 'c06_stop' && id !== 'c06_stopL'), 5), c06_stop: 'quick', c06_stopL: 'quick',
     // the chip slides off to the right while the graph draws behind it
-    c06_chip: { x: 2400, z: 9, at: 0.45, dur: 1.0, ease: 'power3.in' },
+    c06_chip: { x: 2400, z: 9, at: 0.35, dur: 0.75, ease: 'power3.in' },
     ...bar([6, 7, 8], { dur: 0.9 }),
-    c06_graph: { type: 'canvas', draw: 'c06_graph', z: 4, in: 'fade', dur: 0.2, at: 0.5, params: { draw: 1, nb: 0, q: 0, lasso: 0 }, paramsFrom: { draw: 0 }, pdur: 2.6, pease: 'power2.out' },
+    c06_graph: { type: 'canvas', draw: 'c06_graph', z: 4, in: 'fade', dur: 0.2, at: 0.9, params: { draw: 1, nb: 0, q: 0, lasso: 0 }, paramsFrom: { draw: 0 }, pdur: 2.6, pease: 'power2.out' },
     c06_gcap: { type: 'text', versions: ['the code graph:&ensp;<span class="c-dim">functions as nodes, calls as edges</span>', `${m('get_code_neighbors', T.TEAL)}&ensp;<span class="c-dim">callers and callees</span>`, `${m('search_similar_code', T.TEAL)}&ensp;<span class="c-dim">find a symbol</span>`, `${m('get_code_subgraph', T.TEAL)}&ensp;<span class="c-dim">a set of nodes, with their edges</span>`], ver: 0, size: 44, x: VX + 40, y: 165, in: 'wipe', at: 0.9 },
     c06_gtag: { type: 'text', html: cap('concept · example names'), size: 24, color: T.DIM, align: 'right', ax: 1, x: 1840, y: 1035, in: 'fade', at: 1.2 },
   }, { cut: false });
@@ -418,7 +423,7 @@
   cc(4.5, {
     c06_gcap: { ver: 2, dur: 0.6 },
     c06_graph: { params: { draw: 1, nb: 0, q: 1, lasso: 0 }, pdur: 2.4 },
-    c06_q: { type: 'box', w: 300, h: 70, x: GN[QN][1], y: GN[QN][2] - 78, stroke: T.YELLOW, fill: 'rgba(21,26,33,0.96)', rad: 35, html: m('HTTPAdapter', T.INK), size: 34, z: 8, in: 'fade', from: { x: 700, y: 180, s: 1.2, o: 0 }, at: 0.2, dur: 1.5, ease: 'expo.inOut' },
+    c06_q: { type: 'box', w: 300, h: 70, x: GN[QN][1], y: GN[QN][2] - 78, stroke: T.YELLOW, fill: 'rgba(21,26,33,0.96)', rad: 35, html: m('HTTPAdapter', T.INK), size: 34, z: 8, in: 'fade', from: { s: 1.35, o: 0 }, at: 0.5, dur: 1.2, ease: 'expo.out' },
     c06_qtag: { type: 'text', html: `<span class="plate">${cap('example query')}</span>`, size: 24, color: T.DIM, x: GN[QN][1], y: GN[QN][2] - 136, in: 'fade', at: 1.6, z: 8 },
     c06_sym: { type: 'text', html: '<span class="plate">a <span class="c-yellow">symbol name</span>, not a sentence</span>', size: 56, x: 1100, y: 960, in: 'wipe', at: 1.8, z: 9 },
   }, { sfx: [{ at: 1.65, kind: 'tick' }] });
@@ -434,7 +439,7 @@
   // 231 (4.5) — OVER the ring again, re-staged: the loop at the centre of the frame, the nine tiles as a
   // true ring around it; a dashed ring grows outside: "+ skills you write"
   const RT = (i) => ({ x: RING2(i)[0], y: RING2(i)[1], s: 1, o: 1, w: 310, h: 52, size: 25, rad: 12 });
-  const COL = 1430; // right-hand text column
+  const COL = 1460; // right-hand text column
   c(4.5, {
     // the graph sinks back while the loop and the ring come forward through it
     c06_graph: { o: 0, s: 0.92, at: 0, dur: 0.8, ease: 'power2.in' }, c06_gcap: 'up', c06_gtag: 'fade',
@@ -447,8 +452,8 @@
   c(4.5, {
     c06_graph: null,
     c06_ext: { params: { a1: 1, a2: 1 }, pdur: 1.8 },
-    c06_x2: { type: 'text', html: '<span class="c-blue">+ sub-agents</span> you define', size: 46, maxw: 390, align: 'left', ax: 0, x: COL, y: 760, in: 'wipe', at: 1.0 },
-    c06_xtag: { type: 'text', html: cap('the fixed nine stay fixed'), size: 26, color: T.DIM, align: 'left', ax: 0, x: COL, y: 920, in: 'fade', at: 1.8 },
+    c06_x2: { type: 'text', html: '<span class="c-blue">+ sub-agents</span><br>you define', size: 46, maxw: 380, align: 'left', ax: 0, x: COL, y: 760, in: 'wipe', at: 1.0 },
+    c06_xtag: { type: 'text', html: cap('the fixed nine<br>stay fixed'), size: 26, color: T.DIM, align: 'left', ax: 0, x: COL, y: 920, in: 'fade', at: 1.8 },
   }, { drift: 0.6 });
   // 233 (2) — three meters beside the ring: time · tool calls · context
   const MP = { x: COL, y: 600, w: 88, h: 250, gap: 42, v0: 0.82, v1: 0.74, v2: 0.78, labels: 1, a: 1, glow: 0 };
@@ -461,8 +466,8 @@
     c06_t0: { s: 1.08, fill: 'rgba(92,208,179,1)', at: 0.2, dur: 0.4, ease: 'power2.out' },
     c06_fire: { type: 'arrow', x1: RING2(0)[0] + 170, y1: RING2(0)[1], x2: COL + 120, y2: 320, bend: -90, color: T.TEAL, sw: 4, head: 18, flow: 1, in: 'draw', at: 0.3, dur: 0.7 },
     c06_met: { params: { ...MP, v0: 0.74, v1: 0.64, v2: 0.68, glow: 0.6 }, pdur: 1.0, at: 0.9, pease: 'power3.out' },
-    c06_cost1: { type: 'text', html: 'every budgeted call costs', size: 42, maxw: 390, align: 'left', ax: 0, x: COL, y: 745, in: 'wipe', at: 1.3 },
-    c06_cost2: { type: 'text', html: '<span class="c-yellow">time</span>, a <span class="c-teal">tool call</span> and <span class="c-blue">context</span>', size: 50, maxw: 390, align: 'left', ax: 0, x: COL, y: 905, in: 'wipe', at: 1.8 },
+    c06_cost1: { type: 'text', html: 'every budgeted<br>call costs', size: 42, maxw: 360, align: 'left', ax: 0, x: COL, y: 745, in: 'wipe', at: 1.3 },
+    c06_cost2: { type: 'text', html: '<span class="c-yellow">time</span>, a <span class="c-teal">tool call</span> and <span class="c-blue">context</span>', size: 50, maxw: 360, align: 'left', ax: 0, x: COL, y: 905, in: 'wipe', at: 1.8 },
   }, { drift: 0.6, sfx: [{ at: 0.25, kind: 'click' }, { at: 1.0, kind: 'tick' }] });
   // 235 (2.5) — reading beat: "time, a tool call and context" stays bright; the rest sinks to a third
   c(2.5, {
@@ -487,13 +492,16 @@
   const tK = atK(T2.x, T2.y, KZ), hK = atK(...T2H, KZ), pK = atK(...T2P, KZ);
   c(2.5, {
     ...tilesAt((i) => (i === 0 ? {} : 'fade')), loop: 'fade', c06_met: 'fade', c06_cost1: 'fade', c06_cost2: 'fade',
-    c06_t0: { x: tK[0], y: tK[1], w: T2.w * KZ, h: T2.h * KZ, rad: 12 * KZ, sw: 2 * KZ, s: 1, o: 1, fill: 'rgba(21,26,33,0.97)', stroke: T.TEAL, z: 5, at: 0, dur: 1.0, ease: 'power3.inOut' },
+    rail: { o: 0, at: 0.2, dur: 0.6, ease: 'power2.in' },
+    c06_t0: { x: tK[0], y: tK[1], w: T2.w * KZ, h: T2.h * KZ, rad: 12 * KZ, sw: 2 * KZ, s: 1, o: 1, fill: 'rgba(21,26,33,0.97)', stroke: T.TEAL, ver: 1, z: 5, at: 0, dur: 1.0, ease: 'power3.inOut' },
     c06_tm: { type: 'box', ...T2, x: tK[0], y: tK[1], s: KZ, stroke: T.TEAL, fill: 'rgba(21,26,33,0.97)', sw: 2, rad: 12, html: '', z: 6, in: 'fade', at: 0.75, dur: 0.3 },
     c06_tmh: { type: 'text', html: `${m('run_command', T.TEAL)}&ensp;bash in ${m('/workspace')}`, size: 30, align: 'left', ax: 0, x: hK[0], y: hK[1], s: KZ, z: 7, in: 'wipe', at: 0.8, dur: 0.8 },
     c06_tmp2: { type: 'mono', versions: ['<span class="c-dim">/workspace $</span>', '<span class="c-dim">/workspace $</span> <span style="background:#ECE9E2">&nbsp;</span>'], ver: 1, size: 30, ax: 0, x: pK[0], y: pK[1], s: KZ, z: 7, in: 'wipe', at: 1.05, dur: 0.6 },
-  }, { cut: true, cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+    // the camera keeps creeping in on the full-frame terminal until the pull-back starts (no static tail)
+  }, { cut: true, cam: { x: 960, y: 540, s: 1 }, drift: 0.9 });
   // 237 (5.5) — the pull-back reveals /workspace inside container A; RAIL → 07
-  const fromK = (x, y) => { const q = atK(x, y, KZ); return { x: q[0], y: q[1], s: KZ, o: 1 }; };
+  // container A starts invisible at the zoomed scale and fades in with the pull-back (no one-frame flood)
+  const fromK = (x, y) => { const q = atK(x, y, KZ); return { x: q[0], y: q[1], s: KZ, o: 0 }; };
   c(5.5, {
     c06_t0: 'quick',
     c06_tm: { y: T2.y, s: 1, ...PULL, at: 0.05 },
@@ -503,6 +511,6 @@
     contA_hd: { ...cA.contA_hd, in: 'fade', from: fromK(cA.contA_hd.x, cA.contA_hd.y), ...PULL },
     contA_ht: { ...cA.contA_ht, in: 'fade', from: fromK(cA.contA_ht.x, cA.contA_ht.y), ...PULL },
     c06_tmc: { type: 'text', html: '<span class="plate">the tools run <span class="c-blue">inside the sandbox</span></span>', size: 44, x: 960, y: 960, in: 'wipe', at: 2.3, dur: 1.0 },
-    rail: { ver: 7 },
+    rail: { ver: 7, o: 1, at: 2.6, dur: 1.0, ease: 'power2.out' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();

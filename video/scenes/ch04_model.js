@@ -10,7 +10,7 @@
   const PANEL = 'rgba(21,26,33,0.96)';
 
   // ------------------------------------------------------------------ rig params (accumulating)
-  let RP = { yaw: -0.62, pitch: 40, dist: 11.5, tx: 0.55, ty: 0.3, tz: 0.9, key: 0, cards: 0, seams: 0, dock: 0, glow: 0, pass: -1, film: 0, films: 0, dimW: 0 };
+  let RP = { yaw: -0.62, pitch: 40, dist: 15.5, tx: 0.25, ty: 0.1, tz: 0.35, key: 0, cards: 0, seams: 0, dock: 0, glow: 0, pass: -1, film: 0, films: 0, dimW: 0 };
   const R = (o, extra = {}) => { RP = Object.assign({}, RP, o); return Object.assign({ params: RP }, extra); };
 
   // ------------------------------------------------------------------ labels pinned to 3D anchors
@@ -19,7 +19,7 @@
     c04_name: ['slabFront', 0, 64],
     c04_p31: ['slabLeft', -40, -78],
     c04_p17: ['slabRight', 70, -70],
-    c04_l4_0: ['card0', 0, -40], c04_l4_1: ['card1', 0, -40], c04_l4_2: ['card2', 0, -40], c04_l4_3: ['card3', 0, -40],
+    c04_l4_0: ['card0', 0, -52], c04_l4_1: ['card1', 0, -52], c04_l4_2: ['card2', 0, -52], c04_l4_3: ['card3', 0, -52],
     c04_frozen: ['slabFront', 0, 64],
     c04_film: ['film', 0, -70],
     c04_total: ['cardsMid', 0, -170],
@@ -47,6 +47,32 @@
     const pts = [[a[0] - 30, a[1] - up + 22], [a[0] - 30, a[1] - up], [m[0] - 14, m[1] - up], [m[0], m[1] - up - 14], [m[0] + 14, m[1] - up], [b[0] + 30, b[1] - up], [b[0] + 30, b[1] - up + 22]];
     DRAW.polyline(ctx, pts, p.draw ?? 1, { color: T.YELLOW, w: 4 });
   };
+  // 3→4 hand-off: ch3's blue block behind "One open model." (c03_blk, 1060 × 210 at 960, 540, rad 18,
+  // BLUE at 22 %) turns solid brand BLUE and morphs onto the slab's top face (live anchors), then
+  // dissolves into the 3D slab. k 0..1 morph, 1..2 fade. Drawn as a filled inset polygon plus a
+  // round-joined stroke (= rounded corners) into an offscreen canvas, then composited at alpha.
+  const TOPC = document.createElement('canvas'); TOPC.width = 1920; TOPC.height = 1080;
+  const TOPX = TOPC.getContext('2d');
+  DRAW.c04_top = (ctx, p) => {
+    const k = p.k || 0, m = ease(clamp(k)), fade = clamp(k - 1);
+    if (fade >= 1) return;
+    const A = window.ANCHORS, rg = FILM.EL.rig, R0 = 18;
+    const rect = [[430 + R0, 435 + R0], [1490 - R0, 435 + R0], [1490 - R0, 645 - R0], [430 + R0, 645 - R0]];
+    let quad = rect;
+    if (A && A.slabTopQ && rg) {
+      const q = rg.proxy;
+      quad = A.slabTopQ.map((a) => [q.x + (a[0] - 960) * q.s, q.y + (a[1] - 540) * q.s]);
+    }
+    const pts = rect.map((r, i) => [lerp(r[0], quad[i][0], m), lerp(r[1], quad[i][1], m)]);
+    TOPX.setTransform(1, 0, 0, 1, 0, 0); TOPX.clearRect(0, 0, 1920, 1080);
+    TOPX.beginPath(); pts.forEach((pt, i) => (i ? TOPX.lineTo(pt[0], pt[1]) : TOPX.moveTo(pt[0], pt[1]))); TOPX.closePath();
+    TOPX.fillStyle = T.BLUE; TOPX.fill();
+    const lw = 2 * R0 * (1 - m);
+    if (lw > 0.3) { TOPX.lineJoin = 'round'; TOPX.lineWidth = lw; TOPX.strokeStyle = T.BLUE; TOPX.stroke(); }
+    ctx.save(); ctx.globalAlpha *= lerp(0.22, 1, ease(clamp(k * 1.6))) * (1 - fade);
+    ctx.drawImage(TOPC, 0, 0); ctx.restore();
+  };
+
   // INT4 inset: one weight as 16 bit-cells squeezed to 4; the activation stays 16; number lines; QAT loop
   const BITS = '0110100111010010';
   const BX = 1040, BW = 40, BP = 46, WY = 280, AY = 410;
@@ -231,19 +257,23 @@
   // ------------------------------------------------------------------ layout helpers
   const plate = (id, x, y, w, h, o = {}) => ({ [id]: Object.assign({ type: 'box', x, y, w, h, stroke: '#3A4654', fill: PANEL, sw: 2.5, rad: 20, html: '', in: 'scale', z: 4 }, o) });
   const cv = (id, draw, params, o = {}) => ({ [id]: Object.assign({ type: 'canvas', draw, x: 960, y: 540, params, in: 'fade', dur: 0.3, z: 5 }, o) });
-  const RIG0 = { type: 'three', scene: 'rig', x: 960, y: 560, w: 1920, h: 1080, z: 1 };
+  const RIG0 = { type: 'three', scene: 'rig', x: 960, y: 500, w: 1920, h: 1080, z: 1 };
 
   // ================================================================== 116 (4.5) — the only model
   c(4.5, {
     ...K.rail(4),
     oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 540, color: T.INK, in: 'none', from: { o: 1, s: 1 }, o: 0, s: 7, at: 0, dur: 0.85, ease: 'power2.in' },
-    rig: Object.assign({}, RIG0, R({ key: 1, yaw: -0.5 }), { in: 'behind', at: 0.25, paramsFrom: { key: 0, yaw: -0.66 } }),
+    // ch3's translucent block hands over to c04_top at the same pixels, which becomes the slab's top face
+    c03_blk: { type: 'rect', x: 960, y: 540, w: 1060, h: 210, rad: 18, fill: 'rgba(88,196,221,0.22)', z: 0, in: 'none', o: 0, at: 0.034, dur: 0.004, ease: 'none' },
+    c04_top: { type: 'canvas', draw: 'c04_top', x: 960, y: 540, params: { k: 2 }, paramsFrom: { k: 0 }, in: 'none', at: -0.01, pdur: 1.75, pease: 'power1.inOut', z: 3 },
+    // the rig renders from the first frame (so the morph can read the slab's anchors) but stays invisible until the plate lands
+    rig: Object.assign({}, RIG0, R({ key: 1, yaw: -0.5 }), { in: 'fade', from: { o: 0.003 }, at: -0.05, dur: 1.3, ease: 'expo.in', paramsFrom: { key: 0, yaw: -0.66 } }),
     ...capLabel('c04_only', 'the only model', { y: 150, color: T.DIM, at: 1.4 }),
     c04_name: { type: 'text', html: '<span class="plate m">gemma-4-31b-it-qat-w4a16-ct</span>', size: 40, color: T.BLUE, in: 'wipe', at: 1.6, z: 6 },
   }, { clear: true, keep: ['oneopen'], cut: true, cam: { x: 960, y: 540, s: 1 }, animateFirst: true });
 
   // 117 (2.5) — key from the left, rim behind; the camera orbits slowly
-  c(2.5, { rig: R({ yaw: -0.42 }) });
+  c(2.5, { rig: R({ yaw: -0.42 }), c03_blk: null, c04_top: null });
 
   // 118 (4.5) — "31B parameters"
   c(4.5, { oneopen: null, rig: R({ yaw: -0.36 }), ...pinLabel('c04_p31', '<span class="c-yellow">31B</span> parameters', { at: 0.3, in: 'wipe' }) }, { sfx: [{ at: 0.3, kind: 'tick' }] });
@@ -253,7 +283,7 @@
 
   // 120 (4.5) — one base model per submission
   c(4.5, {
-    rig: R({ yaw: -0.24, dist: 12 }),
+    rig: R({ yaw: -0.24, dist: 16 }),
     c04_only: 'fade',
     c04_rule: { type: 'text', html: '<span class="plate">one base model per submission — <span class="c-dim">every agent in your bundle uses it</span></span>', size: 46, x: 960, y: 150, in: 'wipe', at: 0.3, z: 6 },
   });
@@ -261,7 +291,7 @@
   // 121 (2) — 2D inset beside the slab: 16 bit-cells squeeze to 4
   c(2, {
     c04_rule: 'up', c04_p31: 'fade', c04_p17: 'fade',
-    rig: R({ yaw: -0.2 }, { x: 520, y: 560, s: 0.92 }),
+    rig: R({ yaw: -0.2 }, { x: 490, y: 540, s: 0.92 }),
     ...plate('c04_pl', 1400, 560, 860, 840),
     ...cv('c04_bits', 'c04_bits', { w: 2, act: 0, lines: 0, loop: 0 }, { paramsFrom: { w: 0 }, pdur: 1.45, pease: 'power2.inOut', at: 0.15 }),
   }, { cut: true });
@@ -288,10 +318,10 @@
 
   // 126 (4.5) — wide (42°): four cards rise behind the slab, "NVIDIA L4" on each
   const L4 = {};
-  for (let i = 0; i < 4; i++) Object.assign(L4, capLabel('c04_l4_' + i, 'NVIDIA L4', { at: 1.0 + 0.25 * i, size: 24 }));
+  for (let i = 0; i < 4; i++) Object.assign(L4, capLabel('c04_l4_' + i, 'NVIDIA<br>L4', { at: 1.0 + 0.25 * i, size: 24, lh: 1.1 }));
   c(4.5, {
     c04_name: 'fade', c04_pl: 'shrink', c04_bits: 'shrink', c04_w4: 'shrink', c04_qat: 'shrink',
-    rig: R({ yaw: -0.42, pitch: 42, dist: 15, tx: 0.45, ty: 1.1, tz: 0, cards: 1 }, { x: 860, y: 600, s: 1 }),
+    rig: R({ yaw: -0.42, pitch: 42, dist: 16.5, tx: 0.2, ty: 0.4, tz: -0.1, cards: 1 }, { x: 900, y: 500, s: 1 }),
     ...L4,
   }, { cut: true, sfx: [{ at: 0.6, kind: 'tick' }, { at: 0.9, kind: 'tick' }, { at: 1.2, kind: 'tick' }, { at: 1.5, kind: 'tick' }] });
 
@@ -362,20 +392,25 @@
     c04_vllm: { type: 'text', html: '<span class="plate">served by vLLM · <span class="m">max_model_len = <span class="c-yellow">32,768</span></span> tokens</span>', size: 48, x: 960, y: 150, in: 'wipe', at: 0.5, z: 6 },
   }, { cut: true });
 
-  // 137 (2.5) — reading beat: push in on "max_model_len = 32,768"
-  F.beat(2.5, { id: 'c04_vllm', mode: 'push', dx: 60 });
+  // 137 (2.5) — reading beat on "max_model_len = 32,768": a slow push (≈1.7 s, eased both ends) made by
+  // the line growing toward the viewer while the rig eases back a step — no fast camera move
+  c(2.5, {
+    c04_vllm: { s: 1.16, y: 176, dur: 1.75, ease: 'power2.inOut' },
+    rig: { o: 0.5, s: 1.04, dur: 1.75, ease: 'power2.inOut' },
+    c04_l4_0: { o: 0.5, dur: 1.2 }, c04_l4_1: { o: 0.5, dur: 1.2 }, c04_l4_2: { o: 0.5, dur: 1.2 }, c04_l4_3: { o: 0.5, dur: 1.2 },
+  }, { drift: 0.4 });
 
   // 138 (4.5) — camera rises to 50°: the whole slab again, "the same weights, frozen"
   c(4.5, {
     c04_vllm: 'up', c04_l4_0: 'fade', c04_l4_1: 'fade', c04_l4_2: 'fade', c04_l4_3: 'fade',
-    rig: R({ pitch: 50, yaw: -0.4, dist: 12, tz: 0.7, ty: 0.3, dock: 0, seams: 0, glow: 0 }, { pdur: 3.0 }),
+    rig: R({ pitch: 50, yaw: -0.4, dist: 15.5, tz: 0.1, ty: 0.2, dock: 0, seams: 0, glow: 0 }, { pdur: 3.0, o: 1, s: 1, dur: 1.4, ease: 'power2.inOut' }),
     ...pinLabel('c04_frozen', 'the same weights, <span class="c-blue">frozen</span>', { at: 2.2, in: 'wipe' }),
   });
 
   // 139 (2) — 2D inset beside the slab: B and A draw themselves
   c(2, {
     c04_frozen: 'fade',
-    rig: R({ yaw: -0.34 }, { x: 520, y: 580, s: 0.92 }),
+    rig: R({ yaw: -0.34 }, { x: 500, y: 540, s: 0.8 }),
     ...plate('c04_pl2', 1400, 580, 860, 800),
     ...cv('c04_bai', 'c04_bai', { ba: 1, mul: 0 }, { paramsFrom: { ba: 0 }, pdur: 1.3, at: 0.15 }),
   }, { cut: true });
@@ -435,7 +470,7 @@
   c(2, {
     ...toyOut,
     c04_eq: { x: 1400, y: 250, size: 60 },
-    rig: R({ yaw: -0.3, film: 0 }, { o: 1, x: 520, y: 580, s: 0.92 }),
+    rig: R({ yaw: -0.3, film: 0 }, { o: 1, x: 500, y: 540, s: 0.8 }),
     ...plate('c04_pl3', 1400, 580, 860, 800),
     ...cv('c04_bai2', 'c04_bai', { ba: 1, mul: 1 }, { paramsFrom: { ba: 0.6, mul: 0 }, pdur: 1.3, at: 0.1 }),
   }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
@@ -443,7 +478,7 @@
   // 150 (4.5) — the product lies on the slab as a thin purple film; "rank r ≤ 128 here"
   c(4.5, {
     c04_pl3: 'right', c04_bai2: 'right', c04_eq: 'right',
-    rig: R({ yaw: -0.36, film: 1 }, { x: 880, y: 680, s: 1, pdur: 2.2 }),
+    rig: R({ yaw: -0.36, film: 1 }, { x: 920, y: 520, s: 1, pdur: 2.2 }),
     c04_rank: { type: 'text', html: '<span class="plate">the update <span class="i c-purple">B·A</span> · <span class="c-yellow">rank r ≤ 128</span> here</span>', size: 50, x: 960, y: 150, in: 'wipe', at: 1.4, z: 6 },
   }, { sfx: [{ at: 1.0, kind: 'pop' }] });
 
@@ -463,7 +498,7 @@
   // 154 (4.5) — camera back to 40°: "the only way to change the model's weights"
   c(4.5, {
     c04_ad: 'up',
-    rig: R({ pitch: 40, yaw: -0.52, dist: 12.5 }, { o: 1 }),
+    rig: R({ pitch: 40, yaw: -0.52, dist: 16 }, { o: 1 }),
     c04_way: { type: 'text', html: '<span class="plate">LoRA: <span class="c-purple">the only way to change the model’s weights</span></span>', size: 50, x: 960, y: 150, in: 'wipe', at: 0.5, z: 6 },
   });
 
@@ -536,9 +571,12 @@
     tape: Object.assign({}, TAPE, { in: 'fade', at: 0.9, dur: 0.4, paramsFrom: { x: 820, w: 280 }, pdur: 1.5, pease: 'expo.out' }),
   }, { cam: { x: 960, y: 540, s: 1 } });
 
-  // 164 (4.5) — the RAIL rewrites to "05 The 32k context window"
+  // 164 (4.5) — the RAIL rewrites to "05 The 32k context window"; in the last second the tape's ticks start
+  // to write on (accelerating into the cut) so the tape is already moving at 450.0 — chapter 5 carries the
+  // same params tween on from there (its tween starts from the carried value; standalone it starts at 0)
   c(4.5, {
     rail: { ver: 5, at: 0.3, dur: 0.9 },
+    tape: { params: Object.assign({}, TAPE.params, { ticks: 0.14 }), at: 2.35, pdur: 1.025, pease: 'power1.in' },
     c04_32k: { y: 330, o: 0, at: 0, dur: 3.3, ease: 'power2.in' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 

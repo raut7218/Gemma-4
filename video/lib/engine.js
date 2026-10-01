@@ -456,7 +456,7 @@
         delete prev[id];
       }
       // entries and morphs
-      let enIdx = 0;
+      let enIdx = 0, mIdx = 0;
       const prevRaw = k > 0 ? COMPS[k - 1].els : {};
       ids.forEach((id, i) => {
         const rec = EL[id];
@@ -499,7 +499,7 @@
           enIdx++;
         } else {
           // morph from previous state
-          const at = t0 + (st.at ?? (i * 0.05));
+          const at = t0 + (st.at ?? (Math.min(mIdx++, 6) * 0.05));  // small stagger among the elements that change, capped at 0.3 s
           const dur = st.dur ?? Math.min(1.1, Math.max(0.6, c.d * 0.4));
           const tvv = Object.assign({}, tv); delete tvv.params;
           tl.to(rec.proxy, Object.assign({ duration: dur, ease: st.ease ?? 'power3.inOut' }, tvv), at);
