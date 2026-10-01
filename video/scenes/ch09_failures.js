@@ -319,7 +319,7 @@
   // 337 (4.5) — the cells become the GRID (hand-off 9 → 10); the RAIL rewrites to "10"
   c(4.5, {
     c09_chart: 'quick', c09_row: 'none', c09_129: 'fade',
-    grid: { type: 'canvas', draw: 'grid', x: 960, y: 540, repos: REPOS, in: 'none', at: -0.04, params: { ...GRID129, reveal: 1, gold: -1, dim: 0.5, sweep: 0, split: 0 }, paramsFrom: { dim: 0 }, pdur: 2.6, pease: 'power2.inOut' },
+    grid: { type: 'canvas', draw: 'grid', x: 960, y: 540, repos: REPOS, in: 'none', at: -0.04, params: { ...GRID129, reveal: 1, gold: -1, dim: 0.5, sweep: 0, split: 0 }, paramsFrom: { dim: 0 }, pdur: 3.3, pease: 'power1.inOut' },
     rail: { ver: 10, at: 0.6, dur: 1.0 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, exitLead: 0 });
 })();

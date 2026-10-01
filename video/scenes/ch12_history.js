@@ -260,7 +260,7 @@
   c(3.5, {
     ...clearLabels('quick'),
     c12_y26: null, c12_ctag: 'quick', c12_axis: 'fade', c12_repo: 'down', c12_rl: 'quick', c12_blk: 'quick',
-    loop: { params: LOOP({ cx: 960, cy: 560, r: 200 }), pdur: 1.4, pease: 'power3.inOut' },
+    loop: { params: LOOP({ cx: 960, cy: 575, r: 180 }), pdur: 1.4, pease: 'power3.inOut' },
     c12_v: { type: 'canvas', draw: 'c12_vessels', in: 'fade', dur: 0.2, params: VP(), paramsFrom: { rise: 0 }, pdur: 1.8, pease: 'expo.out', z: 0 },
     c12_tag: { type: 'text', html: cap('the arc&ensp;·&ensp;') + tagC, size: 28, color: T.DIM, x: 960, y: 150, in: 'fade', at: 0.8 },
   }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
@@ -285,7 +285,7 @@
   c(4.5, {
     c12_l24: 'quick', c12_l25: 'quick', c12_line: 'down', c12_tag: 'quick',
     c12_v: 'zoom',
-    loop: { o: 1, params: { cx: 960, cy: 560, r: 200, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1, hiA: 0 }, pdur: 1.0 },
+    loop: { o: 1, params: { cx: 960, cy: 560, r: 200, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1, hiA: 0 }, pdur: 3.3, pease: 'power2.inOut' },
     rail: { ver: 13, at: 0.8, dur: 1.0 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();

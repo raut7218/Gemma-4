@@ -355,7 +355,7 @@
   // 374 (4.5) — the zip comes to the centre (hand-off 10 → 11); the RAIL rewrites to "11"
   c(4.5, {
     c10_v1: 'fade', c10_v2: 'fade', c10_zz: 'quick', c10_log: 'down',
-    zip: Object.assign({}, ZIP, { s: 1, dur: 1.6, ease: 'expo.inOut', at: 0.2 }),
+    zip: Object.assign({}, ZIP, { s: 1, dur: 3.3, ease: 'power2.inOut', at: 0.0 }),
     rail: { ver: 11, at: 0.8, dur: 1.0 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();

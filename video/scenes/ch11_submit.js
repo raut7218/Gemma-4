@@ -262,7 +262,7 @@
   c(2.5, {
     ...Object.fromEntries(dimIds.filter((k) => k !== 'loop').map((k) => [k, 'quick'])),
     tree: 'left', c11_lev: 'down',
-    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, o: 1, params: { cx: 420, cy: 500, r: 170, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1, hiA: 0 }, pdur: 1.4, pease: 'expo.inOut', dur: 0.6 },
+    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, o: 1, params: { cx: 420, cy: 500, r: 170, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1, hiA: 0 }, pdur: 1.85, pease: 'power2.inOut', dur: 0.6 },
     rail: { ver: 12, at: 0.6, dur: 1.0 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();
