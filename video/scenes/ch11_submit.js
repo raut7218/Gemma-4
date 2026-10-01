@@ -6,7 +6,7 @@
 
   const cap = (s, col) => `<span class="cap" style="font-size:1em${col ? ';color:' + col : ''}">${s}</span>`;
   const tag = (s) => `<span class="cap" style="font-size:0.55em;color:#F4D35E">${s}</span>`;
-  const ZIP = { type: 'box', w: 260, h: 200, x: 960, y: 540, stroke: T.GOLD, fill: 'rgba(240,172,95,0.08)', rad: 22, html: '<span class="m" style="color:#F0AC5F">.zip</span>', size: 44 };
+  const ZIP = { type: 'box', w: 360, h: 270, x: 960, y: 540, stroke: T.GOLD, fill: 'rgba(240,172,95,0.08)', rad: 26, html: '<span class="m" style="color:#F0AC5F">.zip</span>', size: 60 };
   const LOOP = (o) => Object.assign({ cx: 1220, cy: 540, r: 230, draw: 1, labels: 1, ring: 1, dot: -1, exit: 0, hi: -1, hiA: 0 }, o);
 
   // ---------------------------------------------------------------- the four agent shapes (chapter-local)

@@ -16,7 +16,7 @@ Shared constants: `GRID120 = { cols: 12, rows: 10, cw: 112, ch: 64, gap: 14 }` c
 | 7 → 8 | `contA` | `K.container('contA', 'A', {x:960, y:560, w:620, h:760})` — becomes the centre panel. |
 | 8 → 9 | `loop` | `{type:'canvas', draw:'loop', x:960, y:540, params:{cx:960, cy:540, r:300, draw:1, labels:1, ring:0, dot:-1, exit:0, hi:-1}}`. |
 | 9 → 10 | `grid` | `{type:'canvas', draw:'grid', x:960, y:540, params:{...GRID129, reveal:1, gold:-1, dim:0.5, sweep:0, split:0}}` (ch10 colours it by repository). |
-| 10 → 11 | `zip` | `{type:'box', w:260, h:200, x:960, y:540, stroke:T.GOLD, fill:'rgba(240,172,95,0.08)', rad:22, html:'<span class="m" style="color:#F0AC5F">.zip</span>', size:44}`. |
+| 10 → 11 | `zip` | `{type:'box', w:360, h:270, x:960, y:540, stroke:T.GOLD, fill:'rgba(240,172,95,0.08)', rad:26, html:'<span class="m" style="color:#F0AC5F">.zip</span>', size:60}`. |
 | 11 → 12 | `loop` | `{type:'canvas', draw:'loop', x:960, y:540, params:{cx:420, cy:500, r:170, draw:1, labels:1, ring:0, dot:-1, exit:0, hi:-1}}`. |
 | 12 → 13 | `loop` | same object, `params:{cx:960, cy:560, r:200, draw:1, labels:1, ring:0, dot:-1, exit:0, hi:-1}`. |
 | 13 → 14 | `rail` only | the scene clears for a full-frame sentence. |
