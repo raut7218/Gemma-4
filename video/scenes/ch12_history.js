@@ -114,6 +114,7 @@
   c(4.5, {
     loop: { params: LE(0, { dot: 1.6 }), pdur: 4.0, pease: 'power2.inOut' },
     c12_axis: { params: { draw: 1, era: 0, a: 1 }, pdur: 1.2 },
+    c12_ctag: { type: 'text', html: '<span class="cap" style="font-size:1em;color:#F4D35E">loop drawings: concept</span>', size: 24, hud: true, ax: 1, x: 1824, y: 66, in: 'fade', at: 0.4 },
     ...lab('c12_react', '<span class="c-blue">ReAct</span>: reason → act → observe', 1200, 330, { size: 52, maxw: 1000, at: 0.8 }),
   }, { cam: { x: 960, y: 520, s: 1 } });
   // 408 (4.5) — Codex & HumanEval
@@ -258,7 +259,7 @@
   const VP = (o) => Object.assign({ rise: 1, p01: 0, p12: 0, lit: 0, open: 0, a: 1 }, o);
   c(3.5, {
     ...clearLabels('quick'),
-    c12_y26: null, c12_axis: 'fade', c12_repo: 'down', c12_rl: 'quick', c12_blk: 'quick',
+    c12_y26: null, c12_ctag: 'quick', c12_axis: 'fade', c12_repo: 'down', c12_rl: 'quick', c12_blk: 'quick',
     loop: { params: LOOP({ cx: 960, cy: 560, r: 200 }), pdur: 1.4, pease: 'power3.inOut' },
     c12_v: { type: 'canvas', draw: 'c12_vessels', in: 'fade', dur: 0.2, params: VP(), paramsFrom: { rise: 0 }, pdur: 1.8, pease: 'expo.out', z: 0 },
     c12_tag: { type: 'text', html: cap('the arc&ensp;·&ensp;') + tagC, size: 28, color: T.DIM, x: 960, y: 150, in: 'fade', at: 0.8 },

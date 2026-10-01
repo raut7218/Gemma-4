@@ -354,7 +354,8 @@
         if (delta[id] === null) { delete els[id]; continue; }
         if (typeof delta[id] === 'string') {
           // removal with a named exit style: record it on the previous state
-          if (prev && prev.els[id]) prev.els[id] = Object.assign({}, prev.els[id], { out: delta[id] });
+          // mutate in place: copying would break the 'carried unchanged' identity check and re-run the entry tween
+          if (prev && prev.els[id]) prev.els[id].out = delta[id];
           delete els[id]; continue;
         }
         // a delta merges onto the element's last state; untouched elements keep the same object
