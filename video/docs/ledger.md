@@ -65,3 +65,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - ch10: one more pass (10 items) — docs/critic/ch10_r1.md
 - Engine fix from ch10 #1/#2: push beats centre on the element's visual centre (anchor-aware), scale 1.22, 70% travel; the HUD rail fades during push beats and returns after.
 - ch10 round-1 fixes applied by a fixer agent (all 10 items; zip hand-off enlarged to w 360 h 270, ch11 and handoffs.md updated). Awaiting re-check by a new critic on the film render.
+- ch06 round-1 fixes applied by a fixer agent (all 10 items; terminal id collision c06_t2 was the ghost's cause). Awaiting re-check on the film render.
