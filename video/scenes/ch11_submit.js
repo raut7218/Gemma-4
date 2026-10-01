@@ -72,7 +72,7 @@
     ...K.rail(11),
     zip: Object.assign({}, ZIP, { o: 0.18, s: 0.9, dur: 1.4 }),
     c11_w1: { type: 'text', html: 'No <span class="c-red">Python</span> entry points.', size: 118, x: 960, y: 400, in: 'left', at: 0.3 },
-  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.6 });
+  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.6, clear: true, keep: ['rail', 'zip'] });
   // 376 (4.5) — FULL "You submit configuration." enters from the right
   c(4.5, {
     c11_w2: { type: 'text', html: 'You submit <span class="c-gold">configuration</span>.', size: 118, x: 960, y: 690, in: 'right', at: 0.2 },

@@ -159,7 +159,7 @@
     loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { ...LOOP0 } },
     c09_crack: { type: 'path', d: 'M960,60 L930,120 L985,165 L940,220', sw: 6, color: T.RED, in: 'draw', dur: 0.6, at: 0 },
     c09_ring: { type: 'ring', rad: 380, frac: 1, sw: 3, color: T.RED, o: 0.0, in: 'fade', from: { rad: 300, o: 0.9 }, dur: 2.2, ease: 'expo.out', at: 0.3 },
-  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.5 });
+  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.5, clear: true, keep: ['rail', 'loop'] });
   // 316 (4.5) — the taxonomy names itself
   c(4.5, {
     c09_crack: 'undraw', c09_ring: null,

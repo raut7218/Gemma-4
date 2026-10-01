@@ -350,7 +350,10 @@
       // after a push beat, the camera returns to where it was before the beat
       if (prev && prev.beatCam && !opts.cam) opts = Object.assign({}, opts, { cam: prev.beatCam });
       // after a push beat the HUD rail fades back in (it fades out during the push so content never slides under it)
-      if (prev && prev.railHidden && prev.els.rail && !('rail' in delta)) delta = Object.assign({}, delta, { rail: { o: 1, dur: 0.5 } });
+      if (prev && prev.railHidden && prev.els.rail) {
+        if (!('rail' in delta)) delta = Object.assign({}, delta, { rail: { o: 1, dur: 0.5 } });
+        else if (delta.rail && typeof delta.rail === 'object' && delta.rail.o === undefined) delta = Object.assign({}, delta, { rail: Object.assign({}, delta.rail, { o: 1 }) });
+      }
       if (prev && opts.clear && opts.keep) for (const k of opts.keep) if (prev.els[k]) els[k] = prev.els[k];
       for (const id in delta) {
         if (delta[id] === null) { delete els[id]; continue; }

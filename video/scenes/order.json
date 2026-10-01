@@ -1,1 +1,1 @@
-["ch00_open.js"]
+["three_rig.mjs", "three_containers.mjs", "ch00_open.js", "ch01_task.js", "ch02_scoring.js", "ch03_rules.js", "ch04_model.js", "ch05_context.js", "ch06_tools.js", "ch07_sandbox.js", "ch08_example.js", "ch09_failures.js", "ch10_data.js", "ch11_submit.js", "ch12_history.js", "ch13_build.js", "ch14_bundle.js", "ch15_training.js", "ch16_start.js", "ch17_recap.js"]

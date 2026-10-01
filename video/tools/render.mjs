@@ -60,7 +60,26 @@ const srv = await serve();
 const port = srv.address().port;
 const t0 = Date.now();
 
-if (args.still) {
+if (args.probe) {
+  // list the elements visible at the given times: id, position, opacity, text
+  const page = await openPage(browser, port);
+  for (const t of String(args.probe).split(',').map(Number)) {
+    const rows = await page.evaluate((tt) => {
+      FILM.seek(tt);
+      const out = [];
+      for (const id in FILM.EL) {
+        const r = FILM.EL[id], n = r.node || r.el || r.dom;
+        if (!n || !n.getBoundingClientRect) continue;
+        const cs = getComputedStyle(n); if (cs.display === 'none' || +cs.opacity < 0.03 || cs.visibility === 'hidden') continue;
+        const b = n.getBoundingClientRect(); if (b.right < 0 || b.left > 1920 || b.bottom < 0 || b.top > 1080 || b.width * b.height < 4) continue;
+        out.push(`${id} [${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}x${Math.round(b.height)}] o=${(+cs.opacity).toFixed(2)} ${(n.innerText || '').replace(/\s+/g, ' ').slice(0, 40)}`);
+      }
+      return out;
+    }, t);
+    console.log(`t=${t}`); rows.forEach((r) => console.log('  ' + r));
+  }
+  await page.close();
+} else if (args.still) {
   // render named times as PNG stills
   const page = await openPage(browser, port);
   console.log('duration', await page.evaluate(() => FILM.duration));
