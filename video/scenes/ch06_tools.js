@@ -36,6 +36,7 @@
   const RC = [720, 540];
   const RANG = [-90, -50, -10, 30, 62, 118, 150, 190, 230];
   const RING2 = (i) => { const a = RANG[i] * Math.PI / 180; return [RC[0] + 470 * Math.cos(a), RC[1] + 340 * Math.sin(a)]; };
+  const RL_ = () => ({ cx: 960, cy: 560, r: 170, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 });
   // close-ups keep the toolbar pinned: almost no camera drift
   const cc = (b, d, o = {}) => c(b, d, Object.assign({ drift: 0.15 }, o));
   const tileHtml = (i) => [m(NAMES[i], T.TEAL), m(NAMES[i], '#0E1116')];
@@ -428,17 +429,16 @@
   NAMES.forEach((_, i) => dimTo('c06_t' + i, 0.12));
   dimTo('c06_graph', 0.55); dimTo('c06_gcap', 0.45); dimTo('c06_q', 0.6); dimTo('c06_qtag', 0.45); dimTo('c06_gtag', 0);
   // 230 (2) — get_code_subgraph: a lasso around three nodes keeps their edges
-  cc(2, { ...bar([6, 7, 8], { dur: 0.5 }), c06_graph: { o: 1, dur: 0.5, params: { draw: 1, nb: 0, q: 0, lasso: 1 }, pdur: 1.2 }, c06_gtag: { o: 1, dur: 0.5 }, c06_gcap: { ver: 3, o: 1, dur: 0.6 }, c06_q: 'fade', c06_qtag: 'fade', c06_sym: 'down' }, { sfx: [{ at: 0.2, kind: 'click' }] });
+  cc(2, { loop: { x: RC[0], y: RC[1] - 20, s: 1, o: 0, params: RL_(), pdur: 0.2, dur: 0.2 }, ...bar([6, 7, 8], { dur: 0.5 }), c06_graph: { o: 1, dur: 0.5, params: { draw: 1, nb: 0, q: 0, lasso: 1 }, pdur: 1.2 }, c06_gtag: { o: 1, dur: 0.5 }, c06_gcap: { ver: 3, o: 1, dur: 0.6 }, c06_q: 'fade', c06_qtag: 'fade', c06_sym: 'down' }, { sfx: [{ at: 0.2, kind: 'click' }] });
 
   // 231 (4.5) — OVER the ring again, re-staged: the loop at the centre of the frame, the nine tiles as a
   // true ring around it; a dashed ring grows outside: "+ skills you write"
   const RT = (i) => ({ x: RING2(i)[0], y: RING2(i)[1], s: 1, o: 1, w: 310, h: 52, size: 25, rad: 12 });
-  const RL = { ...L0, cx: 960, cy: 560, r: 170, ring: 0 };
   const COL = 1430; // right-hand text column
   c(4.5, {
     // the graph sinks back while the loop and the ring come forward through it
     c06_graph: { o: 0, s: 0.92, at: 0, dur: 0.8, ease: 'power2.in' }, c06_gcap: 'up', c06_gtag: 'fade',
-    loop: { x: RC[0], y: RC[1] - 20, s: 1, o: 1, params: RL, pdur: 1.2, dur: 1.2, at: 0.1, ease: 'expo.inOut' },
+    loop: { o: 1, at: 0.9, dur: 0.8, ease: 'power2.out' },
     ...tilesAt((i) => Object.assign(RT(i), { dur: 1.3, ease: 'expo.inOut', at: 0.1 + i * 0.04 })),
     c06_ext: { type: 'canvas', draw: 'c06_ext', z: 2, in: 'fade', dur: 0.2, at: 1.1, params: { a1: 1, a2: 0 }, paramsFrom: { a1: 0 }, pdur: 1.8, pease: 'power2.out' },
     c06_x1: { type: 'text', html: '<span class="c-teal">+ skills</span> you write', size: 46, align: 'left', ax: 0, x: COL, y: 300, in: 'wipe', at: 1.8 },
