@@ -66,3 +66,6 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - Engine fix from ch10 #1/#2: push beats centre on the element's visual centre (anchor-aware), scale 1.22, 70% travel; the HUD rail fades during push beats and returns after.
 - ch10 round-1 fixes applied by a fixer agent (all 10 items; zip hand-off enlarged to w 360 h 270, ch11 and handoffs.md updated). Awaiting re-check by a new critic on the film render.
 - ch06 round-1 fixes applied by a fixer agent (all 10 items; terminal id collision c06_t2 was the ghost's cause). Awaiting re-check on the film render.
+
+## Film critic — chapters 0–3, round 1 — one more pass (16 items + ch00 re-check: 9 fixed, 3 partly, 3 not) — docs/critic/f00_03_r1.md
+- ch00 fixes for re-check items 2 (exit 0 now ~83% of frame width), 10 (lines converge onto one row and the chip grows out of them), 12 (camera lowered ~30 px on the code panel).

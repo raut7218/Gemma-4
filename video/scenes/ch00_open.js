@@ -31,7 +31,7 @@
     hl: { type: 'rect', x: CODE_X, y: lineY(6), w: 900, h: LINE_H + 8, fill: 'rgba(252,98,85,0.16)', rad: 8, in: 'grow', z: 2 },
     tick: { type: 'rect', x: CODE_X - 474, y: lineY(6), w: 9, h: LINE_H, fill: T.RED, rad: 3, in: 'growh', z: 3, at: 0.25 },
     bug: { type: 'text', html: '<span class="cap" style="font-size:1em">the bug</span>', size: 26, color: T.RED, x: CODE_X + 375, y: lineY(6), in: 'right', at: 0.45 },
-  }, { cam: { x: 1270, y: 640, s: 1.5 }, sfx: [{ at: 0.3, kind: 'tick' }] });
+  }, { cam: { x: 1270, y: 612, s: 1.5 }, sfx: [{ at: 0.3, kind: 'tick' }] });
   // 4 (4) — the line splits: the removed line rises in red
   c(4, {
     bug: 'fade',
@@ -39,19 +39,19 @@
     hl: { y: lineY(6.5), h: LINE_H * 2 + 16, w: 920, fill: 'rgba(240,172,95,0.07)' },
     tick: { y: lineY(6.5), h: LINE_H * 2 + 8, fill: T.GOLD },
     del: { type: 'mono', html: '<span class="del">-   return total / len(xs)</span>', size: SZ, align: 'left', ax: 0, x: CODE_X - 420, y: lineY(6), z: 4, in: 'fade', from: { y: lineY(6) + 12, o: 1 }, dur: 1.2, ease: 'power3.inOut', at: 0.3 },
-  }, { cam: { x: 1290, y: 640, s: 1.5 } });
+  }, { cam: { x: 1290, y: 615, s: 1.5 } });
   // 5 (3.5) — the added line drops in, in gold
   c(3.5, {
     add: { type: 'mono', html: '<span style="color:#F0AC5F">+   return total / len(xs) if xs else 0</span>', size: SZ, align: 'left', ax: 0, x: CODE_X - 420, y: lineY(7), z: 4, in: 'fade', from: { y: lineY(7) - 14, o: 0 }, dur: 1.2, ease: 'power3.out', at: 0.15 },
-  }, { cam: { x: 1310, y: 650, s: 1.52 } });
+  }, { cam: { x: 1310, y: 620, s: 1.52 } });
   // 6 (3) — [SIG1] the two diff lines collapse into the gold chip, which grows out of them on the same pixels
   const FX = CODE_X - 60, FY = lineY(6.5);
   c(3, {
     code: 'fade', code_frame: 'fade', code_title: 'quick', scroll: 'quick', tick: 'quick',
     hl: { x: FX, w: 330 * 1.6, h: 96 * 1.6, rad: 26, fill: 'rgba(240,172,95,0.10)', dur: 0.7, ease: 'power3.inOut', at: 0.1 },
-    del: { x: FX - 150, y: FY, s: 0.35, o: 0, dur: 0.6, ease: 'power3.in', at: 0.1 },
-    add: { x: FX - 150, y: FY, s: 0.35, o: 0, dur: 0.6, ease: 'power3.in', at: 0.1 },
-    ...K.chip('chip', { x: FX, y: FY, s: 1.6, in: 'scale', at: 0.55, dur: 0.8, ease: 'expo.out' }),
+    del: { x: FX - 130, y: FY, s: 0.5, o: 0, dur: 0.75, ease: 'power3.inOut', at: 0.05 },
+    add: { x: FX - 130, y: FY, s: 0.5, o: 0, dur: 0.75, ease: 'power3.inOut', at: 0.05 },
+    ...K.chip('chip', { x: FX, y: FY, s: 1.6, in: 'scale', from: { s: 0.55, o: 0.2 }, at: 0.45, dur: 0.9, ease: 'expo.out' }),
   }, { cam: { x: FX, y: FY, s: 1.35 }, sfx: [{ at: 0.6, kind: 'pop' }] });
   // 7 (3) — container B draws around it; the chip settles into its top; the hidden tests drop in
   const bars = {};
@@ -90,11 +90,11 @@
   ['chip', 'contB', 'contB_hd', 'contB_ht', 'tLabel', 'ill', 'py', ...Object.keys(bars)].forEach((k) => (away[k] = 'quick'));
   c(4.5, {
     ...away,
-    exit0: { x: 960, y: 470, s: 1.45, dur: 1.3, ease: 'expo.inOut', at: 0.05 },
-    resolved: { type: 'text', html: '= <span class="c-green">resolved</span>', size: 110, x: 960, y: 800, in: 'wipe', at: 1.3 },
+    exit0: { x: 960, y: 440, s: 1.72, dur: 1.4, ease: 'expo.inOut', at: 0.05 },
+    resolved: { type: 'text', html: '= <span class="c-green">resolved</span>', size: 100, x: 960, y: 860, in: 'wipe', at: 1.3 },
   }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
   // 14 (2.5) — reading beat on "= resolved"
-  F.beat(2.5, { id: 'resolved', mode: 'underline', w: 520, under: 70, color: T.GREEN });
+  F.beat(2.5, { id: 'resolved', mode: 'underline', w: 480, under: 64, color: T.GREEN });
   // 15 (3) — the grid blooms behind; the verdict shrinks into its cell
   c(3, {
     resolved: 'quick',
