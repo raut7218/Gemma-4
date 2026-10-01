@@ -4,6 +4,7 @@
   const { T } = F;
   const c = F.comp.bind(F);
   F.chapter(K.CH[4]);
+  const C0 = FILM.COMPS.length;
   const { clamp, ease, rr } = DRAW.util;
   const lerp = (a, b, t) => a + (b - a) * t;
   const PANEL = 'rgba(21,26,33,0.96)';
@@ -540,4 +541,12 @@
     rail: { ver: 5, at: 0.3, dur: 0.9 },
     c04_32k: { y: 330, o: 0, at: 0, dur: 3.3, ease: 'power2.in' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+
+  // Engine workaround: a named exit ('fade', 'up', …) copies the element's previous state, including a
+  // stale entry `at`/`dur`; when the element was carried (not entering) in that composition, the stale
+  // `at` re-morphs it back to visible after its exit. Clear those timing fields on carried states.
+  for (let k = C0 + 1; k < FILM.COMPS.length; k++) {
+    const cur = FILM.COMPS[k].els, before = FILM.COMPS[k - 1].els;
+    for (const id in cur) if (cur[id] && cur[id].out && before[id]) cur[id] = Object.assign({}, cur[id], { at: undefined, dur: undefined, ease: undefined });
+  }
 })();

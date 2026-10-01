@@ -3,6 +3,7 @@
   const { T } = F;
   const c = F.comp.bind(F);
   F.chapter(K.CH[3]);
+  const C0 = FILM.COMPS.length;
 
   // ---- calendar geometry (hand-off from chapter 2)
   const CALP = { x: 210, y: 560, w: 1500, draw: 1, dot: -1 };
@@ -173,4 +174,12 @@
     oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 540, color: T.INK, in: 'left', at: 0.25 },
     rail: { ver: 4, at: 1.4, dur: 0.8 },
   }, { cut: true, cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+
+  // Engine workaround: a named exit ('fade', 'up', …) copies the element's previous state, including a
+  // stale entry `at`/`dur`; when the element was carried (not entering) in that composition, the stale
+  // `at` re-morphs it back to visible after its exit. Clear those timing fields on carried states.
+  for (let k = C0 + 1; k < FILM.COMPS.length; k++) {
+    const cur = FILM.COMPS[k].els, before = FILM.COMPS[k - 1].els;
+    for (const id in cur) if (cur[id] && cur[id].out && before[id]) cur[id] = Object.assign({}, cur[id], { at: undefined, dur: undefined, ease: undefined });
+  }
 })();

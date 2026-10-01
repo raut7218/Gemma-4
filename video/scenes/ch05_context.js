@@ -3,6 +3,7 @@
   const { T } = F;
   const c = F.comp.bind(F);
   F.chapter(K.CH[5]);
+  const C0 = FILM.COMPS.length;
   const { clamp, ease, rr } = DRAW.util;
   const S = DRAW.TAPE, X0 = 160, TW = 1600, PX = TW / S.TOTAL, TY = 540;
   const tx = (tok) => X0 + tok * PX;
@@ -267,4 +268,12 @@
     loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { cx: 960, cy: 560, r: 240, draw: 1, labels: 1, ring: 1, dot: -1, exit: 0, hi: -1, stopped: 0 }, pdur: 0.1 },
     c05_src: { y: 1010, o: 0, at: 0, dur: 3.3, ease: 'power2.in' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+
+  // Engine workaround: a named exit ('fade', 'up', …) copies the element's previous state, including a
+  // stale entry `at`/`dur`; when the element was carried (not entering) in that composition, the stale
+  // `at` re-morphs it back to visible after its exit. Clear those timing fields on carried states.
+  for (let k = C0 + 1; k < FILM.COMPS.length; k++) {
+    const cur = FILM.COMPS[k].els, before = FILM.COMPS[k - 1].els;
+    for (const id in cur) if (cur[id] && cur[id].out && before[id]) cur[id] = Object.assign({}, cur[id], { at: undefined, dur: undefined, ease: undefined });
+  }
 })();
