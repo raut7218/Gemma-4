@@ -1,5 +1,7 @@
 """Motion QA over every frame: python3 tools/qa.py in.mp4 [--json out.json]
-Reports frozen stretches (mean abs frame difference below a threshold), frozen time per 30 s
+Reports frozen stretches (mean abs difference between each frame and the frame 0.1 s earlier
+below a threshold — what a viewer perceives as "nothing moved"; stretches shorter than 0.2 s are
+not counted as frozen screen), frozen time per 30 s
 window, the longest still stretch, cuts (very large differences), and brightness/edge stats."""
 import argparse, json, subprocess, numpy as np
 ap = argparse.ArgumentParser(); ap.add_argument('inp'); ap.add_argument('--json'); ap.add_argument('--thresh', type=float, default=0.06)
@@ -7,7 +9,8 @@ a = ap.parse_args()
 W, H = 384, 216
 p = subprocess.Popen(['ffmpeg', '-loglevel', 'error', '-i', a.inp, '-vf', f'scale={W}:{H}', '-f', 'rawvideo', '-pix_fmt', 'gray', '-'], stdout=subprocess.PIPE)
 fps = 60.0
-prev = None; diffs = []; bright = []; edges = []
+from collections import deque
+hist = deque(maxlen=6); diffs = []; bright = []; edges = []
 while True:
     buf = p.stdout.read(W * H)
     if len(buf) < W * H: break
@@ -15,8 +18,8 @@ while True:
     img = f.reshape(H, W)
     bright.append(float(img.mean()))
     edges.append(float(np.abs(np.diff(img, axis=1)).mean()))
-    if prev is not None: diffs.append(float(np.abs(f - prev).mean()))
-    prev = f
+    if hist: diffs.append(float(np.abs(f - hist[0]).mean()))
+    hist.append(f)
 diffs = np.array(diffs); n = len(diffs) + 1
 still = diffs < a.thresh
 # still stretches
@@ -28,11 +31,17 @@ while i < len(still):
         stretches.append((i / fps, (j - i) / fps)); i = j
     else: i += 1
 long = [(round(s, 2), round(d, 2)) for s, d in stretches if d > 0.5]
+MIN = int(0.2 * fps)
+counted = np.zeros(len(still), bool)
+for s0, d in stretches:
+    if d * fps >= MIN: counted[int(round(s0 * fps)):int(round((s0 + d) * fps))] = True
+still_frames = still
+still = counted
 win = []
 for w0 in range(0, int(np.ceil(n / fps / 30))):
     lo, hi = int(w0 * 30 * fps), int(min(len(still), (w0 + 1) * 30 * fps))
     win.append(round(float(still[lo:hi].sum() / fps), 2))
-cuts = [round(i / fps, 2) for i in np.where(diffs > 18)[0]]
+cuts = sorted({round(i / fps, 1) for i in np.where(diffs > 18)[0]})
 rep = {
     'frames': n, 'seconds': round(n / fps, 2), 'threshold': a.thresh,
     'frozen_total_s': round(float(still.sum() / fps), 2),
