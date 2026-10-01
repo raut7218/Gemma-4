@@ -105,20 +105,29 @@
   // ---------------------------------------------------------------- 28 (4.5) FULL the question
   c(4.5, {
     ...K.rail(1),
-    c01_q1: { type: 'text', html: 'What does the <span class="c-blue">agent</span>', size: 120, x: 960, y: 450, maxw: 1800, in: 'left', dur: 1.2 },
-    c01_q2: { type: 'text', html: 'receive?', size: 120, x: 960, y: 610, in: 'right', at: 0.45, dur: 1.2 },
-    c01_qu: { type: 'rect', x: 960, y: 690, w: 430, h: 5, rad: 3, fill: T.BLUE, in: 'grow', at: 1.7, dur: 1.2 },
+    // the question grows out of the rail tag (96, 66) from the chapter's first frame
+    c01_q1: { type: 'text', html: 'What does the <span class="c-blue">agent</span>', size: 120, x: 960, y: 450, maxw: 1800, in: 'scale', at: -0.05, dur: 1.5, ease: 'expo.out', from: { x: 330, y: 70, s: 0.24, o: 0.35 } },
+    c01_q2: { type: 'text', html: 'receive?', size: 120, x: 960, y: 610, in: 'up', at: 0.35, dur: 1.2 },
+    c01_qu: { type: 'rect', x: 960, y: 690, w: 430, h: 5, rad: 3, fill: T.BLUE, in: 'grow', at: 1.5, dur: 1.2 },
   }, { animateFirst: true });
 
   // ---------------------------------------------------------------- 29 (3.5) WIDE two inputs
+  // the kit's issue card, with its small caps at 30 px (it is shown at s 0.82 / 0.6×1.35)
+  const ISSUE_HTML = `<div style="padding:0 64px; text-align:left">
+    <div style="display:flex; align-items:center; gap:18px; margin-bottom:26px">
+      <span style="display:inline-block;width:30px;height:30px;border-radius:50%;border:4px solid #83C167"></span>
+      <span class="cap" style="font-size:30px;color:#9AA3AD">Issue · open</span>
+      <span class="cap" style="font-size:30px;color:#9AA3AD;margin-left:auto">illustrative example</span></div>
+    <div style="font-size:1.12em; line-height:1.25"><span class="m" style="color:#ECE9E2">summarize([]) raises ZeroDivisionError</span></div>
+    <div style="margin-top:26px; font-size:0.86em; color:#9AA3AD">Expected 0 for an empty list.</div></div>`;
   const sheet = { type: 'box', w: 540, h: 500, stroke: '#3A4654', fill: 'rgba(21,26,33,0.96)', sw: 2.5, rad: 20, html: '', in: 'right' };
   c(3.5, {
-    c01_q1: 'left', c01_q2: 'right', c01_qu: 'right',
-    ...K.issue('c01_issue', { x: 540, y: 540, s: 0.7, in: 'left', at: 0.1 }),
-    c01_rs2: Object.assign({}, sheet, { x: 1464, y: 516, at: 0.2, o: 0.6 }),
-    c01_rs1: Object.assign({}, sheet, { x: 1452, y: 528, at: 0.26, o: 0.8 }),
+    c01_q1: 'up', c01_q2: 'down', c01_qu: 'quick',
+    ...K.issue('c01_issue', { x: 560, y: 540, s: 0.82, in: 'left', at: 0.45, html: ISSUE_HTML }),
+    c01_rs2: Object.assign({}, sheet, { x: 1464, y: 516, at: 0.5, o: 0.6 }),
+    c01_rs1: Object.assign({}, sheet, { x: 1452, y: 528, at: 0.56, o: 0.8 }),
     c01_repo: Object.assign({}, sheet, {
-      x: 1440, y: 540, at: 0.32, size: 34,
+      x: 1440, y: 540, at: 0.62, size: 34,
       html: `<div style="text-align:left;padding:0 48px">
         <div style="display:flex;align-items:center;margin-bottom:22px"><span class="cap" style="font-size:24px;color:#9AA3AD">Python repository</span><span class="cap" style="font-size:24px;color:#F4D35E;margin-left:auto">illustrative</span></div>
         <div class="m" style="font-size:38px;line-height:1.55">src/<br>&nbsp;&nbsp;stats.py<br>&nbsp;&nbsp;io.py<br>tests/<br>&nbsp;&nbsp;test_stats.py<br>pyproject.toml</div></div>`,
@@ -127,6 +136,7 @@
 
   // ---------------------------------------------------------------- 30 (4.5) CLOSE the issue
   c(4.5, {
+    c01_rs2: { x: 1464 + 260, at: 0.0, dur: 0.9, ease: 'power3.inOut' }, c01_rs1: { x: 1452 + 260, at: 0.03, dur: 0.9, ease: 'power3.inOut' }, c01_repo: { x: 1440 + 260, at: 0.06, dur: 0.9, ease: 'power3.inOut' },
     c01_l1: { type: 'text', html: 'a <span class="c-ink">GitHub-style issue description</span>', size: 50, x: 540, y: 790, maxw: 1000, in: 'wipe', at: 0.6, dur: 1.2 },
     c01_l1u: { type: 'rect', x: 568, y: 828, w: 640, h: 4, rad: 2, fill: T.DIM, in: 'grow', at: 1.6, dur: 1.2 },
   }, { cam: { x: 560, y: 610, s: 1.42 } });
@@ -155,7 +165,7 @@
     c01_commits: { x: 960 - 440 * 0.1, y: 560 + 20 * 0.1, s: 0.1, o: 0, at: 0.1, dur: 1.0, ease: 'power3.in' },
     c01_l2: 'fade', c01_nic: 'fade',
     c01_model: { type: 'box', x: 960, y: 560, w: 520, h: 170, stroke: T.BLUE, fill: 'rgba(88,196,221,0.12)', sw: 4, rad: 26, html: '<span class="c-blue">Gemma 4 31B</span>', size: 64, in: 'pop', at: 1.0 },
-    c01_mid: { type: 'mono', html: 'gemma-4-31b-it-qat-w4a16-ct', size: 30, color: T.DIM, x: 960, y: 690, in: 'wipe', at: 1.8, dur: 1.0 },
+    c01_mid: { type: 'mono', html: 'gemma-4-31b-it-qat-w4a16-ct', size: 38, color: T.DIM, x: 960, y: 694, in: 'wipe', at: 1.8, dur: 1.0 },
   }, { cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 1.05, kind: 'pop' }] });
 
   // ---------------------------------------------------------------- 35 (4.5) the ADK harness around the model
@@ -220,7 +230,7 @@
     loop: { params: L({ dot: 2 + 1 / 3, exit: 1 }), pdur: 1.3, pease: 'power2.inOut' },
     c01_log3: logLine(3, 'submit_patch()', 0.6, 430, 'c-gold'),
     ...K.chip('c01_chip', {
-      versions: ['<span class="m" style="color:#F0AC5F">patch.diff</span>', '<span class="m" style="color:#F0AC5F">git diff</span> of /workspace'],
+      versions: ['<span class="m" style="color:#F0AC5F">patch.diff</span>', '<div style="width:0;margin:0 auto;display:flex;justify-content:center;white-space:nowrap"><span><span class="m" style="color:#F0AC5F">git diff</span> of /workspace</span></div>'],
       x: 1413, y: 922, s: 0.75, at: 1.2,
     }),
   }, { sfx: [{ at: 1.25, kind: 'pop' }] });
@@ -236,39 +246,39 @@
 
   // ---------------------------------------------------------------- 44 (4.5) FULL the reframe
   c(4.5, {
-    c01_chip: 'shrink',
-    c01_dn: 'fade',
-    c01_r1: { type: 'text', html: 'You don’t submit a <span class="c-gold">fix</span>.', size: 96, x: 960, y: 430, maxw: 1800, in: 'left' },
-    c01_r2: { type: 'text', html: 'You submit <span class="c-blue">the agent</span> that writes it.', size: 96, x: 960, y: 610, maxw: 1800, in: 'right', at: 0.9 },
-  }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
+    c01_chip: 'quick',
+    c01_dn: 'quick',
+    c01_r1: { type: 'text', html: 'You don’t submit a <span class="c-gold">fix</span>.', size: 96, x: 960, y: 430, maxw: 1800, in: 'left', at: 0.3 },
+    c01_r2: { type: 'text', html: 'You submit <span class="c-blue">the agent</span> that writes it.', size: 96, x: 960, y: 610, maxw: 1800, in: 'right', at: 1.05 },
+  }, { cut: true, cam: { x: 960, y: 540, s: 1 }, exitLead: 0.25 });
 
   // ---------------------------------------------------------------- 45 (2.5) reading beat: push on "You submit the agent"
   push(2.5, 'c01_r2', { c01_r1: { o: 0.4 } }, { dx: -330 });
 
-  // ---------------------------------------------------------------- 46 (3.5) WIDE container A and container B
-  const A2 = { x: 520, y: 500, w: 680, h: 560 }, B2 = { x: 1400, y: 500, w: 680, h: 560 };
+  // ---------------------------------------------------------------- 46 (3.5) CLOSE container A alone (B arrives in 47)
+  const A2 = { x: 520, y: 540, w: 720, h: 640 }, B2 = { x: 1400, y: 540, w: 720, h: 640 };
   const bars = {};
-  for (let i = 0; i < 4; i++) bars['c01_tb' + i] = { type: 'rect', x: B2.x, y: 432 + i * 58, w: 520, h: 36, fill: '#3A4452', rad: 7, in: 'down', at: 1.0 + 0.08 * i, z: 2 };
+  for (let i = 0; i < 4; i++) bars['c01_tb' + i] = { type: 'rect', x: B2.x, y: 482 + i * 60, w: 540, h: 38, fill: '#3A4452', rad: 7, in: 'grow', at: 0.35 + 0.08 * i, z: 2 };
   c(3.5, {
     c01_r1: 'left', c01_r2: 'right',
     ...K.container('contA', 'A', A2),
-    ...K.container('c01_contB', 'B', B2),
-    c01_aL: { type: 'text', html: '<span class="c-blue">your agent</span> ran here', size: 44, x: A2.x, y: 380, in: 'fade', at: 0.6 },
-    ...K.chip('c01_chip', { x: A2.x, y: 540, s: 1, w: 330, ver: 0, at: 0.7 }),
-    c01_htl: { type: 'text', html: 'hidden tests', size: 40, color: T.DIM, x: B2.x, y: 380, in: 'fade', at: 0.9 },
-    ...bars,
-  }, { cam: { x: 960, y: 540, s: 1 } });
+    c01_aL: { type: 'text', html: '<span class="c-blue">your agent</span> ran here', size: 48, x: A2.x, y: 400, in: 'fade', at: 0.6 },
+    ...K.chip('c01_chip', { x: A2.x, y: 580, s: 1.15, w: 330, ver: 0, at: 0.9 }),
+  }, { cam: { x: 560, y: 540, s: 1.3 }, sfx: [{ at: 0.95, kind: 'pop' }] });
 
-  // ---------------------------------------------------------------- 47 (2) the chip travels A → B along an arc
-  const P0 = [A2.x, 540], P2 = [B2.x, 330], BEND = -220;
+  // ---------------------------------------------------------------- 47 (2) pull wide: B draws in; the chip travels A → B along a low arc
+  const P0 = [A2.x, 580], P2 = [B2.x, 340], BEND = 130;
   const arcC = (() => { const mx = (P0[0] + P2[0]) / 2, my = (P0[1] + P2[1]) / 2, dx = P2[0] - P0[0], dy = P2[1] - P0[1], len = Math.hypot(dx, dy); return [mx - (dy / len) * BEND, my + (dx / len) * BEND]; })();
   const t47 = F.now();
   c(2, {
+    ...K.container('c01_contB', 'B', B2),
+    c01_htl: { type: 'text', html: 'hidden tests', size: 40, color: T.DIM, x: B2.x, y: 760, in: 'fade', at: 0.3 },
+    ...bars,
     c01_arc: { type: 'arrow', x1: P0[0], y1: P0[1], x2: P2[0], y2: P2[1], bend: BEND, color: T.GOLD, sw: 3, head: 0, dashed: true, flow: 0, o: 0.55, in: 'draw', dur: 0.8 },
-    c01_chip: { x: P2[0], y: P2[1], s: 0.8, at: 0.15, dur: 1.2, ease: 'power2.inOut' },
-  });
+    c01_chip: { x: P2[0], y: P2[1], s: 0.8, at: 0.2, dur: 1.15, ease: 'power2.inOut' },
+  }, { cam: { x: 960, y: 540, s: 1 } });
   F.hook((t) => {
-    if (t < t47 + 0.15 || t > t47 + 1.35) return;
+    if (t < t47 + 0.2 || t > t47 + 1.35) return;
     const pr = FILM.EL.c01_chip && FILM.EL.c01_chip.proxy; if (!pr) return;
     // follow the same quadratic curve as the dashed arc (x drives the parameter)
     const tx = pr.x;
@@ -284,8 +294,8 @@
     c01_arc: 'quick', c01_htl: 'fade',
     ...green,
     c01_contB: { fill: 'rgba(131,193,103,0.13)', at: 0.2, dur: 0.8 },
-    c01_v1: { type: 'text', html: '<span class="m">exit 0</span> → resolved', size: 54, color: T.GREEN, x: B2.x, y: 720, in: 'wipe', at: 1.2 },
-    c01_v2: { type: 'text', html: 'anything else → not resolved', size: 46, color: T.RED, o: 0.65, x: B2.x, y: 860, in: 'fade', at: 2.1 },
+    c01_v1: { type: 'text', html: '<span class="m">exit 0</span> → resolved', size: 54, color: T.GREEN, x: B2.x, y: 740, in: 'wipe', at: 1.2 },
+    c01_v2: { type: 'text', html: 'anything else → not resolved', size: 44, color: T.RED, o: 0.65, x: B2.x, y: 812, in: 'fade', at: 2.1 },
   }, { sfx: [0, 1, 2, 3].map((i) => ({ at: 0.32 + 0.2 * i, kind: 'click' })) });
 
   // ---------------------------------------------------------------- 49 (4.5) OVER axes: binary reward
@@ -328,14 +338,14 @@
       html: '<div class="m" style="text-align:left;padding:0 48px;line-height:1.6"><div class="c-ink">/workspace</div><div class="c-dim">&nbsp;&nbsp;src/stats.py</div><div class="c-dim">&nbsp;&nbsp;tests/</div><div class="c-dim">&nbsp;&nbsp;pyproject.toml</div></div>' },
     c01_repro: { type: 'box', x: 1300, y: 400, w: 600, h: 150, stroke: T.BLUE, fill: 'rgba(88,196,221,0.06)', sw: 3, rad: 18, size: 44, in: 'pop', at: 1.4,
       html: '<span class="m">/tmp/repro.py</span>' },
-    c01_tag1: cap('concept', 26, T.YELLOW, { x: 1300, y: 296, at: 1.8 }),
-    c01_tmp: cap('scratch in /tmp stays out of the patch', 24, T.DIM, { x: 1300, y: 512, at: 2.3 }),
+    c01_tag1: cap('concept', 30, T.YELLOW, { x: 1300, y: 292, at: 1.8 }),
+    c01_tmp: cap('scratch in /tmp stays out of the patch', 28, T.DIM, { x: 1300, y: 516, maxw: 640, at: 2.3 }),
   }, { cam: { x: 960, y: 560, s: 1 }, sfx: [{ at: 1.45, kind: 'pop' }] });
 
   // ---------------------------------------------------------------- 54 (4.5) run → fails before the fix
   c(4.5, {
     c01_run: { type: 'mono', html: 'run_command', size: 40, color: T.TEAL, x: 1300, y: 700, in: 'rise', at: 0.1 },
-    c01_ra: { type: 'arrow', x1: 1300, y1: 660, x2: 1300, y2: 540, color: T.TEAL, sw: 5, head: 20, flow: 1, in: 'draw', from: { flow: 0 }, at: 0.5, dur: 1.0, pulseColor: T.TEAL },
+    c01_ra: { type: 'arrow', x1: 1300, y1: 660, x2: 1300, y2: 580, color: T.TEAL, sw: 5, head: 20, flow: 1, in: 'draw', from: { flow: 0 }, at: 0.5, dur: 1.0, pulseColor: T.TEAL },
     c01_res: { type: 'text', versions: ['<span class="c-red">✗</span> fails before the fix', '<span class="c-green">✓</span> passes after the fix'], ver: 0, size: 50, x: 1300, y: 820, in: 'rise', at: 1.5 },
   }, { sfx: [{ at: 0.6, kind: 'tick' }, { at: 1.55, kind: 'click' }] });
 
@@ -349,9 +359,9 @@
 
   // ---------------------------------------------------------------- 56 (4.5) why: the agent checks itself
   c(4.5, {
-    c01_why: { type: 'text', html: 'the hidden tests are never shown, so <span class="c-blue">the agent checks itself</span>', size: 54, x: 960, y: 1060, maxw: 1900, in: 'wipe', at: 0.7, dur: 1.4 },
+    c01_why: { type: 'text', html: 'the hidden tests are never shown, so <span class="c-blue">the agent checks itself</span>', size: 54, x: 960, y: 1036, maxw: 1900, in: 'wipe', at: 0.7, dur: 1.4 },
     c01_res: { s: 1.08, at: 2.2, dur: 0.8 },
-  }, { cam: { x: 960, y: 610, s: 0.86 } });
+  }, { cam: { x: 960, y: 590, s: 0.93 } });
 
   // ---------------------------------------------------------------- 57 (3.5) OVER the pipeline in one strip
   const gone2 = {};
@@ -410,8 +420,9 @@
   TAGS.forEach((_, i) => { fold0['c01_t' + i] = null; });
   c(3, {
     ...fold0,
-    c01_slot: { type: 'box', x: 1320, y: 580, w: 420, h: 230, stroke: T.DIM, fill: 'rgba(154,163,173,0.05)', sw: 3, rad: 22, size: 30, in: 'draw', at: 0.0, dur: 0.8,
-      html: '<span class="cap" style="font-size:26px;color:#9AA3AD">upload</span>' },
+    // an opaque card (bg-coloured) so whatever passes behind it stays hidden; its word is a separate label
+    c01_slot: { type: 'box', x: 1320, y: 580, w: 420, h: 230, stroke: T.DIM, fill: '#15191F', sw: 3, rad: 22, html: '', in: 'draw', at: 0.0, dur: 0.8, z: 5, out: 'none' },
+    c01_slotl: cap('upload', 30, T.DIM, { x: 1320, y: 580, z: 6, at: 0.2 }),
     c01_bundle: { x: 1320, y: 580, s: 0.4, o: 0, at: 0.5, dur: 0.8, ease: 'power3.in' },
     c01_sa: { type: 'arrow', x1: 1545, y1: 580, x2: 1640, y2: 580, color: T.DIM, sw: 4, head: 18, in: 'draw', at: 1.25, dur: 0.4 },
     c01_qm: { type: 'text', html: '?', size: 150, color: T.YELLOW, x: 1730, y: 560, in: 'pop', at: 1.5 },
@@ -423,8 +434,12 @@
   const GRID120 = { cols: 12, rows: 10, cw: 112, ch: 64, gap: 14 };
   const [gx, gy] = DRAW.gridCell(55, { w: 1920, h: 1080 }, GRID120, 960, 500);
   c(2, {
-    c01_slot: 'zoom', c01_bundle: null, c01_sa: 'quick', c01_qm: 'zoom', c01_qml: 'quick', c01_qmn: 'quick',
-    grid: { type: 'canvas', draw: 'grid', x: 960, y: 500, in: 'fade', dur: 0.2, params: Object.assign({}, GRID120, { reveal: 1, gold: 55, goldGlow: 1, dim: 0, sweep: 0, split: 0, ring: 0, lock: 0, repo: 0, count: 0 }), paramsFrom: { reveal: 0, goldGlow: 0 }, pdur: 1.5, pease: 'power2.out' },
+    c01_bundle: null, c01_sa: 'quick', c01_qm: 'quick', c01_qml: 'quick', c01_qmn: 'quick', c01_slotl: 'quick',
+    // the word goes first, then the opaque card shrinks into exactly the gold cell 55 while the camera dives
+    // (same ease and timing as the camera, so on screen it grows steadily); the grid grows around it.
+    // out: 'none' — in ch02 it vanishes on top of the identical gold cell of the grid.
+    c01_slot: { x: gx, y: gy, w: 112, h: 64, rad: 9, stroke: T.GOLD, fill: '#6F5435', at: 0.0, dur: 0.72, ease: 'power3.inOut' },
+    grid: { type: 'canvas', draw: 'grid', x: 960, y: 500, in: 'fade', dur: 0.2, at: 0.15, params: Object.assign({}, GRID120, { reveal: 1, gold: 55, goldGlow: 1, dim: 0, sweep: 0, split: 0, ring: 0, lock: 0, repo: 0, count: 0 }), paramsFrom: { reveal: 0, goldGlow: 0 }, pdur: 1.3, pease: 'power2.out' },
     rail: { ver: 2 },
   }, { cam: { x: gx, y: gy, s: 6 }, drift: 0 });
 })();

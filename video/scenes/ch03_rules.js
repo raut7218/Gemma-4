@@ -21,6 +21,34 @@
     };
   };
 
+  // the calendar as a thick band: an opaque 60 px strip drawn UNDER the shared DRAW.calendar at the same
+  // pixels; identical to chapter 2's DRAW.c02_calband so the 2→3 cut is invisible. `sheen` 0..1 sweeps a highlight.
+  DRAW.c03_calband = (ctx, p) => {
+    const { clamp, rr } = DRAW.util, rgba = DRAW.rgba;
+    const x = p.x ?? 210, y = p.y ?? 560, w = p.w ?? 1500, dr = clamp(p.draw ?? 1), H = 60;
+    if (dr <= 0) return;
+    const day = (d, m) => DRAW.calX(p, Date.UTC(2026, m - 1, d));
+    const bx = x - 14, bw = Math.max(24, (w + 28) * dr);
+    ctx.save(); ctx.globalAlpha *= clamp(p.a ?? 1);
+    ctx.save(); rr(ctx, bx, y - H / 2, bw, H, 12); ctx.clip();
+    [[bx, day(1, 10), '#161D25'], [day(1, 10), day(1, 11), '#1D2530'], [day(1, 11), day(1, 12), '#161D25'], [day(1, 12), x + w + 14, '#1D2530']]
+      .forEach(([a, b, col]) => { ctx.fillStyle = col; ctx.fillRect(a, y - H / 2, b - a, H); });
+    const sh = clamp(p.sheen || 0);
+    if (sh > 0 && sh < 1) {
+      const sx = bx + (w + 28) * sh, g = ctx.createLinearGradient(sx - 160, 0, sx + 160, 0);
+      const al = 0.16 * Math.sin(Math.PI * sh);
+      g.addColorStop(0, rgba(T.INK, 0)); g.addColorStop(0.5, rgba(T.INK, al)); g.addColorStop(1, rgba(T.INK, 0));
+      ctx.fillStyle = g; ctx.fillRect(sx - 160, y - H / 2, 320, H);
+    }
+    ctx.restore();
+    rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#3A4654'; ctx.lineWidth = 2.5; ctx.stroke();
+    [['October', day(1, 10), day(1, 11)], ['November', day(1, 11), day(1, 12)]].forEach(([s, a, b]) => {
+      const k = clamp((bx + bw - (a + b) / 2) / 160);
+      if (k > 0) DRAW.text(ctx, s, (a + b) / 2, y - 54, { size: 34, color: T.DIM, a: k });
+    });
+    ctx.restore();
+  };
+
   // shading of the two windows of time (chapter-local drawing over the calendar strip)
   DRAW.c03_shade = (ctx, p) => {
     const y = CY, h = 60, { ease, clamp, rr } = DRAW.util;
@@ -33,10 +61,12 @@
   c(4.5, {
     ...K.rail(3),
     calendar: CAL,
-    ...pin('c03_p1', xSep, 400, { at: 0.3 }),
-    c03_l1: { type: 'text', html: '<b>23 Sep</b>&ensp;<span class="c-dim">·</span>&ensp;start', size: 52, align: 'left', ax: 0, x: xSep - 30, y: 340, in: 'wipe', at: 0.9 },
-    c03_utc: { type: 'text', html: '<span class="cap" style="font-size:1em">all deadlines 23:59 UTC</span>', size: 26, color: T.DIM, x: 960, y: 940, in: 'fade', at: 1.6 },
-  }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0.6, animateFirst: true, sfx: [{ at: 0.5, kind: 'tick' }] });
+    c02_band: 'quick',
+    c03_band: { type: 'canvas', draw: 'c03_calband', x: 960, y: 540, z: 0, in: 'none', at: -0.17, params: { ...CALP, sheen: 1 }, paramsFrom: { sheen: 0 }, pdur: 3.2, pease: 'power1.inOut' },
+    ...pin('c03_p1', xSep, 400, { at: 0 }),
+    c03_l1: { type: 'text', html: '<b>23 Sep</b>&ensp;<span class="c-dim">·</span>&ensp;start', size: 52, align: 'left', ax: 0, x: xSep - 30, y: 340, in: 'wipe', at: 0.5 },
+    c03_utc: { type: 'text', html: '<span class="cap" style="font-size:1em">all deadlines 23:59 UTC</span>', size: 30, color: T.DIM, x: 960, y: 940, in: 'fade', at: 1.4 },
+  }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0.6, animateFirst: true, sfx: [{ at: 0.2, kind: 'tick' }] });
 
   // 100 (4.5) — pin "12 Nov · paper track deadline"
   c(4.5, {
@@ -60,7 +90,7 @@
     c03_l1: 'fade', c03_l2: 'fade', c03_l3: 'fade', c03_l4: 'fade',
     c03_p1_st: 'fade', c03_p1_hd: 'fade', c03_p2_st: 'fade', c03_p2_hd: 'fade', c03_p3_st: 'fade', c03_p3_hd: 'fade', c03_p4_st: 'fade', c03_p4_hd: 'fade',
     c03_shade: { type: 'canvas', draw: 'c03_shade', x: 960, y: 540, in: 'fade', dur: 0.01, params: { a: 1, b: 1 }, paramsFrom: { a: 0, b: 0 }, pdur: 2.2, pease: 'power2.inOut', z: 0 },
-    c03_s1: { type: 'text', html: '23 Sep → 12 Nov: <span class="c-ink">paper window</span>', size: 46, color: T.DIM, x: (xSep + xNov12) / 2, y: 470, in: 'wipe', at: 0.4 },
+    c03_s1: { type: 'text', html: '23 Sep → 12 Nov: <span class="c-ink">paper window</span>', size: 46, color: T.DIM, x: (xSep + xNov12) / 2, y: 436, in: 'wipe', at: 0.4 },
     c03_s2: { type: 'text', html: '12 Nov → 2 Dec: <span class="c-red">final push</span>', size: 46, color: T.DIM, x: (xNov12 + xDec2) / 2 - 40, y: 660, in: 'wipe', at: 1.3 },
     calendar: { params: { ...CALP, dot: 1 }, pdur: 3.3, pease: 'power1.inOut' },
   }, { cam: { x: 960, y: 560, s: 1.05 } });
@@ -69,21 +99,21 @@
   const BASE = 900;
   const plinth = (id, x, w, h, at) => ({ [id]: { type: 'box', x, y: BASE, ax: 0.5, ay: 1, w, h, stroke: '#4A5664', fill: 'rgba(33,40,49,0.96)', sw: 2.5, rad: 14, html: '', in: 'growh', at, dur: 1.2 } });
   c(4.5, {
-    calendar: 'up', c03_shade: 'up', c03_s1: 'up', c03_s2: 'up', c03_utc: 'fade',
+    calendar: 'up', c03_band: 'up', c03_shade: 'up', c03_s1: 'up', c03_s2: 'up', c03_utc: 'fade',
     c03_floor: { type: 'rect', x: 960, y: BASE + 3, w: 1700, h: 4, fill: '#3A4654', rad: 2, in: 'grow', at: 0.2 },
     ...plinth('c03_pl1', 960, 440, 470, 0.45),
     c03_pl1k: { type: 'text', html: '<span class="cap" style="font-size:1em">1st place</span>', size: 30, color: T.DIM, x: 960, y: BASE - 470 + 70, in: 'fade', at: 1.3 },
-    c03_pl1v: { type: 'num', val: 37, pre: '$', suf: 'k', size: 120, color: T.YELLOW, x: 960, y: BASE - 470 + 175, in: 'count', at: 1.3 },
+    c03_pl1v: { type: 'num', val: 37, pre: '$', suf: 'k', size: 120, color: T.YELLOW, x: 960, y: BASE - 470 + 175, in: 'pop', at: 1.3 },
   }, { cut: true, cam: { x: 960, y: 560, s: 1 }, sfx: [{ at: 1.3, kind: 'pop' }] });
 
   // 105 (4.5) — two flanking plinths: 2nd $18k left, 3rd $10k right
   c(4.5, {
     ...plinth('c03_pl2', 470, 400, 330, 0.2),
     c03_pl2k: { type: 'text', html: '<span class="cap" style="font-size:1em">2nd</span>', size: 30, color: T.DIM, x: 470, y: BASE - 330 + 64, in: 'fade', at: 0.9 },
-    c03_pl2v: { type: 'num', val: 18, pre: '$', suf: 'k', size: 100, color: T.YELLOW, x: 470, y: BASE - 330 + 160, in: 'count', at: 0.9 },
+    c03_pl2v: { type: 'num', val: 18, pre: '$', suf: 'k', size: 100, color: T.YELLOW, x: 470, y: BASE - 330 + 160, in: 'pop', at: 0.9 },
     ...plinth('c03_pl3', 1450, 400, 240, 0.7),
     c03_pl3k: { type: 'text', html: '<span class="cap" style="font-size:1em">3rd</span>', size: 30, color: T.DIM, x: 1450, y: BASE - 240 + 60, in: 'fade', at: 1.4 },
-    c03_pl3v: { type: 'num', val: 10, pre: '$', suf: 'k', size: 96, color: T.YELLOW, x: 1450, y: BASE - 240 + 150, in: 'count', at: 1.4 },
+    c03_pl3v: { type: 'num', val: 10, pre: '$', suf: 'k', size: 96, color: T.YELLOW, x: 1450, y: BASE - 240 + 150, in: 'pop', at: 1.4 },
   }, { cam: { x: 960, y: 580, s: 1.02 }, sfx: [{ at: 0.9, kind: 'pop' }, { at: 1.4, kind: 'pop' }] });
 
   // 106 (4.5) — a separate plinth slides in apart: the Paper Track

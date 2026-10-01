@@ -134,32 +134,61 @@
     });
     ctx.restore();
   };
-  // four recap stamps: press in, hold, then drop into the calendar and vanish (k 0..1 across the comp)
+  // the calendar as a thick band: an opaque 60 px strip drawn UNDER the shared DRAW.calendar at the same
+  // pixels (same x, y, w, draw), month segments shaded alternately, month names above it (34 px).
+  // `sheen` 0..1 sweeps a soft highlight along it. Chapter 3 draws the identical band (DRAW.c03_calband).
+  DRAW.c02_calband = (ctx, p) => {
+    const x = p.x ?? 210, y = p.y ?? 560, w = p.w ?? 1500, dr = clamp(p.draw ?? 1), H = 60;
+    if (dr <= 0) return;
+    const day = (d, m) => DRAW.calX(p, Date.UTC(2026, m - 1, d));
+    const bx = x - 14, bw = Math.max(24, (w + 28) * dr);
+    ctx.save(); ctx.globalAlpha *= clamp(p.a ?? 1);
+    ctx.save(); rr(ctx, bx, y - H / 2, bw, H, 12); ctx.clip();
+    [[bx, day(1, 10), '#161D25'], [day(1, 10), day(1, 11), '#1D2530'], [day(1, 11), day(1, 12), '#161D25'], [day(1, 12), x + w + 14, '#1D2530']]
+      .forEach(([a, b, col]) => { ctx.fillStyle = col; ctx.fillRect(a, y - H / 2, b - a, H); });
+    const sh = clamp(p.sheen || 0);
+    if (sh > 0 && sh < 1) {
+      const sx = bx + (w + 28) * sh, g = ctx.createLinearGradient(sx - 160, 0, sx + 160, 0);
+      const al = 0.16 * Math.sin(Math.PI * sh);
+      g.addColorStop(0, rgba(T.INK, 0)); g.addColorStop(0.5, rgba(T.INK, al)); g.addColorStop(1, rgba(T.INK, 0));
+      ctx.fillStyle = g; ctx.fillRect(sx - 160, y - H / 2, 320, H);
+    }
+    ctx.restore();
+    rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#3A4654'; ctx.lineWidth = 2.5; ctx.stroke();
+    [['October', day(1, 10), day(1, 11)], ['November', day(1, 11), day(1, 12)]].forEach(([s, a, b]) => {
+      const k = clamp((bx + bw - (a + b) / 2) / 160);
+      if (k > 0) DRAW.text(ctx, s, (a + b) / 2, y - 54, { size: 34, color: T.DIM, a: k });
+    });
+    ctx.restore();
+  };
+  // four recap stamps, two rows: press in, settle slowly, then drop into the calendar band and flash
+  // (k 0..1 across the comp)
   const STAMPS = [['≈120 private tasks', T.INK, false], ['pytest exit 0', T.GREEN, true], ['≈6 min a task, if sequential', T.YELLOW, false], ['1 a day', T.YELLOW, false]];
-  const STAMP_TX = [430, 790, 1150, 1510], STAMP_R = [-2.5, 1.8, -1.2, 2.2];
+  const STAMP_TX = [430, 790, 1150, 1510], STAMP_R = [-2.5, 1.8, -1.2, 2.2], STAMP_ROW = [0, 0, 1, 1], STAMP_Y = [270, 420];
   DRAW.c02_stamps = (ctx, p) => {
-    const k = p.k || 0;
-    ctx.font = '400 42px CM';
-    const ws = STAMPS.map(([s, , m]) => { ctx.font = `400 42px ${m ? 'CMT' : 'CM'}`; return ctx.measureText(s).width + 70; });
-    const tot = ws.reduce((a, b) => a + b, 0) + 40 * 3;
-    let sx = 960 - tot / 2;
+    const k = p.k || 0, FS = 58, SH = 116;
+    const ws = STAMPS.map(([s, , m]) => { ctx.font = `400 ${FS}px ${m ? 'CMT' : 'CM'}`; return ctx.measureText(s).width + 84; });
+    const rows = [[0, 1], [2, 3]].map((ix) => ix.reduce((a, i) => a + ws[i], 0) + 50);
+    const cx0s = [];
+    [[0, 1], [2, 3]].forEach((ix, r) => { let sx = 960 - rows[r] / 2; ix.forEach((i) => { cx0s[i] = sx + ws[i] / 2; sx += ws[i] + 50; }); });
     STAMPS.forEach(([s, col, m], i) => {
-      const w = ws[i], cx0 = sx + w / 2; sx += w + 40;
-      const a = clamp((k - 0.03 - 0.07 * i) / 0.1); if (a <= 0) return;
-      const dRaw = clamp((k - 0.56 - 0.05 * i) / 0.16), d = dRaw * dRaw * dRaw;
-      const flash = dRaw >= 1 ? clamp(1 - (k - (0.72 + 0.05 * i)) / 0.08) : 0;
+      const w = ws[i], cx0 = cx0s[i], cy0 = STAMP_Y[STAMP_ROW[i]];
+      const a = clamp((k - 0.02 - 0.06 * i) / 0.09); if (a <= 0) return;
+      const settle = ease(clamp((k - 0.02 - 0.06 * i) / 0.5));
+      const dRaw = clamp((k - 0.6 - 0.065 * i) / 0.15), d = dRaw * dRaw * dRaw;
+      const flash = dRaw >= 1 ? clamp(1 - (k - (0.75 + 0.065 * i)) / 0.07) : 0;
       if (dRaw < 1) {
-        const x = lerp(cx0, STAMP_TX[i], d), y = lerp(330, 560, d), sc = lerp(lerp(1.35, 1, ease(a)), 0.1, d);
+        const x = lerp(cx0, STAMP_TX[i], d), y = lerp(cy0 + 10 * (1 - settle), 560, d), sc = lerp(lerp(1.3, 1.06, ease(a)) - 0.06 * settle, 0.1, d);
         ctx.save(); ctx.globalAlpha *= clamp(a * 2) * (1 - d);
-        ctx.translate(x, y); ctx.rotate((STAMP_R[i] * (1 - d) * Math.PI) / 180); ctx.scale(sc, sc);
-        rr(ctx, -w / 2, -48, w, 96, 14); ctx.fillStyle = 'rgba(21,26,33,0.96)'; ctx.fill();
-        ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.stroke();
+        ctx.translate(x, y); ctx.rotate((STAMP_R[i] * (1.8 - 0.8 * settle) * (1 - d) * Math.PI) / 180); ctx.scale(sc, sc);
+        rr(ctx, -w / 2, -SH / 2, w, SH, 16); ctx.fillStyle = 'rgba(21,26,33,0.96)'; ctx.fill();
+        ctx.strokeStyle = col; ctx.lineWidth = 4.5; ctx.stroke();
+        DRAW.text(ctx, s, 0, 2, { size: FS, mono: m, color: col });
         ctx.restore();
-        DRAW.text(ctx, s, x, y + 2, { size: 42 * sc, mono: m, color: col, a: clamp(a * 2) * (1 - d) });
       }
       if (flash > 0) {
-        ctx.save(); ctx.globalAlpha *= flash; ctx.beginPath(); ctx.arc(STAMP_TX[i], 560, 10 + 22 * (1 - flash), 0, Math.PI * 2);
-        ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.globalAlpha *= flash; ctx.beginPath(); ctx.arc(STAMP_TX[i], 560, 12 + 34 * (1 - flash), 0, Math.PI * 2);
+        ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.stroke(); ctx.restore();
       }
     });
   };
@@ -229,7 +258,10 @@
 
   // ---------------------------------------------------------------- 69 (4.5) OVER [SIG2] a clock: 12 hours
   const CK = { cx: 960, cy: 520, r: 300 };
-  const out69 = { grid: 'fade', c02_eL: 'up', c02_num: 'up', c02_bar: 'up', c02_den: 'up', c02_res: 'up', c02_ex: 'fade' };
+  // the whole equation (incl. "= 0.25" and its tag) lifts away together as one group; removed in the next comp
+  const EQ_Y = { c02_eL: 540, c02_num: 466, c02_bar: 545, c02_den: 628, c02_res: 548, c02_ex: 790 };
+  const out69 = { grid: 'fade' };
+  for (const k in EQ_Y) out69[k] = { y: EQ_Y[k] - 320, o: 0, at: 0, dur: 0.55, ease: 'power3.in' };
   for (const k in mini) out69[k] = 'down';
   c(4.5, {
     ...out69,
@@ -239,6 +271,7 @@
 
   // ---------------------------------------------------------------- 70 (4.5) what counts
   c(4.5, {
+    c02_eL: null, c02_num: null, c02_bar: null, c02_den: null, c02_res: null, c02_ex: null,
     c02_face: { params: Object.assign({}, CK, { draw: 1, slices: 0, gap: 0, hand: 1, a: 1 }), pdur: 3.3, pease: 'power2.inOut' },
     c02_12h: { y: 875, s: 0.85, dur: 0.8 },
     c02_12s: { type: 'text', html: 'for all tasks&ensp;<span class="c-dim">·</span>&ensp;sandbox setup included&ensp;<span class="c-dim">·</span>&ensp;verification excluded', size: 42, x: 960, y: 975, maxw: 1800, in: 'wipe', at: 0.6, dur: 1.6 },
@@ -248,7 +281,7 @@
   c(2, { c02_face: { params: Object.assign({}, CK, { draw: 1, slices: 1, gap: 0, hand: 1, a: 1 }), pdur: 1.4, pease: 'power2.inOut' } }, { sfx: [{ at: 0.1, kind: 'tick' }] });
 
   // ---------------------------------------------------------------- 72 (2) one wedge pulls out
-  const RU = { x: 200, y: 760, w: 1300 };
+  const RU = { x: 200, y: 760, w: 1180 };
   const B1 = [[0.7, T.TEAL, 'read'], [1.2, T.TEAL, 'run'], [0.6, T.GOLD, 'edit'], [1.2, T.TEAL, 'run'], [0.4, T.GOLD, 'submit']];
   const WP = (o) => Object.assign({}, CK, { draw: 0, slices: 0, pull: 0, unroll: 0, rx: RU.x, ry: RU.y, rw: RU.w, a: 1 }, o);
   c(2, {
@@ -298,28 +331,28 @@
   });
 
   // ---------------------------------------------------------------- 80 (2) the LOOP rolls onto the ruler
-  const px = RU.w / 6, LY = 275, LS = 0.4, CIRC = 2 * Math.PI * 113;
+  const px = RU.w / 6, LY = 268, LS = 0.75;
   const xAt = (m) => RU.x + m * px;
-  const rot = (x) => ((x - xAt(0.6)) / CIRC) * 360;
+  const LP = (o) => Object.assign({ cx: 960, cy: 540, r: 240, draw: 1, labels: 1, ring: 0, dot: 0, exit: 0, hi: -1, hiA: 0, stopped: 0 }, o);
   c(2, {
     c02_setup: 'up', c02_cc1: 'fade',
-    c02_loop: { type: 'canvas', draw: 'loop', x: xAt(0.6), y: LY, s: LS, r: 0, in: 'fade', from: { x: -100, r: rot(-100), o: 0 }, dur: 1.3, ease: 'power3.out',
-      params: { cx: 960, cy: 540, r: 240, draw: 1, labels: 0, ring: 0, dot: -1, exit: 0, hi: -1, hiA: 0, stopped: 0 } },
+    c02_loop: { type: 'canvas', draw: 'loop', x: 520, y: LY, s: LS, in: 'fade', from: { x: 120, o: 0 }, dur: 1.3, ease: 'power3.out',
+      params: LP({ dot: 0.9 }), paramsFrom: { dot: 0 }, pdur: 1.4, pease: 'power2.inOut' },
   });
 
   // ---------------------------------------------------------------- 81 (2.5) each lap lays a block
   const f4 = 0.6 + 0.7 + 1.2 + 0.6 + 1.2;
   c(2.5, {
     c02_ruler: { params: Object.assign({}, RU, { draw: 1, ticks: 1, grey: 1, show: 0.8, over: 0, stretch: 0, a: 1 }), pdur: 1.8, pease: 'power1.inOut' },
-    c02_loop: { x: xAt(f4), r: rot(xAt(f4)), at: 0, dur: 1.8, ease: 'power1.inOut' },
+    c02_loop: { x: xAt(f4), at: 0, dur: 1.8, ease: 'power1.inOut', params: LP({ dot: 4 }), pdur: 1.8, pease: 'power1.inOut' },
     c02_ill: cap('illustrative', 26, T.YELLOW, { x: 1590, y: 290, at: 0.3 }),
   }, { sfx: [0.3, 0.7, 1.1, 1.5].map((at) => ({ at, kind: 'tick' })) });
 
   // ---------------------------------------------------------------- 82 (2.5) submit lands before 6 min
   c(2.5, {
     c02_ruler: { params: Object.assign({}, RU, { draw: 1, ticks: 1, grey: 1, show: 1, over: 0, stretch: 0, a: 1 }), pdur: 0.8, pease: 'power2.out' },
-    c02_loop: { x: xAt(f4 + 0.4), r: rot(xAt(f4 + 0.4)), at: 0, dur: 0.8, ease: 'power2.out' },
-    c02_ok: { type: 'text', html: '✓ fits', size: 60, color: T.GREEN, x: 1700, y: R1Y - 30, in: 'pop', at: 0.8 },
+    c02_loop: { x: xAt(f4 + 0.4), at: 0, dur: 0.8, ease: 'power2.out', params: LP({ dot: 5 }), pdur: 0.8, pease: 'power2.out' },
+    c02_ok: { type: 'text', html: '✓ fits', size: 60, color: T.GREEN, x: 1560, y: R1Y - 30, in: 'pop', at: 0.8 },
   }, { sfx: [{ at: 0.85, kind: 'pop' }] });
 
   // ---------------------------------------------------------------- 83 (3) a second ruler runs out
@@ -328,7 +361,7 @@
   c(3, {
     c02_loop: 'fade', c02_cv1: 'fade', c02_cv2: 'fade',
     c02_r2: { type: 'canvas', draw: 'c02_ruler', x: 960, y: 540 + (R2Y - RU.y), in: 'right', blocks: B2, si: 1, slen: 5.0, params: Object.assign({}, RU, { draw: 1, ticks: 1, grey: 1, show: 1, over: 1, stretch: 0, a: 1 }), paramsFrom: { show: 0, over: 0 }, pdur: 2.2, pease: 'power1.inOut' },
-    c02_bx: { type: 'text', html: 'budget<br>exhausted', size: 46, lh: 1.1, color: T.RED, x: 1715, y: R2Y - 20, in: 'rise', at: 1.7 },
+    c02_bx: { type: 'text', html: 'budget<br>exhausted', size: 46, lh: 1.1, color: T.RED, x: 1580, y: R2Y - 20, in: 'rise', at: 1.7 },
   }, { sfx: [{ at: 1.9, kind: 'click' }] });
 
   // ---------------------------------------------------------------- 84 (4.5) one command can eat the task [SIG2 ends]
@@ -345,40 +378,42 @@
   push(2.5, 'c02_300', dimAll(['c02_r2', 'c02_bx', 'c02_300n'], 0.45));
 
   // ---------------------------------------------------------------- 86 (4.5) WIDE eval_config.yaml
-  const CF = { x: 560, y: 560, w: 720, h: 560, size: 44 };
-  const yk = (k, v = '') => `<span class="c-ink">${k}</span><span class="c-dim">:${v}</span>`;
+  const CF = { x: 640, y: 555, w: 960, h: 600, size: 54, lh: 2.1 };
+  const yk = (k, v = '') => `<span class="c-ink">${k}</span><span class="c-dim">:</span>${v ? ' <span class="c-yellow">' + v + '</span>' : ''}`;
   const L2 = [yk('timeout_seconds'), yk('max_tool_calls')];
   const L4 = [yk('timeout_seconds'), yk('max_tool_calls'), yk('max_time_minutes'), yk('max_turns')];
-  const cfg = K.file('c02_cfg', 'eval_config.yaml', L2, { x: CF.x, y: CF.y, w: CF.w, h: CF.h, size: CF.size, variants: [L4], text: { lh: 2.4, at: 0.7, dur: 1.2 } });
-  cfg.c02_cfg_frame.at = 0.2; cfg.c02_cfg_name.at = 0.5;
+  const L4v = [yk('timeout_seconds'), yk('max_tool_calls', '10'), yk('max_time_minutes', '1'), yk('max_turns')];
+  const cfg = K.file('c02_cfg', 'eval_config.yaml', L2, { x: CF.x, y: CF.y, w: CF.w, h: CF.h, size: CF.size, variants: [L4, L4v], text: { lh: CF.lh, at: 0.7, dur: 1.2 } });
+  cfg.c02_cfg_frame.at = 0.2; cfg.c02_cfg_name.at = 0.5; cfg.c02_cfg_name.size = 34;
   c(4.5, {
     c02_r2: 'shrink', c02_bx: 'fade', c02_300: 'up', c02_300n: 'fade',
     ...cfg,
-  }, { cam: { x: 820, y: 560, s: 1.1 } });
-  const LINE0 = 432, PITCH = 105.6;
+  }, { cam: { x: 900, y: 560, s: 1.05 } });
+  const PITCH = CF.size * CF.lh, LINE0 = CF.y + 30 - 2 * PITCH + PITCH / 2;
 
   // ---------------------------------------------------------------- 87 (2) two more lines
   c(2, { c02_cfg: { ver: 1, at: 0.1, dur: 0.9 } });
 
   // ---------------------------------------------------------------- 88 (4.5) four dials; you set these
-  const DP = (o) => Object.assign({ x: 1010, y0: LINE0, pitch: PITCH, r: 42, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
+  const DP = (o) => Object.assign({ x: 1310, y0: LINE0, pitch: PITCH, r: 50, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
   c(4.5, {
     c02_dials: { type: 'canvas', draw: 'c02_dials', x: 960, y: 540, in: 'fade', dur: 0.2, params: DP({}), paramsFrom: { a: 0, v0: 0, v1: 0, v2: 0, v3: 0 }, pdur: 2.4, pease: 'power2.out' },
-    c02_dcap: { type: 'text', html: '<span class="cap" style="font-size:1em">per-task budgets&ensp;—&ensp;<span class="c-ink">you set these</span></span>', size: 28, color: T.DIM, x: 820, y: 150, in: 'fade', at: 1.4 },
+    c02_dcap: { type: 'text', html: '<span class="cap" style="font-size:1em">per-task budgets&ensp;—&ensp;<span class="c-ink">you set these</span></span>', size: 28, color: T.DIM, x: 820, y: 118, in: 'fade', at: 1.4 },
   }, { sfx: [0.2, 0.5, 0.8, 1.1].map((at) => ({ at, kind: 'tick' })) });
 
   // ---------------------------------------------------------------- 89 (4.5) they snap to the starter
   c(4.5, {
     c02_dials: { params: DP({ v1: 0.06, v2: 0.04, d0: 1, d3: 1 }), pdur: 2.6, pease: 'elastic.out(1, 0.45)' },
-    c02_snap: { type: 'text', html: '<span class="c-yellow">1</span> minute&ensp;·&ensp;<span class="c-yellow">10</span> tool calls', size: 60, x: 820, y: 212, in: 'wipe', at: 0.6, dur: 1.2 },
-    c02_rd1: { type: 'text', html: '<span class="c-yellow">10</span> calls', size: 46, align: 'left', ax: 0, x: 1080, y: LINE0 + PITCH, in: 'left', at: 0.5 },
-    c02_rd2: { type: 'text', html: '<span class="c-yellow">1</span> min', size: 46, align: 'left', ax: 0, x: 1080, y: LINE0 + 2 * PITCH, in: 'left', at: 0.7 },
+    c02_cfg: { ver: 2, at: 0.4, dur: 0.8 },
+    c02_snap: { type: 'text', html: '<span class="c-yellow">1</span> minute&ensp;·&ensp;<span class="c-yellow">10</span> tool calls', size: 60, x: 820, y: 188, in: 'wipe', at: 0.6, dur: 1.2 },
+    c02_rd1: { type: 'text', html: '<span class="c-yellow">10</span> calls', size: 56, align: 'left', ax: 0, x: 1400, y: LINE0 + PITCH, in: 'left', at: 0.5 },
+    c02_rd2: { type: 'text', html: '<span class="c-yellow">1</span> min', size: 56, align: 'left', ax: 0, x: 1400, y: LINE0 + 2 * PITCH, in: 'left', at: 0.7 },
   }, { sfx: [{ at: 0.05, kind: 'click' }] });
 
   // ---------------------------------------------------------------- 90 (4.5) the trap
   c(4.5, {
-    c02_st1: { type: 'text', html: 'the organizers’ starter&ensp;—&ensp;“which', size: 46, color: T.DIM, x: 820, y: 900, in: 'wipe', at: 0.2, dur: 1.0 },
-    c02_st2: { type: 'text', html: '<span class="c-red">caps the score near zero</span>”', size: 62, x: 820, y: 975, in: 'wipe', at: 1.2, dur: 1.2 },
+    c02_st1: { type: 'text', html: 'the organizers’ starter&ensp;—&ensp;“which', size: 46, color: T.DIM, x: 820, y: 918, in: 'wipe', at: 0.2, dur: 1.0 },
+    c02_st2: { type: 'text', html: '<span class="c-red">caps the score near zero</span>”', size: 62, x: 820, y: 990, in: 'wipe', at: 1.2, dur: 1.2 },
   });
 
   // ---------------------------------------------------------------- 91 (2.5) reading beat: the rest sinks to a third
@@ -389,6 +424,7 @@
   c(2, Object.assign(dimAll(['c02_cfg', 'c02_cfg_frame', 'c02_cfg_name', 'c02_dcap'], 1), {
     c02_snap: 'up', c02_rd1: 'fade', c02_rd2: 'fade', c02_st1: 'down', c02_st2: 'down',
     c02_dials: { o: 1, params: DP({ v0: 0.85, v1: 0.8, v2: 0.9, v3: 0.82 }), pdur: 1.3, pease: 'power3.out', dur: 0.5 },
+    c02_cfg: { o: 1, ver: 1, dur: 0.6 },
     c02_ghost: { type: 'canvas', draw: 'c02_ruler', x: 960, y: 540, in: 'fade', dur: 0.8, at: 0.2, blocks: [], params: Object.assign({}, RU, { y: 930, draw: 1, ticks: 1, grey: 0, show: 0, over: 0, stretch: 0, a: 0.35 }) },
   }));
 
@@ -398,6 +434,7 @@
   const CALP = { x: 210, y: 560, w: 1500, draw: 1, dot: -1 };
   c(3.5, {
     ...out93,
+    c02_band: { type: 'canvas', draw: 'c02_calband', x: 960, y: 540, z: 0, in: 'fade', dur: 0.2, at: 0.3, params: Object.assign({}, CALP, { sheen: 0 }), paramsFrom: { draw: 0 }, pdur: 2.4, pease: 'power2.inOut' },
     calendar: { type: 'canvas', draw: 'calendar', x: 960, y: 540, spans: [], in: 'fade', dur: 0.2, at: 0.3, params: Object.assign({}, CALP, { dot: 0 }), paramsFrom: { draw: 0 }, pdur: 2.4, pease: 'power2.inOut' },
     c02_d0: { type: 'text', html: '23 Sep', size: 44, x: 210, y: 490, in: 'fade', at: 0.4 },
     c02_d1: { type: 'text', html: '2 Dec', size: 44, x: 1710, y: 490, in: 'fade', at: 2.0 },
@@ -407,25 +444,29 @@
   c(4.5, {
     calendar: { params: Object.assign({}, CALP, { dot: 1 }), pdur: 1.6, pease: 'power3.out', at: 0.5 },
     c02_spd: { type: 'text', html: '<span class="c-yellow">1</span> submission per day', size: 60, x: 960, y: 220, in: 'wipe', at: 0.0, dur: 0.9 },
-    c02_n: { type: 'num', val: 70, pre: '≈', size: 160, color: T.YELLOW, x: 850, y: 375, in: 'count', at: 0.5, dur: 1.6 },
+    c02_n: { type: 'text', html: '≈70', size: 160, color: T.YELLOW, x: 850, y: 375, in: 'scale', at: 0.5, dur: 1.0 },
     c02_tries: { type: 'text', html: 'tries&ensp;<span class="cap c-yellow" style="font-size:0.42em">derived</span>', size: 70, align: 'left', ax: 0, x: 1050, y: 392, in: 'fade', at: 1.4 },
   });
 
   // ---------------------------------------------------------------- 95 (2.5) reading beat: push on ≈70
-  push(2.5, 'c02_n', Object.assign(dimAll(['c02_spd', 'calendar', 'c02_d0', 'c02_d1'], 0.45), { c02_tries: { s: 1.05, dur: 0.6 } }), { dx: 70 });
+  push(2.5, 'c02_n', Object.assign(dimAll(['c02_spd', 'calendar', 'c02_band', 'c02_d0', 'c02_d1'], 0.45), { c02_tries: { s: 1.05, dur: 0.6 } }), { dx: 110, scale: 1.1 });
 
   // ---------------------------------------------------------------- 96 (3.5) OVER the scoring pipeline
   const TOP = [['hidden task', T.DIM], ['your agent', T.BLUE], ['patch.diff', T.GOLD, true], ['container B', T.GREEN], ['score', T.YELLOW]];
   const BOT = [['public task', T.DIM], ['your agent', T.BLUE], ['patch.diff', T.GOLD, true], ['your container', T.GREEN], ['local score', T.YELLOW]];
   c(3.5, {
-    calendar: 'fade', c02_d0: 'fade', c02_d1: 'fade', c02_spd: 'up', c02_n: 'up', c02_tries: 'up',
-    c02_pt: cap('the scoring pipeline', 28, T.DIM, { x: 960, y: 220, at: 0.2 }),
-    c02_p1: { type: 'canvas', draw: 'c02_pipe', x: 960, y: 540, in: 'fade', dur: 0.2, at: 0.3, items: TOP, params: { y: 330, draw: 1, dash: 0, a: 1 }, paramsFrom: { draw: 0 }, pdur: 2.2, pease: 'power2.out' },
-  }, { cam: { x: 960, y: 540, s: 1 } });
+    calendar: 'fade', c02_band: 'fade', c02_d0: 'fade', c02_d1: 'fade', c02_spd: 'up', c02_n: 'up', c02_tries: 'up',
+    c02_pt: cap('the scoring pipeline', 32, T.DIM, { x: 960, y: 420, at: 0.2 }),
+    c02_p1: { type: 'canvas', draw: 'c02_pipe', x: 960, y: 540, in: 'fade', dur: 0.2, at: 0.3, items: TOP, params: { y: 540, draw: 1, dash: 0, a: 1 }, paramsFrom: { draw: 0 }, pdur: 2.2, pease: 'power2.out' },
+    c02_pd: { type: 'text', html: 'one hidden task in, one number out', size: 46, color: T.DIM, x: 960, y: 680, in: 'wipe', at: 1.2, dur: 1.0 },
+  }, { cam: { x: 960, y: 540, s: 1.04 } });
 
   // ---------------------------------------------------------------- 97 (4.5) a dashed local copy that must agree
   c(4.5, {
-    c02_p2: { type: 'canvas', draw: 'c02_pipe', x: 960, y: 540, in: 'fade', dur: 0.2, at: 0.1, items: BOT, params: { y: 760, draw: 1, dash: 1, a: 1 }, paramsFrom: { draw: 0 }, pdur: 2.0, pease: 'power2.out' },
+    c02_pd: 'fade',
+    c02_pt: { y: 220, at: 0, dur: 0.9, ease: 'power3.inOut' },
+    c02_p1: { params: { y: 330, draw: 1, dash: 0, a: 1 }, pdur: 0.9, pease: 'power3.inOut' },
+    c02_p2: { type: 'canvas', draw: 'c02_pipe', x: 960, y: 540, in: 'fade', dur: 0.2, at: 0.5, items: BOT, params: { y: 760, draw: 1, dash: 1, a: 1 }, paramsFrom: { draw: 0 }, pdur: 2.0, pease: 'power2.out' },
     c02_loc: { type: 'text', html: 'your local evaluation', size: 54, x: 960, y: 900, in: 'wipe', at: 1.2 },
     c02_locn: cap('built in chapter 10', 26, T.DIM, { x: 960, y: 965, at: 1.8 }),
     c02_ag1: { type: 'arrow', x1: 900, y1: 420, x2: 900, y2: 670, color: T.INK, sw: 4, head: 18, in: 'draw', at: 2.0, dur: 0.6 },
@@ -436,8 +477,9 @@
   // ---------------------------------------------------------------- 98 (4.5) recap stamps drop into the calendar → chapter 3
   c(4.5, {
     c02_pt: 'fade', c02_p1: 'shrink', c02_p2: 'shrink', c02_loc: 'fade', c02_locn: 'fade', c02_ag1: 'quick', c02_ag2: 'quick', c02_agree: 'fade',
-    c02_stamps: { type: 'canvas', draw: 'c02_stamps', x: 960, y: 540, in: 'none', params: { k: 1 }, paramsFrom: { k: 0 }, pdur: 3.375, pease: 'none' },
-    calendar: { type: 'canvas', draw: 'calendar', x: 960, y: 540, spans: [], in: 'fade', dur: 0.8, at: 0.6, params: Object.assign({}, CALP), paramsFrom: { draw: 0 }, pdur: 1.6, pease: 'power2.out' },
+    c02_stamps: { type: 'canvas', draw: 'c02_stamps', x: 960, y: 540, z: 2, in: 'none', params: { k: 1 }, paramsFrom: { k: 0 }, pdur: 3.375, pease: 'none' },
+    c02_band: { type: 'canvas', draw: 'c02_calband', x: 960, y: 540, z: 0, in: 'fade', dur: 0.6, at: 0.4, params: Object.assign({}, CALP, { sheen: 0 }), paramsFrom: { draw: 0 }, pdur: 2.9, pease: 'power2.out' },
+    calendar: { type: 'canvas', draw: 'calendar', x: 960, y: 540, spans: [], in: 'fade', dur: 0.6, at: 0.4, params: Object.assign({}, CALP), paramsFrom: { draw: 0 }, pdur: 2.9, pease: 'power2.out' },
     rail: { ver: 3 },
-  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [0, 1, 2, 3].map((i) => ({ at: 0.1 + 0.236 * i, kind: 'pop' })) });
+  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [0, 1, 2, 3].map((i) => ({ at: 0.1 + 0.2 * i, kind: 'pop' })) });
 })();
