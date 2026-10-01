@@ -1,0 +1,84 @@
+## 0 Cold open | 0
+3 | CLOSE frame one, finished: an issue card fills the frame — "Issue · open", corner tag "illustrative example", title `summarize([]) raises ZeroDivisionError`, body "Expected 0 for an empty list." | hook with a bug every engineer recognises | the card slides left and shrinks while a code panel sweeps in from the right | issue card
+3 | WIDE issue card small at left; code panel `src/stats.py` at right, lines 1–8 of a longer file (a slim scrollbar shows more below) | the bug lives in a repository | the camera pushes right onto line 6 while the issue card drifts out of frame left | code panel
+2.5 | CLOSE line 6 `return total / len(xs)` glows red, a red tick draws in the gutter, small caps "the bug" | locate | the line itself begins to split | line 6
+3.5 | CLOSE line 6 splits: `- return total / len(xs)` rises in red; `+ return total / len(xs) if xs else 0` drops in gold; the rest of the file dims | a fix is a diff | the two lines slide together toward the centre | diff lines
+3 | [SIG1] WIDE the two diff lines fold into a gold chip `patch.diff`, large at centre | the agent's only output | the chip glides right as a green box draws around its landing spot | CHIP
+3 | WIDE container B (green rounded case with a header strip "fresh container") on the right, the chip settles into its top; at left, big type enters from the left: "The fix is judged somewhere else." | the patch is judged elsewhere | the left type rolls up to its next line | CHIP, container B
+2.5 | six grey test bars drop into B one after another; left type becomes "Tests written by the original developers." | hidden tests | `$ pytest` starts typing under the bars | container B
+3.5 | `$ pytest` types inside B, then the bars turn green one by one (a soft click each); left type: "Never shown to the agent." | the verdict comes from tests | `→ exit 0` appends to the line | container B
+2 | the pytest line completes `$ pytest → exit 0` and swells | binary outcome | `exit 0` lifts off toward the camera while B falls back | exit 0
+3 | FULL `exit 0` fills the frame; "= resolved" writes beneath | define success | the pair shrinks toward one cell of a grid revealed behind it | exit 0
+3 | OVER the grid: 12×10 cells bloom from the centre; the verdict lands in one gold cell [SIG1 ends] | about 120 hidden tasks | a plate label rises from the bottom edge | GRID
+3 | GRID; label "≈120 hidden tasks · from private repositories"; a small lock stroke draws on every cell, rippling outward | scale, and the twist | the label rewrites itself in place | GRID
+2.5 | GRID; a tiny issue → patch → verdict glyph sweeps along every row; label "each cell is one full run" | every cell is the whole loop | the grid dims and the title writes over it | GRID (dim)
+3.5 | FULL title over the dim grid: "The Gemma 4 Developer Agent Competition", small caps "Google · Kaggle · 2026" above | the name | the title rushes toward camera, revealing the first constraint behind it | —
+2 | FULL "One open model." enters from the left | constraint 1 | holds while the next line enters | words
+2 | FULL "Real bugs." enters from the right beneath it | constraint 2 | holds | words
+2.5 | FULL "No internet." enters from the left | constraint 3 | the three lines leave to alternating sides | —
+4 | quote writes in, small caps "the organizers' goal": “Post-train an open model into a reliable agent that navigates complex codebases | intent, in their words | the second line writes beneath | quote
+4 | second line: "and drafts fixes for real software issues, accelerating developer workflows on everyday hardware.” — "Post-train an open model" warms to purple, "drafts fixes" to gold as the line lands | the two verbs that define the work | the quote lifts out of the top edge | quote
+3 | three prize figures count up across the frame: $37k · $18k · $10k, small caps "1st · 2nd · 3rd place" | stakes | the figures sink as the date writes above them | —
+3 | "2 December 2026" writes large, small caps "final submission · 23:59 UTC" | deadline | the date rushes toward camera, revealing a vertical rail of 17 ticks | —
+3 | OVER a vertical rail of 17 ticks down the left third; "17 chapters · 24 minutes" beside it; only tick 01 carries its name, "The task" | the shape of the film, without a wall of text | tick 01 brightens and glides to the top-left corner | rail
+2 | the tick and its name settle into the RAIL tag at the top-left, at its exact pixels; the other ticks fade; the grid fades | where we are | a question writes at centre | RAIL
+
+## 1 The task | 0
+3 | FULL "What does the agent receive?" | set the question | the words part left and right, revealing two inputs | —
+3 | WIDE the issue card enters from the left, a stacked repository from the right | two inputs | the camera pushes onto the issue card | issue, repo
+2.5 | CLOSE issue card; "a GitHub-style issue description" underlines beneath it | input one | the camera slides right to the repository | issue
+3 | CLOSE the repository unfolds into a commit line, dots left to right, a pointer labelled `base_commit` | input two | the dots right of the pointer begin to grey | commit line
+3 | the dots after base_commit turn grey; "the fix is not in your checkout" | you start one commit before the fix | the camera pulls back | commit line
+3 | WIDE issue card and repository slide together into a blue rounded block "Gemma 4 31B" | the model reads them | an outline draws around the block | model block
+2.5 | an outline draws around the model: "Agent Development Kit (ADK)" | the harness around the model | a rounded case draws around both | model, ADK
+3.5 | the blue container A draws around both — header strip "container A · offline sandbox", red small caps "no network" | where the agent works | four teal arrows grow out of the agent | container A
+3 | four teal arrows: "read files", "edit files", "run commands", "query a code graph" | four kinds of action | each label rewrites into a real call | arrows
+3 | the labels rewrite: read_file(…), edit_file(…), run_command(…), get_code_neighbors(…) | actions are tool calls | the arrows retract into the agent | arrows
+3 | OVER the agent opens into the LOOP: "think" → "call a tool" → "read the result" → back to "think" | the loop | a blue dot starts round it | LOOP
+3.5 | a blue dot laps the loop; each lap adds one line to a log at the right | it repeats | the dot takes a new branch out | LOOP, log
+3 | the dot exits by a new branch `submit_patch()`; the gold chip pops out of container A | how it ends | A slides left; the chip slides right | CHIP
+2.5 | CLOSE the chip; its label expands to "git diff of /workspace" | what the patch is | type enters from both sides over the dimmed frame | CHIP
+4 | FULL "You don't submit a fix." from the left, "You submit the agent that writes it." from the right | the reframe | the words part, revealing container B | —
+3 | WIDE container A (blue, left) and container B (green, right) side by side; the chip travels from A to B along an arc | judged in a second container | B lights from inside | CHIP, A, B
+3 | B lights: "exit 0 → resolved" in green; a red ghost beside it, "anything else → not resolved" | binary, as in the opening; the details come in chapter 7 | both verdicts tip over into a plot | verdict
+4 | OVER axes draw: x "how close the patch is", y "score"; a step function: 0 everywhere, jumping to 1 only at the right end | binary reward | a blue dot starts along the x axis | axes
+3 | the dot slides through a region marked "almost right"; the score stays on 0 | almost right scores zero | the axes slide away left as container A returns | axes
+3 | WIDE container A; a small file `/tmp/repro.py` appears beside `/workspace`, tag "concept" | the agent writes its own check | a run arrow fires into it | A
+2.5 | run → red ✗ "fails before the fix" | reproduce first | an edit lands in /workspace | A
+3 | edit → run → green ✓ "passes after" | confirm | the camera pulls back over the whole flow | A
+3 | label "the hidden tests are never shown, so the agent checks itself" | why | the flow straightens into a single strip | —
+3 | OVER strip: issue → LOOP → chip → container B → verdict | the pipeline in one line | the loop section lifts and brightens | strip
+3 | the loop part glows blue, "you design this"; container B and the verdict turn grey, "fixed by the organizers" | your part vs theirs | the blue part zooms forward | strip
+3 | CLOSE "you design this" fans into five tags: prompts · workflow · skills · adapters · budgets | a preview of what you submit | the tags fold into one card | tags
+3 | the card becomes "your bundle"; it slides into an upload slot; the slot prints "score = fraction of tasks resolved" | you upload configuration and get one number | the card multiplies into cells | bundle
+3 | the card multiplies into a row, then into the grid of ≈120 cells | one run per task | the camera dives into one cell; the RAIL tag rewrites to "02 Scoring and time" | GRID
+
+## 2 Scoring and time | 0
+3 | CLOSE one cell fills the frame: "one task = one issue + one repository" | the unit | the camera pulls back | cell
+3 | WIDE GRID: "≈120 hidden tasks" | the hidden set | the grid parts down the middle | GRID
+3 | the halves slide apart: "public leaderboard" | "private leaderboard", small caps "split 50/50" | the split | the halves close as an equation writes above | GRID
+3.5 | FULL equation writes, 3Blue1Brown-style: score = tasks resolved ÷ tasks | the metric | the denominator transforms into a number | equation
+2.5 | the denominator becomes ≈120; the numerator glows green, "resolved" | concrete | the equation shrinks to the top edge | equation
+4 | OVER [SIG2] a clock face draws itself: "12 hours" | the time cap | a line writes under it | clock
+3 | under it: "for all tasks · sandbox setup included · verification excluded" | what counts | the face starts to slice | clock
+4 | the face slices into about 120 thin wedges in one sweep | dividing the time | one wedge lifts | clock
+2.5 | one wedge pulls out toward the camera | one task's share | it begins to unroll | wedge
+4 | the wedge unrolls into a horizontal ruler: "≈ 6 minutes per task", ticks 0 … 6 min | the per-task budget | a caveat writes beneath | ruler
+3 | FULL the arithmetic writes, one term at a time: 12 h = 720 min | the conversion (derived) | the next term writes | equation
+2.5 | 720 min ÷ ≈120 tasks | the division | the result writes | equation
+3 | = ≈ 6 min per task — the 6 slides down onto the ruler's last tick | the result lands on the ruler | the ruler returns | equation → ruler
+3 | the first part of every task's 6 minutes shades grey: "sandbox setup counts against the 12 h" (concept) | setup eats into the budget | the caveat writes | ruler
+3 | small caps under the ruler: "if tasks run one at a time · concurrency not documented" | honesty about the estimate | the loop drops onto the ruler's left end | ruler
+3.5 | the LOOP rolls along the ruler; each lap lays a coloured block (read, run, edit, run, submit); tag "illustrative" | the loop costs time | the last block lands | ruler
+2.5 | the final "submit" block lands before 6 min; a green tick | it fits | a second ruler slides in below | ruler
+3.5 | second ruler: blocks run past the end, which turns red, "budget exhausted"; "the diff left behind is still graded" | running out | a single block on it begins to stretch | rulers
+3 | one run_command block stretches to "up to 300 s per command" — most of the ruler | one slow command can eat a task [SIG2 ends] | the ruler folds into a file card | ruler
+3 | WIDE file card `eval_config.yaml`; four lines type: timeout_seconds · max_tool_calls · max_time_minutes · max_turns | the budget lever | a dial grows beside each line | file card
+3 | four dials attach; small caps "per-task budgets — you set these" | they are knobs | the dials snap to a preset | dials
+3 | the dials snap to "1 minute · 10 tool calls"; label "the organizers' starter — which caps the score near zero" | the trap | the dials begin to sweep up | dials
+3 | the dials sweep up while the 6-minute ruler ghosts behind them | the trade-off | the camera turns to a calendar | dials, ruler
+3.5 | WIDE calendar strip from 23 Sep to 2 Dec, one tick per day drawing left to right | how many tries you get | a counter runs above | calendar
+3 | a counter: "1 submission per day · ≈70 tries (derived)" | scarcity | a dashed copy of the pipeline draws below | calendar
+3.5 | OVER the scoring pipeline at top; a dashed copy at bottom, "your local evaluation"; an arrow between them, "must agree" | you need an offline copy you trust | the copy's cells flicker | two pipelines
+3 | in the copy, about 20 of 129 cells turn grey: "gold patch fails locally · exclude" | the first pitfall (detailed in chapter 10) | the pipelines fold together | pipelines
+3 | the folded line compresses into four stamps: "≈120 private tasks" · "pytest exit 0" · "≈6 min a task, if sequential" · "1 a day" | recap as objects | the stamps drop into a calendar; the RAIL rewrites to "03 Rules, dates, prizes" | stamps, calendar

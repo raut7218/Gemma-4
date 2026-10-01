@@ -1,0 +1,43 @@
+## 15 Where to start | 0
+3 | WIDE the ribbon of cards settles into a column at the left: "levers, ranked by expected return"; small caps "the roadmap's hypothesis, not a result" | the plan | lever 1 lights | lever column
+3.5 | lever 1 "local eval fidelity": the 129-cell grid runs gold and null patches through your local copy; "one leaderboard probe a day — you need an offline copy you trust" | why lever 1 | a reading card pins to it | GRID
+3 | reading cards R01 + R02 pin to the grid: "the organizers' harness guide (60′)" · "a participant's local harness: gold patches pass 109/129 locally (30′)" | what to read for it | lever 2 lights | cards
+3 | lever 2 "budget and termination": the eval_config dials sweep against the 6-minute ruler; "every task must end in a diff" | why lever 2 | lever 3 lights | dials, ruler
+3.5 | lever 3 "prompt and workflow": the LOOP lights explore → reproduce → fix → verify → submit in order; "a strong single-agent prompt first, then A/B against a staged SequentialAgent" | why lever 3 | reading cards pin | LOOP
+3 | cards pin to the loop: R05 "Building effective agents — start simple (25′)" · R06 "explore, reproduce, fix, rerun, edge cases (20′)" · R07 "mini-swe-agent (30′)" | what to read for it | lever 4 lights | cards
+3 | lever 4 "thinking vs context": the three tapes NONE / LOW / HIGH return; card R09 "context is a finite attention budget (25′)" pins to them | why lever 4 | lever 5 lights | tapes
+3 | lever 5 "failure taxonomy": the empty chart fills its first bar outline — "label 50 failed runs" | measure before fixing | lever 6 lights | chart
+3 | lever 6 "LoRA SFT on verified runs": the funnel spins once — "rank 16 on a subset of layers"; card R10 "ADK: output_key, include_contents, AgentTool (60′)" pins to the tree | teach the model | lever 7 lights | funnel
+3 | lever 7 "more training tasks": new bars sprout beside the four repository bars; lever 8 "test-time scaling": two short rulers + a judge vs one long ruler, "if time allows" | wider data, and scaling | lever 9 dims in | bars, rulers
+3 | lever 9 "RL": a tall, dim bar — "highest ceiling, highest cost, only after SFT" | last | the cards stack into a pile | bar
+3 | the pinned cards stack into one pile: "the read-first tier: 11 readings · ≈7 hours"; more cards behind: "next: SWE-Gym → SWE-smith → R2E-Gym → SWE-RL → DeepSWE → Kimi-Dev → SWE-Protégé → CANOPY" | what to read | the pile slides onto a calendar | pile
+3.5 | WIDE the calendar returns with four milestone flags (relative weeks, dates small): "week 1 · first non-zero score" · "week 2 · pick the scaffold" · "week 4 · LoRA beats prompt-only on the held-out repo" · "12 Nov · paper due" | the plan in four flags | a log line types beneath | calendar
+3 | a log line types under the calendar: "one line per experiment: config · local score per repo · leaderboard score · one observation" | discipline | the line becomes a page; the RAIL rewrites to "16 The paper track" | log line
+
+## 16 The paper track | 0
+3 | FULL "That log becomes the paper." small caps "paper track · deadline 12 Nov · separate pool, reported as $35k" | why log | six question marks fall into a grid | —
+3 | OVER six question marks settle into a 3 × 2 grid, each over a film object | six hypotheses worth testing | Q1 opens | questions
+3 | Q1 "workflow vs loop at 31B": the plain loop beside the staged pipeline | question 1 | Q2 opens | Q1
+3 | Q2 "depth vs breadth under a time cap": one long ruler vs k short rulers + a judge | question 2 | Q3 opens | Q2
+3 | Q3 "self-distillation without proprietary data": the funnel and its purple sheet | question 3 | Q4 opens | Q3
+3 | Q4 "thinking tokens vs observation tokens": the three tapes | question 4 | Q5 opens | Q4
+3 | Q5 "do code-graph tools help localisation?": the graph with one lit node | question 5 | Q6 opens | Q5
+3 | Q6 "memorisation vs skill": the rich block pulled out of the grid | question 6 | the six collapse into a single page | Q6
+3 | the six collapse into one page: "spend each day's submission on your best held-out configuration, not on exploration" | the rhythm | the page folds into the gold chip; the RAIL rewrites to "17 Recap" | page → CHIP
+
+## 17 Recap | 0
+3 | OVER the gold chip at centre: "your agent's only output: a git diff" | recap 1 | the camera pulls back continuously | CHIP
+3 | the pull-back reveals the GRID around it: "≈120 hidden tasks from private repositories · pytest exit 0 or nothing" | recap 2 | the pull-back continues | GRID
+3 | the ruler beside the grid: "12 hours for everything ≈ 6 minutes a task, if run one at a time" | recap 3 | the pull-back continues | ruler
+3 | the slab and four cards: "Gemma 4 31B INT4 on 4 × L4 · LoRA is your only lever on the weights" | recap 4 | the pull-back continues | rig
+3 | the TAPE: "32,768 tokens, and inside a task it only grows" | recap 5 | the pull-back continues | TAPE
+3 | the tool ring: "9 fixed tools · budgeted calls cost time, a tool call and context" | recap 6 | the pull-back continues | tool ring
+3 | containers A and B: "work in A, judged in B · keep the patch clean" | recap 7 | the pull-back continues | A, B
+3 | the TREE: "configuration, not code · every lever is in this tree" | recap 8 | the whole map holds for a breath, then the chip flies forward | TREE
+3 | the gold chip flies into container B one last time; its tests light; `exit 0` | callback to the opening | `exit 0` rushes toward camera | CHIP, B
+3 | FULL "Enter the competition." | the call to action | a second line writes | —
+3 | "Google – The Gemma 4 Developer Agent Competition · on Kaggle" writes beneath | where | a third line writes | —
+3 | "final submission: 2 December 2026, 23:59 UTC" | the deadline | the RAIL unfolds into the full column of 17 ticks | —
+3 | the RAIL column: all 17 ticks light in sequence, then fade | close the map | the grid returns behind | RAIL
+3 | end card over the dim grid, small caps: "sources: the competition page, the organizers' harness guide and the Gemma 4 Developer Agent Research Roadmap (Sep 2026) · hypotheses and concepts are labelled" | sources | the title writes | GRID
+3 | end frame: the gold cell glows; title "The Gemma 4 Developer Agent Competition" | final frame | fade to black on the last beat | GRID

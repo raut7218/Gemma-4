@@ -1,0 +1,72 @@
+## 3 Rules, dates, prizes | 0
+3 | WIDE calendar strip; a pin drops at "23 Sep · start" | the start | the next pin falls | calendar
+2.5 | pin "12 Nov · paper track deadline" | date 2 | the next pin falls | calendar
+2.5 | pin "25 Nov · entry and team-merger deadline" | date 3 | a red pin falls | calendar
+3 | red pin "2 Dec · final submission"; small caps "all deadlines 23:59 UTC" | the deadline | the span shades in two colours | calendar
+3.5 | the strip shades "23 Sep → 12 Nov: paper window" in purple, then "12 Nov → 2 Dec: final push" in red; a dot travels the whole span | how the time divides | the strip rises; three plinths grow out of it | calendar
+3.5 | three plinths grow, 1st in the centre, 2nd left, 3rd right: $37k · $18k · $10k | the stakes | a fourth plinth slides in apart | plinths
+3 | a separate plinth: "Paper Track · separate pool, reported as $35k · deadline 12 Nov" | the second track | the plinths sink | plinths
+4 | FULL "Winners open-source their code and adapters" from the left; "and provide a reproducible write-up." from the right | the obligation | the words part; three tokens drop through the gap | —
+3.5 | WIDE three rule tokens drop, already labelled: "1 submission a day" (a calendar tick), "2 final selections" (two flags), "teams of up to 5" (five small figures) | the rules | the middle token opens | tokens
+3 | "2 final selections" opens: a row of past submissions, two get flagged | what it means | the tokens slide left; a gate draws | tokens
+3.5 | a gate: "external data and models: allowed if freely accessible to all"; dataset blocks pass through | the reasonableness standard | a smaller gate with a question mark appears | gate
+3 | the second gate: "distillation from proprietary APIs: an open question at launch" | honesty | both gates fold away; the "2 final selections" flags return | gates
+3 | the two flags return and rise into the words "one open model" from the cold open | link to the model | the words thicken into a blue block; the RAIL rewrites to "04 The model and the hardware" | words → model block
+
+## 4 The model and the hardware | 0
+4 | 3D a slab of weights rests on an architectural-model plinth; soft key light from the left, cool rim light behind; camera 40°; HTML label "gemma-4-31b-it-qat-w4a16-ct" | the only model | the camera orbits slowly | slab
+3 | 3D HTML labels pinned to the slab: "31B parameters" · "≈17 GB of weights" | size | another label pins | slab
+3 | 3D label "one base model per submission — every agent in your bundle uses it" | the rule | a 2D inset opens beside the slab | slab
+3 | 2D inset beside the slab: one weight as 16 bit-cells, squeezed down to 4 bit-cells | what INT4 storage means | an activation bar slides in under it | bit bars
+3 | inset: the activation bar stays 16 bits wide — "W4A16: 4-bit weights, 16-bit activations" | the format | a training loop draws around the 4-bit bar | bit bars
+3 | inset: a number line with 16 evenly spaced levels lights up: "4 bits = 16 levels" — beside it a dense line, "16 bits = 65,536 levels" | what is lost in 4 bits | the training loop draws | number lines
+3 | inset: "QAT: trained with the quantization in the loop" | why INT4 still works | the inset folds back into the slab's label | slab
+4 | 3D wide (camera 42°): four graphics cards rise from the plinth behind the slab, HTML label "NVIDIA L4" on each | the hardware | a bracket draws over them | cards
+3 | 3D a bracket over the four: "4 × L4 · 96 GB in total" | memory | the slab lifts | cards
+4 | 3D the slab lifts and divides along its columns into four blocks | tensor parallelism | the blocks drift toward the cards | slab blocks
+4 | 3D the four blocks slide down into the four cards; each card's edge lights; "tensor_parallel_size = 4" | each layer is split across all four | a bar appears above the cards | cards
+3 | 3D a yellow input bar passes down through all four cards at once; "one forward pass, four GPUs" | what tensor parallelism means | the label rewrites | cards
+3 | 2D maths over the 3D: a weight matrix W splits into four column blocks W₁ W₂ W₃ W₄, one per card colour | tensor parallelism as maths | an input vector slides in | matrix
+3 | the same input x multiplies every block at once: W₁x · W₂x · W₃x · W₄x | four partial products in parallel | the pieces join | matrix
+3 | the four partial results join into one output vector | one layer, computed across four GPUs | the maths fades back into the 3D | matrix
+3 | 3D label "served by vLLM · max_model_len = 32,768 tokens" | the server and its ceiling | the camera rises to 50° | cards
+3 | 3D (camera 50°) a whole slab is shown again in front of the cards, "the same weights, frozen"; a tall thin purple sheet B and a short wide sheet A rise beside it | the LoRA factors | an equation writes above | slab, B, A
+3 | 2D equation over the 3D: W′ = W + B·A | the update | the sheets move to meet | equation
+3 | 2D toy example, tag "toy sizes": W drawn as an 8 × 8 grid of cells; B as 8 × 2, A as 2 × 8 beside it | the shapes | one product cell lights | grids
+3 | one cell of B·A lights: a row of B and a column of A glow, multiplied and summed | how each entry of B·A is made | every cell fills | grids
+3 | every cell of the 8 × 8 product fills purple, column by column; it is a full-size update made from two thin pieces | low rank, full size | the counts write | grids
+3 | counts under the toy: W: 8 × 8 = 64 · B + A: 8×2 + 2×8 = 32 — at real sizes the gap is far larger: d·k vs r·(d + k) | why LoRA is cheap | the 3D view returns | grids
+4 | 3D B and A meet over the slab; their product lays down as a thin purple film on its top; "rank r ≤ 128 here" | the update is low-rank | the scene flattens to 2D areas | film
+3 | 3D more films stack on the slab: "up to 8 adapters · a different one per agent allowed" | per-agent adapters | the camera returns to 40° | films
+3 | 3D label "the only way to change the model's weights" | why LoRA matters | the camera eases back (never overhead) and the scene dissolves to a 2D file card | rig
+3 | WIDE 2D file card `configs/sampling.yaml` writes in: temperature · top_p · top_k | you control sampling | two more lines type | sampling card
+3.5 | lines: "max_output_tokens ≤ 32,768" · "thinking_level NONE … HIGH" · "thinking_budget (default 4,096)" | the thinking knobs | "thinking" lifts out of the card | sampling card
+3 | the word "thinking" drops into a thin strip beside the card: "thinking shares the same 32k window" | foreshadow | the strip lengthens across the frame | strip
+3 | FULL a summary line, each term in its colour: Gemma 4 31B · INT4 · 4 × L4 · 32k · ≤ 8 LoRA | recap | "32k" lifts out and grows | "32k"
+3 | "32k" grows and transforms into "32,768 tokens", which stretches into a long empty strip across the frame; the RAIL rewrites to "05 The 32k context window" | the tape is born | ticks draw under it | TAPE
+
+## 5 The 32k context window | 0
+3 | WIDE TAPE across the frame; ticks 0 … 32,768 beneath | the window | four legend chips rise below | TAPE
+3 | legend: prompt (blue) · tool outputs (teal) · the agent's own turns (ink) · thinking (purple); "everything shares one window" | colour key | the first block slides in | TAPE
+4 | [SIG3] a blue block slides in from the left, drawn to scale (about 11%): "first message ≈ 3.5k" | the starting cost | the block opens like a drawer | TAPE
+2.5 | above the block: 3.5k ÷ 32,768 ≈ 11% (derived) | the first message's share | the drawer opens | TAPE
+4 | CLOSE the drawer shows its strips: problem statement · hints, if any · budget · environment rules · tool notes · 150-entry file listing | what the first message holds | the drawer closes | TAPE
+3 | WIDE one teal block (about 4% of the tape): "one full-size tool output (5,000 chars) ≈ 1.3k"; a thin ink sliver after it: "+ the agent's own turn" | the unit cost | a counter appears above | TAPE
+2.5 | above it: 1.3k ÷ 32,768 ≈ 4% (derived) | one output's share | the counter appears | TAPE
+3 | the counter: "tool outputs: 1"; blocks keep coming, 2 … 6, each with a soft tick | filling | the counter keeps running | TAPE
+2.5 | 7 … 12; past half full | filling | the counter keeps running | TAPE
+2.5 | 13 … 18; the free space shrinks and its edges glow red | filling | the counter keeps running | TAPE
+2 | 19; the last gap is a sliver | nearly full | the twentieth block arrives | TAPE
+4 | 20: the block doesn't fit; the tape's end cracks red: "≈20 full-size outputs + the agent's turns → overflow" | the wall | the gold chip slides out from under the tape | TAPE
+3.5 | the sum writes over the cracked tape: 3.5k + 20 × 1.3k = 29.5k — the last ≈3.3k is everything else: the agent's turns, thinking, replies (derived) | why it overflows at about 20 | the chip slides out | TAPE
+3 | the chip slides out from under the cracked tape: "the task ends, but the diff left behind is still graded" | partial work counts [SIG3 ends] | the tape empties | CHIP, TAPE
+3.5 | FULL "Inside a task, the context only grows." small caps "in practice · participant finding (google-adk 2.9.2)" | the surprise, labelled as a finding | the sentence drops back onto the tape | TAPE
+3 | WIDE TAPE refills with purple thinking blocks between steps: "thinking competes for the same space" | thinking costs context | the tape triples into three rows | TAPE
+2.5 | one thinking block at the default budget: 4,096 ÷ 32,768 = 12.5% of the window (derived) | the size of one thought | the tape triples | TAPE
+4 | three tapes stacked: thinking_level NONE / LOW / HIGH, the same steps, purple blocks growing; tag "concept" | the knob | HIGH runs out first | three tapes
+3 | HIGH cracks first; NONE fits the most steps; small caps "measure it on your own runs" | the trade-off | the tapes merge back into one | TAPE
+3.5 | TAPE with short teal slivers instead of full blocks; the counter runs past 20 with no crack; tag "concept" | short outputs buy more steps | the tape stands up vertically beside the loop | TAPE
+3 | OVER TAPE stands vertical as a meter beside the LOOP; each lap drops the meter a notch | tie the window to the loop | the meter reaches red | meter, LOOP
+3 | the meter hits red and the loop stops: "32,768 tokens is the real budget" | recap | the teal blocks lift off the tape | meter
+3 | the teal blocks lift off and fan out; each is stamped with the tool that produced it | which tool made which block | the stamps gather into a ring | blocks
+3 | the stamps settle into a ring of nine tiles around the loop's "call a tool" node; the RAIL rewrites to "06 The nine tools" | the tools are where context comes from | the ring tightens | tool ring

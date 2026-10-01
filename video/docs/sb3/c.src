@@ -1,0 +1,117 @@
+## 6 The nine tools | 0
+3 | OVER the LOOP small at centre; nine teal tiles ring its "call a tool" node | the fixed set | the ring separates into arcs | tool ring
+3 | first arc labels itself: "shell & files" — run_command · read_file · edit_file · write_file | group 1 | the next arc labels | tool ring
+2.5 | second arc: "control" — get_status · submit_patch | group 2 | the last arc labels | tool ring
+3 | third arc: "code graph" — get_code_neighbors · search_similar_code · get_code_subgraph | group 3 | the tiles change fill | tool ring
+3 | seven tiles fill solid, "budgeted: each call counts"; get_status and submit_patch turn to outlines, "free: not counted as a tool call" | cost | run_command slides to the front | tool ring
+4 | CLOSE run_command opens into a terminal: "bash in /workspace · timeout min(300 s, time remaining)" | how it runs | output starts to pour | terminal
+3 | output pours in; a cut line drops at 5,000 chars and the rest greys out | truncation | the terminal folds back into its tile | terminal
+3 | the result returns as a JSON string, keys lighting in turn: status · stdout · exit_code | what the model actually reads | the terminal folds back | JSON
+3.5 | CLOSE read_file opens into a long file; a frame over lines 1–150 slides down; "≤ 150 lines and ≤ 10,000 chars per call" | windowed reading | the view folds back | file view
+2.5 | a flag lights in the result: is_truncated = true | the model is told when it got less | the view folds back | file view
+4 | CLOSE edit_file: old_string (red) above new_string (gold); three match stages light in turn — exact → whitespace-flexible → regex-tokenised | how matching works | two error chips appear | edit view
+3 | error chips: "0 matches → error" · "more than one → error" | its failure modes | the view folds back | edit view
+2.5 | a third switch: allow_multiple (off by default) — on, every match is replaced | the escape hatch | the view folds back | edit view
+3 | CLOSE write_file: a new file appears inside /workspace with a gold outline: "files created here end up in your patch" | the trap | the file slides out of the boundary | file tree
+2.5 | the scratch file slides to /tmp and its gold outline fades | scratch belongs in /tmp | the view folds back | file tree
+3 | CLOSE get_status fires: the tool-call counter stays put while the context meter ticks up a hairline: "free = not counted as a tool call" | what free means | submit_patch slides forward | meters
+3 | CLOSE submit_patch: `git diff HEAD` pours into the gold chip; "ends the session after this turn" | the end call | the chip slides off; a graph draws behind it | CHIP
+4 | WIDE a code graph: functions as nodes, calls as edges | the graph tools | one node lights | graph
+3 | get_code_neighbors: a node lights its callers and callees | neighbours | a query tag flies in | graph
+3 | search_similar_code: the query tag `HTTPAdapter` (tag "example") snaps onto a node — "a symbol name, not a sentence" | symbol search | a lasso draws | graph
+3 | get_code_subgraph: a lasso around three nodes keeps their edges | subgraph | the graph shrinks back into its tiles | graph
+3 | OVER the ring again; two dashed rings grow outside it: "+ skills you write" · "+ sub-agents you define" | the extensions | three meters draw beneath | tool ring
+3 | three meters under the ring: time · tool calls · context | the costs | a run_command fires | meters
+3 | a run_command fires: all three meters drop a notch — "every budgeted call costs time, a tool call and context" | three costs | the run_command tile zooms forward | meters
+3 | the terminal reopens on "bash in /workspace"; the camera pulls back through it to show /workspace inside container A; the RAIL rewrites to "07 Sandbox and verification" | the tool lives inside the sandbox | container A turns 3D | container A
+
+## 7 Sandbox and verification | 0
+3.5 | OVER six stages draw as a track: compile → serve → prepare A → run the loop → extract the patch → verify in B | the whole scoring pipeline | stage 1 lights | track
+3 | stage 1 "compile": the bundle's YAML becomes an agent tree; "no Python entry points · every agent declares the same base model" | compile | stage 2 lights | track
+2.5 | stage 2 "serve": a small slab-and-four-cards icon from chapter 4 | serve | stage 3 lights | track
+3 | stage 3 "prepare container A": "no git history after base_commit · network off" | prepare | the camera dives into stage 3 | track
+4 | 3D (camera 40°) container A as an architectural model on a plinth: a translucent case with a header strip; inside, real parts — a block "/workspace (the repository)", a tray "/tmp (scratch)", two plaques "pytest.ini · conftest.py"; all labels HTML | the sandbox, physically | the camera orbits slowly | container A
+3 | 3D labels: "python:3.13-slim · 4 GiB RAM · 2 vCPU · offline" | the machine | the plaques glow | container A
+3 | 3D the plaques glow red: "the harness commits these as the baseline — do not modify" | trap | a new file appears in /workspace | container A
+3 | 3D an untracked file appears inside /workspace and turns gold: "untracked files end up in the patch" | hygiene | it slides to the tray | container A
+2.5 | 3D the file slides into the /tmp tray; the gold fades | scratch goes to /tmp | a 2D loop overlay draws above the case | container A
+3 | stage 4: a 2D LOOP overlay spins above the 3D case (camera 45°) | the agent works inside | it stops on an end condition | container A, LOOP
+3.5 | 2D end conditions stack beside the case: submit_patch() · budget exhausted · 3 turns in a row without a tool call | how a run ends | the patch command types | list
+3.5 | stage 5 CLOSE `git add -N . && git diff HEAD` types; the gold chip forms: "taken even if the agent never submits" | extraction | the chip arcs out of A | CHIP
+4 | stage 6 3D (camera 42°) container B rises to the right on the same plinth — same silhouette, green, empty and clean; the chip arcs from A to B | a fresh container | B's first step lights | CHIP, A, B
+3 | 3D B step 1 "apply the patch": the chip settles into B's /workspace block | step 1 | a test file inside flips | B
+3 | 3D B step 2 "reset any test files the hidden tests touch": an edited test file flips back | editing tests is useless | grey bars drop in | B
+2.5 | 3D B step 3 "apply the hidden tests": grey bars drop into B | step 3 | pytest runs | B
+3 | CLOSE B's terminal: the patch applies in up to four passes, then `python3 -m pytest <targets> -q` types | the exact check | the rim light changes | B
+3 | 3D B step 4 "run pytest": B's rim light turns green, "exit 0 → resolved"; a red ghost beside it, "anything else → not resolved" | the verdict | the camera pulls back to both | B
+3 | 3D wide (camera 38°): A and B on one plinth; "you shape what happens here" under A, "fixed by the organizers" under B | the boundary | the scene flattens to 2D | A, B
+4 | FULL three habits, entering in turn from alternating sides: "scratch to /tmp" · "never touch pytest.ini or conftest.py" · "don't edit tests" | the habits | the words fall into container A's outline | habits
+3 | container A shrinks into the centre panel of a three-panel frame; the RAIL rewrites to "08 A worked example" | hand-off to the walkthrough | the panels fill | dashboard
+
+## 8 A worked example | 0
+3 | WIDE three panels: left the call log, centre the workspace, right three meters (context, tool calls, time); small caps "illustrative run · not a real trajectory" | the dashboard | the issue card lands in the centre | dashboard
+3 | the cold-open issue card lands in the centre: summarize([]) raises ZeroDivisionError | same example as the opening | the first message assembles | issue
+3 | CLOSE the log fills with the first message (six strips); the context meter fills to ≈3.5k in blue | the starting cost | a thought writes | log, meter
+2 | CLOSE the log: "think: find summarize" | the plan | the run_command tile lights | log
+3 | call 1 run_command: grep -rn "def summarize" --include=*.py . | locate | the result returns | log
+3 | result: src/stats.py:4:def summarize(xs): — tool calls 1; the context meter grows by a sliver | small outputs are cheap | the camera moves to the centre panel | log, meters
+3 | CLOSE centre: call 2 read_file src/stats.py lines 1–8; the cold-open code panel draws, with a scrollbar showing the file is longer | read only what you need | line 6 glows | code panel
+3 | line 6 glows red; the context meter grows by 8 lines, not by the whole file | windowed reading | the camera rises over the workspace | code panel, meters
+3 | OVER the workspace from above: /workspace inside a gold edge, /tmp outside it | where things live | a file appears in /tmp | boundary
+3 | call 3 run_command writes /tmp/repro.py with a heredoc; the file appears outside the gold edge | scratch goes to /tmp | the camera returns to the log | boundary
+3 | CLOSE log: call 4 python3 /tmp/repro.py → ZeroDivisionError: division by zero (red) | bug reproduced | the line underlines itself | log
+3 | the raw result behind that line: {"status": "error", …, "exit_code": 1} — the agent reads JSON, not a terminal | what the model sees (illustrative) | the line underlines | log
+2.5 | "now there is a test the agent can see" | why reproduce | the camera pushes into the code panel | log
+3.5 | CLOSE code: call 5 edit_file — old_string (red) → new_string (gold); line 6 rewrites; "edit applied · 1 match" | the fix | the camera pulls back to the log | code panel
+3 | CLOSE log: call 6 python3 /tmp/repro.py → 0 (green) | the repro passes | the next call types | log
+2.5 | raw result: {"status": "ok", "stdout": "0", "exit_code": 0} (illustrative) | success in the same shape | the next call types | log
+3 | call 7 python3 -m pytest tests/test_stats.py -q → passed (green dots) | nearby existing tests still pass | the next call types | log
+3 | call 8 git status --short → " M src/stats.py" only; /tmp/repro.py is not listed | the patch is clean | the camera pushes into the meters | log
+3 | CLOSE meters: context far below 32k; tool calls 8; time bar short | the run fits | submit fires | meters
+3 | submit_patch (free): the gold chip forms — 1 file, 1 line changed | the output | the chip travels right | CHIP
+3 | the chip travels into a small container B; its test cells stay neutral grey: "on a real task, this is where it's decided" | honesty: the hidden tests could still fail | the dashboard resets | CHIP, B
+3 | FULL "Same task. Careless agent." | contrast | the dashboard returns, reset | —
+3 | WIDE call 1: read_file on a large, unrelated file; the context meter jumps by a big teal block | wasteful reading | more reads follow | dashboard
+3 | calls 2–4: read_file on three more large files; the meter passes half | drift | an edit lands | dashboard
+3 | the edit lands with no reproduction and no test run | no verification | a file is written | dashboard
+2.5 | write_file creates notes.txt inside /workspace | a stray file | submit fires | dashboard
+3 | the chip forms with two files: the fix and notes.txt | junk ships with the fix | the frame splits | CHIP
+3.5 | split: careful run (left) vs careless run (right), meters side by side | comparison | a line writes under both | split
+3.5 | "same fix · nothing checked · junk in the patch — your prompt, workflow and budget decide which run you get" | the lesson | the careful log compresses into icons | split
+3 | the careful run's log compresses into an icon line: find → read → reproduce → fix → re-run → test → check → submit | the recipe | each icon names its tool | icon line
+3 | each icon names its tool: run_command · read_file · run_command · edit_file · run_command · run_command · run_command · submit_patch | the recipe in tool calls | the line cracks red at "submit"; the RAIL rewrites to "09 Failure modes" | icon line
+
+## 9 Failure modes | 0
+3 | OVER the crack opens into a large LOOP at centre; small caps "five ways runs fail (the roadmap's taxonomy)" | the taxonomy | the loop starts to spin | LOOP
+4 | looping: the blue dot laps and laps; a log beside it repeats the same call three times in red; the tool-call meter drains | symptom 1 | the exit branch erases itself | LOOP
+3 | a detector draws over the log: three identical consecutive calls bracketed — "easy to count in a trajectory" (concept) | how to spot it | the exit branch erases | LOOP
+3 | never submitting: the exit branch is gone; the time bar runs out; the diff is taken anyway — an empty one scores zero | symptom 2 | small caps write beside the loop | LOOP
+2.5 | "a run also ends after 3 turns in a row without a tool call" | a related end | a small code graph appears beside the loop | LOOP
+3 | wrong file: the edit edge lands on the wrong node of the code graph; the hidden tests aim at the other node and turn red | symptom 3 | the chip drops toward a container | LOOP, graph
+2.5 | in the log: the edit's filepath differs from the file the reproduction imported (illustrative) | how to spot it | the chip drops | LOOP
+3 | patch that won't apply: the chip's shape doesn't fit container B's slot and bounces off — "verification applies it to a fresh checkout" | symptom 4 | the chip swells | CHIP, B
+3 | over-editing: the chip swells into a long, many-file diff beside a short one | symptom 5 | the five symptoms shrink into tags | CHIP
+2.5 | the diff's file count and line count tick up beside it: "measure patch size per task" (concept) | how to spot it | symptoms shrink to tags | CHIP
+3 | four harness traps fan out as tags: context overflow · editing tests · stray files · touching pytest.ini or conftest.py | the harness traps | the tags sort into piles | tags
+3 | all nine tags sort into two piles: "the agent's behaviour" · "the patch's hygiene"; small caps "suggested split" | structure | an empty chart frame draws | piles
+3.5 | an empty bar chart: "your failure counts — label 50 failed runs by hand"; tag "empty on purpose: you fill this in" | what to build | the chart's x-axis stretches into a row of cells | chart
+3 | the x-axis becomes a row of cells, which multiplies into a grid; the RAIL rewrites to "10 The data" | from failures to the data | the cells colour by repository | GRID
+
+## 10 The data | 0
+4 | OVER 129 cells colour themselves by repository: fastapi 67 · rich 48 · requests 13 · httpx 1 (a single lonely cell) | the public training set | the blocks slide apart | GRID
+3 | the four blocks slide apart: "129 public training tasks · 4 repositories" | breakdown | one cell opens | GRID
+3 | each block gains its character: fastapi "web framework · routing, dependency injection, pydantic" · rich "terminal rendering · string and ANSI output" | what the code looks like | the other two label | GRID
+3 | requests "HTTP client · several tests need a network that doesn't exist offline" · httpx "HTTP client" | why some tasks misbehave offline | one cell opens | GRID
+3 | CLOSE one cell opens like a folder: problem_statement · base_commit · repository snapshot | contents | more files slide out | task
+3.5 | more: test_patch "hidden at evaluation" · gold patch "training only" · code-graph and embedding files | contents | the graph files flicker | task
+3 | the graph files flicker: "about half are 0 bytes (hard links), yet 128 of 129 tasks still have usable graph data" | a known data quirk | the gold patch unrolls | task
+3.5 | the gold patch unrolls as a strip: "median reference fix: 31 lines in 1 file"; small caps "no hints text · ≈20.5 GB of repository snapshots" | how big a fix is | the folder closes; the camera rises | task
+4 | OVER how tasks were mined: repository history → commits → filter "changed core .py logic and matching unit tests" | provenance | a gate draws | pipeline
+3 | gate "two-phase verification: tests fail before the fix, pass after"; tasks drop out of it | the quality gate | a second grid appears beside the first | pipeline
+3 | one task runs through the gate: its tests on base_commit → red; with the gold patch → green; only then is it kept | the two phases, shown | the second grid appears | pipeline
+3.5 | WIDE two grids: public 129 (4 repositories, gold patch visible) vs hidden ≈120 (private repositories, locked, gold patch not visible) | the difference | a line writes under the hidden grid | grids
+3 | under the hidden grid: "same pipeline, so expect similar size and style: small, single-file fixes" | what to expect | the hidden grid fades; the rich block lifts | grids
+3 | the rich block lifts out of the public grid: tag "example split — develop on the rest, test on rich" | hold out a whole repository | about 20 cells turn grey | GRID
+3 | about 20 cells turn grey: "gold patch fails locally for environment reasons — exclude them" | noise in local evaluation | three empty bars rise | GRID
+3 | three empty bars: fastapi · rich · requests — "report your scores per repository" | to spot overfitting | one cell's file list lifts out | GRID
+3 | the cell's file list lifts out and re-forms as a file tree; the RAIL rewrites to "11 What you submit" | from task files to bundle files | type enters over a dimmed frame | TREE

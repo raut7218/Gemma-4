@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Gemma 4 Developer Agent — explainer</title>
+<link rel="stylesheet" href="lib/style.css">
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/MorphSVGPlugin.min.js"></script>
+<script src="vendor/CustomEase.min.js"></script>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div>
+  <div id="world"></div>
+  <div id="hud"></div>
+</div>
+<script src="lib/tokens.js"></script>
+<script>
+  gsap.registerPlugin(MorphSVGPlugin, CustomEase);
+  // Background: faint number plane with a soft vignette, baked once into an image
+  // (cheaper to composite each frame than live SVG lines plus a gradient layer).
+  (function () {
+    const c = document.createElement('canvas'); c.width = 2880; c.height = 1620;
+    const g = c.getContext('2d');
+    g.fillStyle = TOK.BG; g.fillRect(0, 0, 2880, 1620);
+    for (let x = 0; x <= 2880; x += 60) { g.strokeStyle = x % 240 === 0 ? '#1C232B' : '#151B22'; g.lineWidth = x % 240 === 0 ? 1.6 : 1; g.beginPath(); g.moveTo(x + 0.5, 0); g.lineTo(x + 0.5, 1620); g.stroke(); }
+    for (let y = 0; y <= 1620; y += 60) { g.strokeStyle = y % 240 === 0 ? '#1C232B' : '#151B22'; g.lineWidth = y % 240 === 0 ? 1.6 : 1; g.beginPath(); g.moveTo(0, y + 0.5); g.lineTo(2880, y + 0.5); g.stroke(); }
+    const v = g.createRadialGradient(1440, 810, 420, 1440, 810, 1500);
+    v.addColorStop(0, 'rgba(14,17,22,0)'); v.addColorStop(1, 'rgba(6,8,11,0.85)');
+    g.fillStyle = v; g.fillRect(0, 0, 2880, 1620);
+    document.getElementById('bg').style.background = `url(${c.toDataURL('image/png')})`;
+  })();
+  window.THREE_SCENES = {};
+</script>
+<script src="lib/engine.js"></script>
+<script src="lib/kit.js"></script>
+<script src="lib/draw.js"></script>
+<script type="module">
+  // Scenes are listed in film.json order; ?only=<file> loads a single test scene.
+  const q = new URLSearchParams(location.search);
+  const list = q.get('scenes') ? q.get('scenes').split(',') : (await (await fetch('scenes/order.json')).json());
+  for (const s of list) {
+    if (s.endsWith('.mjs')) await import('./scenes/' + s);
+    else await new Promise((res, rej) => { const el = document.createElement('script'); el.src = 'scenes/' + s; el.onload = res; el.onerror = rej; document.body.appendChild(el); });
+  }
+  await document.fonts.ready;
+  await Promise.all(Object.values(FILM.EL).map((r) => r.extra.ready).filter(Boolean));
+  FILM.build();
+  await Promise.all(Object.values(FILM.EL).map((r) => r.extra.ready).filter(Boolean));
+  FILM.seek(Number(q.get('t') || 0));
+  window.__READY = true;
+</script>
+</body>
+</html>

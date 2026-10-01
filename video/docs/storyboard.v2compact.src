@@ -1,0 +1,342 @@
+# Storyboard v2. One line per composition:
+#   beats | on screen | what this moment is for | how it leaves | carried into next shot
+# "## N Title | target" starts a chapter. 1 beat = 0.75 s (80 BPM). Scale tags: CLOSE, WIDE, OVER (map/overhead
+# diagram view), FULL (full-frame type), 3D. [SIG1] [SIG2] [SIG3] mark the three signature moments.
+# Persistent objects: CHIP (gold patch.diff), LOOP (agent loop: think → call a tool → read the result, exit
+# branch submit_patch), CONT (container silhouette: rounded case with a header strip; A blue, B green), TAPE
+# (context window), GRID (task cells), TREE (bundle file tree), RAIL (HUD chapter tag).
+
+## 0 Cold open | 80
+4 | CLOSE frame one, finished: issue card fills the frame — header "Issue · open", corner tag "illustrative example", title `summarize([]) raises ZeroDivisionError`, body "Expected 0 for an empty list." | hook with something every engineer recognises | card slides left and shrinks while a code panel draws in from the right | issue card
+3 | WIDE issue card (left, small); code panel `src/stats.py` (right, large) with 8 numbered lines | the bug lives in a repository | camera pushes right onto line 6 | code panel
+3 | CLOSE line 6 `return total / len(xs)` glows red; a red tick draws in the gutter; small caps "the bug" | locate | issue card drops out of frame; the line itself starts to split | line 6
+4 | CLOSE line 6 splits: red `- return total / len(xs)` rises, green `+ return total / len(xs) if xs else 0` drops; rest of the file dims | a fix is a diff | the two lines slide together toward centre | diff lines
+3 | [SIG1] the two diff lines fold into a gold CHIP `patch.diff` at centre; camera pulls back to wide | the agent's only output | chip slides right as a box draws around its destination | CHIP
+3 | WIDE CONT B (green) draws on the right, header "fresh container"; CHIP slides into its top; left, large type enters from the left: "The fix is judged somewhere else." | the patch is judged elsewhere | type swaps in place to the next line | CHIP, CONT B
+3 | six grey test bars drop into B; the left type becomes "Tests written by the original developers." | hidden tests | `$ pytest` types under the box | CONT B
+4 | `$ pytest` types under B, then the bars turn green one after another (soft click each); left type: "Never shown to the agent." | the verdict comes from tests | `→ exit 0` appends to the pytest line | CONT B
+2 | `$ pytest → exit 0` (green) completes and swells slightly | binary outcome | exit 0 flies forward to fill the frame while B falls back | exit 0
+3 | FULL "exit 0" fills the frame; "= resolved" wipes in beneath | define success | the pair shrinks toward one cell of a grid revealed behind it | exit 0
+3 | OVER [SIG1 ends] GRID: 12×10 cells bloom from the centre; the verdict lands in one gold cell | ≈120 hidden tasks | a plate label rises from the bottom edge | GRID
+3 | GRID; plate label "≈120 hidden tasks · from private repositories"; every cell gets a lock stroke | the scale and the twist | label swaps text in place | GRID
+3 | GRID; an icon trio (issue → patch → verdict) sweeps across every row; label "each cell: one full run" | every cell is the whole loop | grid dims; title wipes in over it | GRID (dim)
+4 | FULL title over the dim grid: "The Gemma 4 Developer Agent Competition"; small caps "Google · Kaggle · 2026" | the name | title flies toward camera revealing the first constraint under it | —
+2 | FULL "One open model." enters from the left | constraint 1 | stays; second line enters | words
+2 | FULL "Real bugs." enters from the right | constraint 2 | stays; third line enters | words
+3 | FULL "No internet." enters from the left | constraint 3 | lines leave to alternating sides | —
+4 | quote line 1 wipes in, small caps "the organizers' goal": “Post-train an open model into a reliable agent that navigates complex codebases | intent in their words | stays; line 2 wipes under it | quote
+4 | quote line 2: "and drafts fixes for real software issues, accelerating developer workflows on everyday hardware.” — "Post-train an open model" turns purple, "drafts fixes" gold | the two verbs that define the work | quote lifts out of the top edge | quote
+3 | three prize figures count up in a row: $37k · $18k · $10k, small caps "1st · 2nd · 3rd place" | stakes | figures drop out as the date writes in above | —
+3 | "2 December 2026" writes in, small caps "final submission · 23:59 UTC" | deadline | date flies at camera, revealing the chapter map | —
+3 | OVER chapter map: 14 chapter names in two columns over the dim grid, small caps "what this film covers" | the map | all names shrink away except chapter 1 | chapter names
+3 | "01 The task" glides to the top-left and settles as the RAIL tag at its exact pixels | where we are | the remaining grid fades | RAIL
+
+## 1 The task | 160
+3 | FULL question: "What does the agent receive?" | set the question | words part left/right, revealing the two inputs | —
+3 | WIDE issue card enters from the left, a repository stack from the right | two inputs | camera pushes onto the issue card | issue, repo
+2 | CLOSE issue card; label "a GitHub-style issue description" underlines | input one | camera slides right onto the repo | issue
+3 | CLOSE repo becomes a commit line: dots left to right, a pointer `base_commit` | input two | dots to the right of the pointer start to grey | commit line
+3 | dots after base_commit go grey; label "the fix is not in your checkout" | you start one commit before the fix | camera pulls back | commit line
+3 | WIDE both inputs slide into a blue rounded block "Gemma 4 31B" | the model reads them | an outline draws round the block | model block
+3 | outline "Agent Development Kit (ADK)" draws around the model | the harness around the model | a second outline draws round both | model, ADK
+3 | CONT A (blue) draws around both; header "container A · offline sandbox", red small caps "no network" | where it works | four teal arrows grow out of the agent | CONT A
+3 | four teal arrows: "read files", "edit files", "run commands", "query a code graph" | four kinds of action | each arrow's label swaps to a real call | arrows
+3 | arrow labels swap to calls: read_file(…), edit_file(…), run_command(…), get_code_neighbors(…) | actions are tool calls | arrows retract into the agent | arrows
+3 | OVER the agent opens into the LOOP: "think" → "call a tool" → "read the result" → back | the loop | a dot starts running round it | LOOP
+3 | a yellow dot laps the loop; each lap adds one line to a log at the right | it repeats | the dot takes the exit branch | LOOP, log
+3 | the dot exits by a new branch `submit_patch()`; CHIP pops out of container A | how it ends | CHIP slides right; A slides left | CHIP
+3 | CLOSE CHIP; its label expands to "git diff of /workspace" | what the patch is | type enters from both sides over a dimmed frame | CHIP
+4 | FULL "You don't submit a fix." from the left, "You submit the agent that writes it." from the right | the reframe | words part, revealing CONT B | —
+3 | WIDE CONT A (left) and CONT B (right, green) side by side; CHIP travels A → B | judged elsewhere | B's steps list under it | CHIP, A, B
+3 | under B, step list builds: "apply the patch · add hidden tests · run pytest" | what happens in B (taught fully in chapter 7) | the verdict branches | B
+3 | B branches: "exit 0 → resolved" (green) / "anything else → not resolved" (red) | binary | the branch tips become a plot | verdict
+4 | OVER axes: x "how close the patch is", y "score"; a step: 0 until the right end, then 1 | binary reward | a yellow dot travels the x axis | axes
+3 | the dot slides through "almost right"; y stays 0; label "almost right scores zero" | the lesson | axes fold up into container A | axes
+3 | WIDE CONT A again; /tmp/repro.py appears beside /workspace, tag "concept" | the agent writes its own check | a run arrow fires | A
+3 | run → red ✗ "fails before the fix" | reproduce first | the code edits | A
+3 | edit → run → green ✓ "passes after" | confirm | camera pulls back to the whole flow | A
+3 | label "the hidden tests are never shown, so the agent checks itself" | why | the flow straightens into a strip | —
+3 | OVER strip: issue → LOOP → CHIP → CONT B → verdict | recap the pipeline | the loop section lifts and brightens | strip
+3 | the LOOP part brightens blue, "you design this"; B and verdict grey, "fixed by the organizers" | your part vs theirs | the blue part zooms forward | strip
+3 | CLOSE "you design this" splits into five tags: prompts · workflow · skills · adapters · budgets | preview of the bundle | tags fold into a single card | tags
+3 | the card becomes "bundle · YAML, prompts, skills, adapters"; it slides into an upload slot | you upload configuration | the slot prints a line | bundle
+3 | the slot prints "score = fraction of tasks resolved" | the score | the bundle multiplies into cells | score line
+3 | the CHIP returns at centre and multiplies into a row, then into GRID | one patch per task | grid zooms into one cell | GRID
+3 | RAIL becomes "02 Scoring and time"; the camera settles on one cell | where we are | the cell becomes chapter 2's subject | cell
+
+## 2 Scoring and time | 160
+3 | CLOSE one cell; label "one task = one issue + one repository" | the unit | camera pulls back | cell
+3 | WIDE GRID; label "≈120 hidden tasks" | the hidden set | grid parts down the middle | GRID
+3 | grid halves slide apart: "public leaderboard" · "private leaderboard"; small caps "split 50/50" | the split | halves rejoin as an equation writes above | GRID
+4 | FULL equation writes: score = tasks resolved ÷ tasks | the metric | the denominator takes the value ≈120 | equation
+3 | the denominator becomes ≈120, the numerator glows green "resolved" | concrete | equation slides to the top edge, small | equation
+4 | OVER [SIG2] a clock face draws: "12 hours" | the time cap | label writes under it | clock
+3 | label: "for all tasks · sandbox setup included · verification excluded" | what counts | the face starts to slice | clock
+4 | the face slices into ≈120 thin wedges in one sweep | dividing the time | one wedge lifts | clock
+3 | one wedge pulls out toward the camera | one task's share | it unrolls | wedge
+4 | the wedge unrolls into a horizontal ruler "≈ 6 minutes per task" with ticks 0…6 min | the per-task budget | caveat writes beneath | ruler
+3 | small caps "if tasks run one at a time · concurrency not documented" | honesty | the LOOP drops onto the ruler's start | ruler
+3 | LOOP on the ruler; its laps lay coloured blocks along it (read, run, edit, run, submit), tag "illustrative" | the loop costs time | the last block lands | ruler
+3 | final block "submit" lands before 6 min, green tick | fits | a second ruler slides under | ruler
+3 | second ruler: blocks run past the end, which turns red "budget exhausted"; label "the diff left behind is still graded" | overflowing | both rulers slide down; a single command block grows | rulers
+3 | one run_command block stretches to "up to 300 s" — almost the whole ruler | one slow command can eat the task | [SIG2 ends] ruler shrinks into a file card | ruler
+3 | WIDE file card `eval_config.yaml`; four lines type: timeout_seconds, max_tool_calls, max_time_minutes, max_turns | the budget lever | a dial appears beside each line | file card
+3 | four dials attach; small caps "per-task budgets you set" | they're knobs | dials snap to a preset | dials
+3 | dials snap to "1 minute · 10 tool calls", label "the organizers' starter — which caps the score near zero" | the trap | dials sweep up slowly | dials
+3 | dials sweep up while the 6-minute ruler ghosts behind; label "12 h covers all ≈120 tasks" | the trade-off | camera turns to a calendar | dials, ruler
+4 | WIDE calendar strip 23 Sep → 2 Dec, one tick per day | how many tries you get | ticks count | calendar
+3 | ticks count: "1 submission per day · ≈70 tries (derived)" | scarcity | a mirror pipeline draws below | calendar
+3 | OVER the scoring pipeline (top) and a dashed copy "your local evaluation" (bottom), arrow "must agree" | you need a copy you trust | ≈20 cells of the local copy go grey | two pipelines
+3 | in the local copy ≈20 of 129 cells go grey: "gold patch fails locally · exclude" | a known pitfall | pipelines merge into one line | pipelines
+3 | the line folds into four stacked stamps: "≈120 private tasks", "pytest exit 0", "≈6 min a task", "1 a day" | recap as objects, not text | stamps slide into the RAIL | stamps
+3 | RAIL becomes "03 Rules, dates, prizes"; the calendar returns wide | where we are | first tick glows | calendar
+
+## 3 Rules, dates, prizes | 90
+3 | WIDE calendar: "23 Sep · start" pins | the start | next pin drops | calendar
+3 | "12 Nov · paper track deadline" pins | date 2 | next pin drops | calendar
+3 | "25 Nov · entry and team-merger deadline" pins | date 3 | next pin drops in red | calendar
+3 | "2 Dec · final submission" pins in red; small caps "all 23:59 UTC" | the deadline | a bracket spans the strip | calendar
+3 | bracket spans 23 Sep → 2 Dec: "≈10 weeks (derived)" | span | the strip rises; plinths grow from it | calendar
+3 | three plinths grow: 1st centre, 2nd left, 3rd right; figures $37k, $18k, $10k | stakes | a separate plinth slides in | plinths
+3 | a fourth, separate plinth: "Paper Track · separate pool, reported as $35k · deadline 12 Nov" | the second track | all plinths compress into a ribbon | plinths
+3 | FULL "Winners open-source their code and adapters" from the left, "and provide a reproducible write-up." from the right | obligation | words part; rule tokens fall into place | —
+3 | WIDE three rule tokens drop and stack like weights: "1 submission a day", "2 final selections", "teams of up to 5" | rules | the middle token opens | tokens
+3 | "2 final selections" token opens: a row of past submissions, two get picked | what it means | tokens slide left; a gate draws | tokens
+4 | a gate: "external data and models: allowed if freely accessible to all"; datasets pass through | the reasonableness standard | a second, smaller gate with a question mark | gate
+3 | second gate, question mark: "distillation from proprietary APIs: an open question at launch" | honesty | gates collapse into one tick list | gates
+3 | the calendar returns; 12 Nov → 25 Nov highlights "paper first", 25 Nov → 2 Dec "then the final push" | sequencing | the strip narrows into a blue block | calendar
+3 | RAIL becomes "04 The model and the hardware"; the blue block thickens into 3D | where we are | 3D begins under it | model block
+
+## 4 The model and the hardware | 180
+4 | 3D a slab of weights on a plinth (soft key light left, rim light behind); label "gemma-4-31b-it-qat-w4a16-ct" | the only model | camera orbits slowly | slab
+3 | 3D labels: "31B parameters" · "≈17 GB of weights" | size | the slab's top face shows its columns | slab
+3 | 3D label "one base model per submission · every agent in the bundle uses it" | the rule | camera lowers to 38° | slab
+3 | 2D inset beside the slab: one weight as 16 bit cells, squeezed to 4 bit cells | what INT4 storage means | the activation bar appears next to it | bit bars
+3 | inset: activation bar stays 16 bits: "W4A16 = 4-bit weights, 16-bit activations" | the format | a training loop draws round the 4-bit bar | bit bars
+3 | inset: "QAT: trained with the quantization in the loop" | why INT4 still works | inset folds into the slab's label | slab
+4 | 3D wide: four graphics cards stand behind the slab on the same plinth, labels "NVIDIA L4" | the hardware | a bracket spans the cards | cards
+3 | 3D bracket over the four: "96 GB in total" | memory | the slab rises above them | cards
+4 | 3D the slab divides along its columns into four blocks | tensor parallelism | the blocks descend toward the cards | slab blocks
+4 | 3D the four blocks slide down into the four cards; label "tensor_parallel_size = 4" | each layer split across all four | an input bar appears above | cards
+3 | 3D an input bar passes through all four at once; outputs rejoin; label "one forward pass, four GPUs" | what TP means | label swaps | cards
+3 | 3D label "served by vLLM · max_model_len = 32,768" | the server and its ceiling | camera rises to 50° | cards
+3 | 3D a tall thin purple sheet B and a short wide sheet A rise beside the slab | the LoRA factors | equation writes above | B, A
+3 | 2D equation over the 3D: W′ = W + B·A | the update | sheets move to multiply | equation
+4 | 3D B and A meet; their product lays down as a thin purple film on top of the slab | the update is low-rank | label "rank r ≤ 128 here" | film
+3 | 2D counting: W has d·k numbers (grey, frozen), B·A has r·(d + k) (purple, trained) — the purple area is a sliver beside the grey | why it's cheap | areas fold into labels | areas
+3 | 3D more films stack: "up to 8 adapters · a different one per agent allowed" | per-agent adapters | camera returns to 40° | films
+3 | 3D label "the only way to change the model's weights" | why LoRA matters | camera lifts away; scene goes 2D | rig
+3 | WIDE 2D file card `configs/sampling.yaml` writes in: temperature · top_p · top_k | you control sampling | the next two lines type | sampling card
+3 | lines: max_output_tokens ≤ 32,768 · thinking_level NONE … HIGH · thinking_budget (default 4,096) | the thinking knobs | "thinking" lifts out | sampling card
+3 | "thinking" drops into a thin strip beside it: "thinking shares the same 32k window" | foreshadow | the strip lengthens | strip
+3 | FULL one summary line, each term in its colour: Gemma 4 31B · INT4 · 4× L4 · 32k · ≤ 8 LoRA | recap | "32k" lifts out and grows | "32k"
+3 | "32k" grows and becomes "32,768 tokens" | precise | the number stretches into a long empty strip | TAPE
+3 | RAIL becomes "05 The 32k context window"; the TAPE spans the frame | where we are | ticks draw under it | TAPE
+
+## 5 The 32k context window | 170
+3 | WIDE TAPE; scale ticks 0 … 32,768 beneath | the window | legend chips appear below | TAPE
+3 | legend: prompt (blue), tool outputs (teal), the agent's own turns (ink), thinking (purple); small caps "everything shares one window" | colour key | the first block slides in | TAPE
+4 | [SIG3] block slides in from the left: "first message ≈ 3.5k" | the starting cost | the block opens like a drawer | TAPE
+4 | CLOSE the drawer shows six labelled strips: problem statement · hints, if any · budget · environment rules · tool notes · 150-entry file listing | what the first message holds | drawer closes | TAPE
+3 | WIDE one teal block: "one full-size tool output (5,000 chars) ≈ 1.3k"; a thin ink sliver after it: "+ the agent's own turn" | the unit cost | a counter appears | TAPE
+3 | counter "tool outputs: 1"; blocks keep coming 2 … 6, each with a soft tick | filling | the counter keeps running | TAPE
+3 | 7 … 12; past half full | filling | the counter keeps running | TAPE
+3 | 13 … 18; the free space shrinks and glows red at the edges | filling | the counter keeps running | TAPE
+3 | 19; the last gap is a sliver | nearly full | the 20th block arrives | TAPE
+4 | 20: the block doesn't fit; the tape's end cracks red: "≈20 full-size outputs + the agent's turns → overflow" | the wall | the CHIP is pulled out from under | TAPE
+3 | the CHIP slides out from under the cracked tape: "the task ends, but the diff left behind is still graded" | partial work counts | the tape empties again | CHIP, TAPE
+3 | FULL "Inside a task, the context only grows." small caps "in practice · participant finding (google-adk 2.9.2)" | the surprise, labelled | the line drops back onto the tape | TAPE
+3 | WIDE TAPE refills with purple thinking blocks between steps: "thinking competes for the same space" | thinking costs | the tape triples | TAPE
+4 | three tapes stacked: thinking_level NONE / LOW / HIGH, same steps, growing purple; tag "concept" | the knob | HIGH runs out first | three tapes
+3 | HIGH cracks first; NONE fits the most steps; small caps "measure it on your own runs" | the trade-off | tapes merge back to one | TAPE
+3 | TAPE with short teal slivers instead of full blocks; the counter runs past 20 with no crack | short outputs help | rulers grow under two slivers | TAPE
+3 | under one sliver a ruler: read_file "≤ 150 lines and ≤ 10,000 chars per call" | the caps | under another: run_command | TAPE
+3 | under another: run_command "stdout/stderr cut at 5,000 chars" | the caps | label writes | TAPE
+3 | label: "the caps protect the window only if you ask for less" | nuance | the tape turns vertical beside the LOOP | TAPE
+3 | OVER TAPE stands vertical as a meter beside the LOOP; each lap drops it a notch | tie to the loop | the meter hits red | meter, LOOP
+3 | the meter hits red; the loop stops; label "32,768 tokens is the real budget" | recap | the teal blocks lift off the tape | meter
+3 | the teal blocks lift off and fan out; each gets the name of the tool that produced it | which tool made which block | the names gather into a ring | blocks
+3 | RAIL becomes "06 The nine tools"; the names settle into a ring of nine tiles | where we are | the ring tightens round the LOOP's "call a tool" node | tool ring
+
+## 6 The nine tools | 160
+3 | OVER the LOOP small at centre; nine teal tiles ring its "call a tool" node | the fixed set | the ring groups itself | tool ring
+3 | tiles group into three arcs: shell & files (run_command, read_file, edit_file, write_file) · control (get_status, submit_patch) · code graph (get_code_neighbors, search_similar_code, get_code_subgraph) | grouping | names stay; colours mark cost | tool ring
+3 | seven tiles fill solid "budgeted"; get_status and submit_patch become outlines "free" | cost | run_command slides to the front | tool ring
+4 | CLOSE run_command opens into a terminal: "bash in /workspace · timeout min(300 s, time remaining)" | detail | output pours in | terminal
+3 | output pours; a cut line at 5,000 chars; the rest greys | truncation | the terminal folds back | terminal
+3 | CLOSE read_file opens into a file view; a frame over lines 1–150 slides down to 120–160; label "≤ 150 lines · ≤ 10,000 chars" | windowed reading | the view folds back | file view
+4 | CLOSE edit_file: old_string (red) above new_string (green); three match stages light in turn: exact → whitespace-flexible → regex-tokenised | matching | two error chips appear | edit view
+3 | error chips: "0 matches → error" · "more than one → error" | failure modes | the view folds back | edit view
+3 | CLOSE write_file: a new file appears inside /workspace with a gold outline: "files created here end up in your patch" | the trap | the file moves | file tree
+3 | the scratch file moves to /tmp and its gold outline disappears | scratch goes to /tmp | the view folds back | file tree
+3 | CLOSE get_status: a small dashboard (tool calls, time left, patch status) glows without dropping | the free check | submit_patch slides forward | dashboard
+3 | CLOSE submit_patch: `git diff HEAD` captured into the CHIP; "ends the session after this turn" | the end call | the chip slides off; a graph draws | CHIP
+4 | WIDE code graph: functions as nodes, calls as edges | the graph tools | one node lights | graph
+3 | get_code_neighbors: a node lights its callers and callees | neighbours | a query tag flies in | graph
+3 | search_similar_code: query tag `HTTPAdapter` (a symbol name, not a sentence) snaps onto a node | symbol search | a lasso draws | graph
+3 | get_code_subgraph: a lasso round three nodes keeps their edges | subgraph | graph shrinks back into its tiles | graph
+3 | OVER the ring again; two dashed rings grow round it: "+ skills you write" · "+ sub-agents you define" | extensions | three meters draw under | tool ring
+3 | three meters under the ring: time · tool calls · context | the costs | a run_command fires | meters
+3 | a run_command fires: all three meters drop a notch: "every budgeted call costs time, a tool call and context" | three costs | get_status fires | meters
+3 | get_status fires: meters glow and don't drop: "free" | the exception | the run_command tile zooms forward | meters
+3 | RAIL becomes "07 Sandbox and verification"; the run_command terminal reads "bash in /workspace" and the camera pulls back to show /workspace inside CONT A | where we are | CONT A becomes 3D | CONT A
+
+## 7 Sandbox and verification | 150
+4 | 3D CONT A as a model on a plinth: a translucent case; inside, three real parts: a block "/workspace (the repository)", a tray "/tmp (scratch)", two plaques "pytest.ini · conftest.py" | the sandbox, physically | camera orbits | CONT A
+3 | 3D labels: "python:3.13-slim · 4 GiB RAM · 2 vCPU · offline" | the machine | the plaques glow | CONT A
+3 | 3D plaques glow red: "the harness commits these as the baseline — do not modify" | trap | an untracked file appears in /workspace | CONT A
+3 | 3D an untracked file appears inside /workspace and turns gold: "untracked files end up in the patch" | hygiene | it moves to the tray | CONT A
+3 | 3D the file moves to the /tmp tray; gold fades | scratch goes to /tmp | the LOOP draws as a ring of light above the case | CONT A
+3 | 3D the LOOP circles above the case at 45° | the agent works inside | the loop stops on an end condition | CONT A, LOOP
+3 | 2D end conditions stack beside the case: submit_patch() · budget exhausted · 3 turns in a row without a tool call | how a run ends | the patch command types | list
+4 | CLOSE `git add -N . && git diff HEAD` types; the CHIP forms: "taken even if the agent never submits" | extraction | the chip arcs out of A | CHIP
+4 | 3D CONT B rises to the right on the same plinth — same silhouette, green, empty and clean; the CHIP arcs A → B | fresh container | B's first step | CHIP, A, B
+3 | 3D step 1 "apply the patch": the chip settles into B's /workspace block | step | a test file inside flips | B
+3 | 3D step 2 "reset any test files the hidden tests touch": an edited test file flips back | editing tests is useless | hidden tests drop in | B
+3 | 3D step 3 "apply the hidden tests": grey bars drop into B | step | pytest runs | B
+3 | 3D step 4 "run pytest": B's rim light turns green: "exit 0 → resolved" | verdict | B rotates to its red alternative | B
+3 | 3D alternative: rim light red "anything else → not resolved" | binary | camera pulls back to the pair | B
+3 | 3D WIDE A and B on one plinth; labels "you shape what happens here" (A) · "fixed by the organizers" (B) | the boundary | the scene flattens | A, B
+4 | FULL three habits, entering in turn from alternating sides: "scratch to /tmp" · "never touch pytest.ini or conftest.py" · "don't edit tests" | the habits | the words fall into CONT A's outline | habits
+3 | RAIL becomes "08 A worked example"; CONT A shrinks into the centre panel of a three-panel frame | where we are | panels fill | CONT A
+
+## 8 A worked example | 180
+3 | WIDE three panels: left the call log, centre the workspace, right three meters (context, tool calls, time); small caps "illustrative run · not a real trajectory" | the dashboard | the issue card lands in the centre | dashboard
+3 | the cold-open issue card lands in the centre: summarize([]) raises ZeroDivisionError | same example as the opening | first message assembles | issue
+3 | CLOSE the log fills with the first message (six strips); the context meter fills ≈3.5k blue | the starting cost | the agent thinks | log, meter
+2 | CLOSE log: "think: find summarize" | plan | the run_command tile lights | log
+3 | call 1 run_command: grep -rn "def summarize" --include=*.py . | locate | result returns | log
+3 | result src/stats.py:4:def summarize(xs):; tool-call meter 1; the context meter grows by a sliver | small outputs are cheap | camera moves to the centre panel | log, meters
+3 | CLOSE centre: call 2 read_file src/stats.py, lines 1–12; the code panel from the cold open draws | read only what's needed | line 6 glows | code panel
+3 | line 6 glows red: return total / len(xs); the context meter grows by 12 lines, not the file | windowed reading | camera drops to overhead | code panel, meters
+3 | OVER the workspace boundary drawn from above: /workspace (gold edge) and /tmp outside it | where things live | a file appears in /tmp | boundary
+3 | call 3 run_command writes /tmp/repro.py (heredoc); the file appears outside the gold edge | scratch goes to /tmp | camera returns to the log | boundary
+3 | CLOSE log: call 4 python3 /tmp/repro.py → ZeroDivisionError: division by zero (red) | bug reproduced | label | log
+3 | label: "now there is a test the agent can see" | why reproduce | camera pushes into the code panel | log
+3 | CLOSE code: call 5 edit_file — old_string (red) → new_string (green); line 6 rewrites; "edit applied · 1 match" | the fix | camera back to the log | code panel
+3 | CLOSE log: call 6 python3 /tmp/repro.py → 0 (green) | fixed | next call | log
+3 | call 7 python3 -m pytest tests/test_stats.py -q → passed (green dots) | nearby existing tests | next call | log
+3 | call 8 git status --short → " M src/stats.py" only; /tmp/repro.py not listed | clean patch | camera pushes into the context meter | log
+3 | CLOSE context meter: still far below 32k; tool calls 8; time bar short | the run fits | submit fires | meters
+3 | submit_patch (free): the CHIP forms — 1 file, 1 line changed | the output | the chip travels | CHIP
+3 | the CHIP travels into CONT B (small, right); tests light; label "on a real task, this is where it's decided" | honesty: hidden tests could still fail | the dashboard resets | CHIP, B
+3 | FULL "Same task. Careless agent." | contrast | the dashboard returns, reset | —
+3 | WIDE call 1: read_file in 150-line chunks; the context meter jumps by big teal blocks | wasteful reading | more reads | dashboard
+3 | calls 2–4: three more full reads of other files; meter past half | drift | edit without a repro | dashboard
+3 | the edit lands with no reproduction and no test run | no verification | a file is written | dashboard
+3 | write_file creates notes.txt inside /workspace | stray file | submit | dashboard
+3 | the CHIP forms with two files: the fix and notes.txt | junk ships | split screen | CHIP
+4 | split: careful run (left) vs careless run (right), meters side by side | comparison | label | split
+3 | label: "same fix, nothing checked, junk in the patch — the prompt, workflow and budget decide which run you get" | the lesson | the careful log compresses into icons | split
+3 | the careful run's log compresses into an icon line: find → read → reproduce → fix → re-run → test → check → submit | the recipe | icons label with tools | icon line
+3 | each icon labels with its tool (run_command, read_file, run_command, edit_file, run_command, run_command, run_command, submit_patch) | mapping | the line cracks at one icon | icon line
+3 | RAIL becomes "09 Failure modes"; the icon line cracks red at "submit" | where we are | the crack opens into the LOOP | LOOP
+
+## 9 Failure modes | 120
+3 | OVER the LOOP large at centre; small caps "five ways runs fail — label 50 failed runs by hand" | the taxonomy | the loop's exit is blocked | LOOP
+4 | looping: the dot laps forever; the same call repeats three times in a log beside it (red); the tool-call meter drains | symptom | the exit branch erases itself | LOOP
+3 | never submitting: the exit branch is missing; the time bar runs out; the diff is taken anyway — empty means zero | symptom | the loop's edit edge reroutes | LOOP
+3 | small caps beside: "a run also ends after 3 turns in a row without a tool call" | related end | the code graph appears beside the loop | LOOP
+3 | wrong file: the edit edge lands on the wrong node of a small code graph; hidden tests target the other node and turn red | symptom | the CHIP drops toward B | LOOP, graph
+3 | patch that won't apply: the CHIP's shape doesn't fit B's slot and bounces off; "verification applies it to a fresh checkout" | symptom | the chip swells | CHIP, B
+3 | over-editing: the CHIP swells into a long diff beside a 31-line reference strip: "median reference fix: 31 lines in 1 file" | symptom | the five symptoms shrink to tags | CHIP
+3 | four harness traps fan out as tags: context overflow · editing tests · stray files · touching pytest.ini/conftest.py | the harness-specific traps | tags sort | tags
+3 | all tags sort into two piles: "the agent's behaviour" · "the patch's hygiene" | structure | the piles label their fixes | piles
+3 | under behaviour: "prompts, workflow, training"; under hygiene: "checks before submitting" | where each is fixed | the piles fold into an empty chart | piles
+3 | an empty bar chart frame "your failure counts", tag "empty on purpose — you fill this in" | what to build | bars become cells | chart
+3 | RAIL becomes "10 The data"; the empty bars turn into the first cells of a new grid | where we are | cells multiply | GRID
+
+## 10 The data | 110
+4 | OVER GRID of 129 cells colours itself by repository: fastapi 67 · rich 48 · requests 13 · httpx 1 (a single lonely cell) | the public set | blocks slide apart | GRID
+3 | the four blocks slide apart and label: "129 public training tasks · 4 repositories" | breakdown | one cell opens | GRID
+3 | CLOSE one cell opens like a folder: problem_statement · base_commit · repo snapshot | contents | more contents | task
+3 | more: test_patch "hidden at evaluation" · gold patch "training only" · code-graph and embedding files | contents | the gold patch unrolls | task
+3 | the gold patch unrolls as a strip: "median reference fix: 31 lines in 1 file"; small caps "no hints text · ≈20.5 GB of snapshots" | scale of a fix | the cell closes; camera pulls up | task
+4 | OVER how tasks were mined: repository history → commits → filter "changed core .py logic and matching unit tests" | provenance | a gate draws | pipeline
+3 | gate "two-phase verification: tests fail before the fix, pass after"; tasks drop out of it | quality gate | a second grid appears beside | pipeline
+4 | WIDE two grids side by side: public 129 (4 repos, gold patch visible) vs hidden ≈120 (private repos, locked, gold patch not visible) | the difference | small caps writes | grids
+3 | small caps under both: "same pipeline" | the similarity | the hidden grid fades; the rich block lifts out | grids
+3 | the rich block physically pulls out of the public grid: tag "example split: develop on the rest, test on rich, then rotate" | hold out a whole repo | ≈20 cells go grey | GRID
+3 | ≈20 cells go grey: "gold patch fails locally for environment reasons · exclude them" | noise | three empty bars | GRID
+3 | three empty bars: fastapi · rich · requests: "report scores per repo" | spot overfitting | the cell's file list re-forms | GRID
+3 | RAIL becomes "11 What you submit"; the cell file list re-forms into a file tree | where we are | the tree grows | TREE
+
+## 11 What you submit | 150
+3 | FULL "No Python entry points." from the left | the rule | second line enters | —
+3 | FULL "You submit configuration." from the right | the rule | the words part, revealing a zip | zip
+3 | WIDE the zip opens; TREE unfolds: agent.yaml · prompts/*.md · configs/sampling.yaml · sub_agents/*.yaml · skills/<name>/SKILL.md · adapters/<name>/ · eval_config.yaml | the bundle | small caps under | TREE
+3 | small caps: "declarative · under 3 GiB" | constraints | the LOOP fades in beside the tree | TREE
+3 | OVER TREE (left) and the LOOP with its tool ring and meters (right) | what each file controls | agent.yaml docks | TREE, LOOP
+4 | agent.yaml flies to the loop and becomes its shape: four shapes appear — LlmAgent (loop), SequentialAgent (chain), ParallelAgent (fork), LoopAgent (cycle) | control flow | the LlmAgent shape stays | LOOP
+3 | prompts/*.md docks onto "think": a page with {problem_description} and {hints} highlighted, "filled from session state" | prompts | a note appears | LOOP
+3 | small caps under the prompt: "the public training data has no hints text" | detail | sampling.yaml docks | LOOP
+3 | configs/sampling.yaml docks onto the model block: temperature · thinking | sampling | sub_agents docks | LOOP
+3 | sub_agents/*.yaml docks as a second small loop hanging off the first: "own prompt · own tools · own adapter · output_key" | sub-agents | an arrow between them | LOOP
+3 | the parent calls the sub-agent like a tool (AgentTool) and gets a short result back | AgentTool | skills dock | LOOP
+3 | skills/<name>/SKILL.md docks onto the tool ring as a new tile; its script runs in the sandbox; the tool-call meter drops one | skills cost a call | adapters dock | LOOP
+3 | adapters/<name>/ docks as a purple sheet on the model block: "PEFT LoRA · safetensors only · rank ≤ 128 · up to 8" | adapters | eval_config docks | LOOP
+3 | eval_config.yaml docks onto the meters as the four dials | budgets | the whole picture pulls back | LOOP
+3 | WIDE every file connected to the part it controls by a thin line | every lever is in the tree | lines fade; the tree glows | TREE, LOOP
+3 | label: "every lever you have is in this tree" | the idea | the LOOP rewinds onto a history axis | TREE
+3 | RAIL becomes "12 How coding agents got here"; the LOOP slides onto a time axis | where we are | the axis draws | LOOP
+
+## 12 How coding agents got here | 100
+3 | WIDE a time axis 2021 → 2026; the LOOP sits at 2021–22 as "reason → act → observe (ReAct)"; label "Codex & HumanEval: function-level code" | the start | the loop gains a repo | LOOP
+3 | 2023: a repository node attaches to the loop: "SWE-bench: real GitHub issues in real repos" | evaluation gets real | a small bar | LOOP
+3 | small caps "early baselines resolved only a few percent" | the starting point | the tool ring grows | LOOP
+4 | 2024: the tool ring around the loop grows large and ornate: "the scaffold era — SWE-agent, AutoCodeRover, OpenHands" | intelligence in the scaffold | one branch straightens | LOOP
+3 | a straight-line pipeline appears beside: "Agentless: a fixed pipeline could match agents" | key result | the ring shrinks back | LOOP
+4 | 2025: the ring shrinks back to two tools (bash + edit) while the model block thickens purple: "49% on SWE-bench Verified with bash plus an edit tool" | intelligence moves into the weights | task factories appear | LOOP
+3 | "task factories: SWE-Gym, SWE-smith, R2E-Gym · training: SWE-RL, DeepSWE, Kimi-Dev — open 32–72B models to about 40–60% on Verified" | the training turn | the block shrinks | LOOP
+3 | 2026: the block shrinks (small open models) and the repo node gets a lock: "harness & context engineering · evaluation on fresh or private repos" | where we are now | three small results hang off | LOOP
+3 | three tags: "SWE-Protégé: 7B → 42%" · "CANOPY: RL for small task pools" · "Open-SWE-Traces: 200k+ trajectories" | 2026 research | three vessels appear | LOOP
+4 | OVER three vessels: prompt · scaffold · weights; a quantity of light flows prompt → scaffold (2024), then scaffold → weights (2025) | the arc | label writes | vessels
+3 | label: "this competition asks you to repeat the second step, on a small scale" | framing | vessels become the six anatomy slots | vessels
+3 | RAIL becomes "13 What you need to build"; the vessels split into six empty slots | where we are | slots fill | slots
+
+## 13 What you need to build | 180
+3 | WIDE six slots arranged round the LOOP: model · control flow · tools · context · environment · verifier | anatomy | slots fill one by one | slots
+3 | model "fixed · change it only via LoRA" (blue); control flow "your YAML agents" | parts 1–2 | next two | slots
+3 | tools "9 fixed + skills + sub-agents" (teal); context "the 32k window" | parts 3–4 | next | slots
+3 | environment "offline container"; verifier slot stays empty and pulses red | the gap | the empty slot zooms forward | slots
+3 | CLOSE verifier: "nothing built in — you create it: a reproduction script, a judge sub-agent" | the missing part | the slots shrink; the loop morphs | slots
+4 | OVER the LOOP morphs through six shapes, one per family, labelled as it goes: A fixed workflow (a straight chain) | families | morph | LOOP
+3 | B tool loop (the loop itself) · C code as action (the loop with code inside the call node) | families | morph | LOOP
+3 | D structure-aware search (the call node becomes a small graph) · E test-time scaling (fan-out + a judge) | families | morph | LOOP
+3 | F multi-agent (a lead loop with child loops) | family | all six shrink side by side | LOOP
+3 | six small shapes in a row; A, B, F glow green "good fit"; E marked "only if time allows"; small caps "the roadmap's assessment, not a measured result" | fit | A and B merge | shapes
+4 | WIDE candidate architecture assembles from A and B: Localize → Reproduce → [Patch ⇄ Verify] → Submit; small caps "candidate · a hypothesis to test" | the pattern | labels attach | pipeline
+3 | labels: "each stage an LlmAgent with a restricted tool list" · "results passed forward through state (output_key)" | detail | the loop part glows | pipeline
+3 | the bracket around Patch ⇄ Verify: "LoopAgent"; two stages get purple tabs "optional LoRA per stage" | detail | the pipeline slides right | pipeline
+3 | split: left "one LlmAgent" (the plain LOOP), right the staged pipeline; arrow from the left: "build this first" | order | the right side gets two cracks | split
+3 | the right side's boundaries crack: "every stage boundary loses information" · "time may be too tight for many stages" | the risk | a scale appears between them | split
+3 | a balance between them: "adopt the staged design only if it wins on a held-out repo" | decision rule | the balance tips; the scene clears | split
+3 | FULL "Then teach the model." | training | words lift away revealing a loop | —
+4 | OVER rejection sampling: tasks → Gemma runs → tests → keep only passing runs → train LoRA → back to Gemma | self-distillation | failing runs fall away | loop
+3 | failing runs drop away grey; passing runs glow green | the filter | a purple sheet grows | loop
+3 | a small purple sheet grows at "train": "a small LoRA on a subset of layers" | the adapter | the sheet flies to the slab | sheet
+3 | the sheet lands on the slab from chapter 4 (2D view); warning tag: "community report: high-rank, all-layer adapters misbehaved on W4A16" | the risk | the slab shrinks into the tree | slab
+3 | three practices that fit here: "verify: a repro in /tmp before and after, plus nearby tests" · "context: short observations, a notes file in /tmp, read-only sub-agents that return summaries" · "skills: repo map, repro scaffold, diff check" | practices that fit | the three rows fold into the TREE | rows
+3 | RAIL becomes "14 Where to start"; the TREE stands at the left, lit faintly | where we are | levers attach | TREE
+
+## 14 Where to start | 140
+3 | WIDE TREE (left); small caps "levers, ranked by expected return · a hypothesis" | the plan | lever 1 lights | TREE
+4 | lever 1 "local eval fidelity": the 129-cell grid runs gold vs null patches; ≈20 cells go grey | why: one probe a day | lever 2 lights | GRID
+3 | lever 2 "budget & termination": eval_config dials sweep against the 6-minute ruler; "every task must end in a diff" | why: the starter caps the score near zero | lever 3 | dials, ruler
+3 | lever 3 "prompt & workflow": the LOOP lights explore → reproduce → fix → verify → submit in order; "single-agent prompt first, then A/B a staged SequentialAgent" | the order | lever 4 | LOOP
+3 | lever 4 "thinking vs context": the three tapes NONE / LOW / HIGH return | the trade-off | lever 5 | tapes
+3 | lever 5 "failure taxonomy": the empty failure chart fills its first bar outline: "label 50 failed runs" | measure first | lever 6 | chart
+3 | lever 6 "LoRA SFT on verified runs": the rejection-sampling loop spins once: "rank-16 on a subset of layers" | teach the model | lever 7 | loop
+3 | lever 7 "more training tasks": new bars sprout beside the four repo bars: "SWE-smith-style bug injection into other Python repos" | wider data | lever 8 | bars
+3 | lever 8 "test-time scaling": two short rulers + a judge vs one long ruler: "if the time allows" | scaling | lever 9 | rulers
+3 | lever 9 "RL": a dim, tall bar: "highest ceiling, highest cost, only after SFT" | last | all levers collapse onto the tree | bar
+3 | OVER the TREE lit file by file by the levers that change it | tie it together | the calendar slides under | TREE
+3 | the calendar slides under the tree: "2 Dec" glows red | the deadline | the chip returns | TREE, calendar
+3 | the CHIP returns at centre | the carried object | it travels into B | CHIP
+3 | the CHIP travels into CONT B one last time; tests light; `exit 0` | callback to the opening | exit 0 flies toward camera | CHIP, B
+3 | FULL "Enter the competition." | call to action | second line writes | —
+3 | "Google – The Gemma 4 Developer Agent Competition · on Kaggle" writes beneath | where | third line | —
+3 | "final submission: 2 December 2026, 23:59 UTC" | deadline | the RAIL lights all chapters | —
+3 | the RAIL expands into the full chapter map, every name lit, then fades | close the map | the grid returns | RAIL
+3 | end card: GRID returns dim; small caps "facts: the competition page and the organizers' harness guide, as summarised on 24 Sep 2026" | sources | grid holds | GRID
+3 | end frame: the gold cell glows; title "The Gemma 4 Developer Agent Competition" | final frame | fade to black on the last beat | GRID

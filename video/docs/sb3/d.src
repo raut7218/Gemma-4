@@ -1,0 +1,78 @@
+## 11 What you submit | 0
+3 | FULL "No Python entry points." enters from the left | the rule | a second line enters | —
+3 | FULL "You submit configuration." enters from the right | the rule | the words part, revealing a zip | zip
+3.5 | WIDE the zip opens; the TREE unfolds: agent.yaml · prompts/*.md · configs/sampling.yaml · sub_agents/*.yaml · skills/<name>/SKILL.md · adapters/<name>/ · eval_config.yaml | the bundle | small caps write under | TREE
+2.5 | small caps: "declarative · under 3 GiB" | constraints | the loop fades in beside the tree | TREE
+3 | OVER TREE at left; the LOOP with its tool ring and meters at right | what each file controls | agent.yaml lifts | TREE, LOOP
+4 | agent.yaml flies to the loop and becomes its shape; four agent shapes line up: LlmAgent (a loop) · SequentialAgent (a chain) · ParallelAgent (a fork) · LoopAgent (a cycle with a counter) | control flow | the LlmAgent shape enlarges | LOOP, shapes
+3.5 | CLOSE an example agent.yaml types (tag "example"): name · model: gemma-4-31b-it-qat-w4a16-ct · instruction: !include prompts/system.md · generate_content_config: !include configs/sampling.yaml · tools: [run_command, read_file, edit_file, …] | what a minimal root looks like | each line links to its part | yaml
+3 | each YAML line draws a thin link to the part of the loop it sets | YAML maps onto the agent | the shapes step forward | yaml, LOOP
+3.5 | OVER the LlmAgent enlarges; handles attach with labels: model · adapter · instruction · tools · skills · sub_agents | an agent's fields | two more handles attach | LOOP
+3.5 | two more handles: output_key (the agent's final text drops into a "session state" box) · include_contents (a switch; at "none", the earlier conversation greys out of view) | how agents share results and context | the shapes step forward | LOOP, state box
+3 | LoopAgent repeats its sub-agents until its "max_iterations" counter runs out; SequentialAgent runs them left to right; ParallelAgent runs them at once | the workflow agents | prompts/*.md lifts from the tree | shapes
+3.5 | prompts/*.md docks onto "think": a page with {problem_description} and {hints} highlighted, "filled from session state"; small caps "the public training data has no hints text" | prompts | sampling.yaml lifts | LOOP
+3 | configs/sampling.yaml docks onto the model block: temperature · thinking | sampling | sub_agents lifts | LOOP
+3.5 | sub_agents/*.yaml docks as a second, smaller loop hanging off the first: "its own prompt, tools and adapter"; the parent calls it like a tool (AgentTool) and gets a short result back | sub-agents | skills lifts | LOOP
+3 | skills/<name>/SKILL.md docks onto the tool ring as a new tile; its script runs in the sandbox and the tool-call meter drops one | skills cost a call | adapters lifts | LOOP
+3 | adapters/<name>/ docks as a purple sheet on the model block: "PEFT LoRA · safetensors only · rank ≤ 128 · up to 8" | adapters | eval_config lifts | LOOP
+3 | eval_config.yaml docks onto the meters as the four dials | budgets | the picture pulls back | LOOP
+3 | WIDE every file joined to the part it controls by a thin line; "every lever you have is in this tree" | the idea | the lines fade; the loop slides onto a time axis; the RAIL rewrites to "12 How coding agents got here" | TREE, LOOP
+
+## 12 How coding agents got here | 0
+3.5 | WIDE a time axis 2021 → 2026 draws along the bottom; the LOOP sits at 2021–22, labelled "ReAct: reason → act → observe"; beside it "Codex & HumanEval: function-level code" | where it started | the loop gains a repository | LOOP
+3 | 2023: a repository node attaches to the loop: "SWE-bench: real GitHub issues in real repositories — early baselines resolved only a few percent" | evaluation gets real | a feedback arrow curls in | LOOP
+3 | a feedback arrow curls back into the loop: "Reflexion: written self-critique helps when there's a feedback signal" | self-critique | the tool ring grows | LOOP
+4 | 2024: the tool ring around the loop grows large and ornate: "the scaffold era — SWE-agent · AutoCodeRover · OpenHands"; small caps "SWE-bench Verified: a cleaned-up subset" | intelligence in the scaffold | a straight pipeline appears beside | LOOP
+3 | a straight-line pipeline beside it: "Agentless: a fixed pipeline could match agents" | key result | the ring collapses | LOOP
+4 | 2025: the ring collapses to two tiles, "bash · edit", while the model block thickens purple: "Claude 3.5 Sonnet · 49% on SWE-bench Verified" | intelligence moves into the weights | two badges attach | LOOP
+3 | badges: "Claude Code · Codex — Codex's model RL-trained in its own sandbox"; a short strip: "mini-swe-agent: 100 lines" | harness and model trained together | task factories appear | LOOP
+3.5 | task factories and recipes hang off the block: "SWE-Gym · SWE-smith · R2E-Gym → SWE-RL · DeepSWE · Kimi-Dev: open 32–72B models to about 40–60% on Verified" | the training turn | the block shrinks | LOOP
+3.5 | 2026: the block shrinks (small open models) and the repository node gets a lock: "harness and context engineering · evaluation on fresh or private repositories" | where things are now | three tags attach | LOOP
+3 | three tags: "SWE-Protégé: 7B → 42%" · "CANOPY: RL for small task pools" · "Open-SWE-Traces: 200k+ trajectories" | 2026 research | a quote writes beside | LOOP
+3 | a quote beside the loop: "harnesses encode assumptions that go stale as models improve" — Anthropic | the caution | three vessels rise | LOOP
+4 | OVER three vessels: prompt · scaffold · weights; light pours from prompt into scaffold (2024), then from scaffold into weights (2025) | the arc | a line writes beneath | vessels
+3 | "this competition asks you to repeat the second step, on a small scale" | framing | the scaffold vessel opens into six empty slots around the loop; the RAIL rewrites to "13 What you need to build" | vessels → slots
+
+## 13 What you need to build | 0
+3 | WIDE six empty slots around the LOOP: model · control flow · tools · context · environment · verifier | the anatomy of a coding agent | the slots fill | slots
+3 | slots fill: model "fixed · change it only through LoRA" (blue) · control flow "your YAML agents" | parts 1–2 | the next two fill | slots
+3 | tools "9 fixed + skills + sub-agents" (teal) · context "the 32k window" | parts 3–4 | the next fills | slots
+3 | environment "offline container"; the verifier slot stays empty and pulses red | the gap | the empty slot zooms forward | slots
+3 | CLOSE verifier: "nothing built in — you create it: a reproduction script, a judge sub-agent" | the missing part | the slots shrink; the loop starts to morph | slots
+4 | OVER the LOOP morphs through the families, labelled as it goes: A fixed workflow (Agentless) — a straight chain: localize → repair → validate | family A | it morphs again | LOOP
+3 | B tool loop (SWE-agent) — the loop itself | family B | it morphs again | LOOP
+3 | C code as action (OpenHands) — code inside the call node | family C | it morphs again | LOOP
+3 | D structure-aware search (AutoCodeRover) — the call node becomes a small graph | family D | it morphs again | LOOP
+3 | E test-time scaling — a fan-out of attempts and a judge | family E | it morphs again | LOOP
+3 | F multi-agent — a lead loop with child loops | family F | all six shrink side by side | LOOP
+3.5 | six small shapes in a row; A, B and F glow green "good fit"; E marked "only if time allows"; small caps "the roadmap's assessment, not a measured result" | fit | A and B slide together | shapes
+4 | WIDE A and B merge into the candidate: Localize → Reproduce → [Patch ⇄ Verify] → Submit; small caps "candidate · a hypothesis to test" | the pattern | labels attach | pipeline
+3 | labels: "each stage an LlmAgent with a restricted tool list" · "results passed forward through state (output_key)" | how it's wired | the bracket lights | pipeline
+3 | the bracket around Patch ⇄ Verify: "LoopAgent"; two stages get purple tabs: "optional LoRA per stage" | details | three reasons write in | pipeline
+3.5 | why this shape: "explicit localization and reproduction stages help weaker models (Agentless, Kimi-Dev)" · "clean-context stages pass short summaries through state" · "looping is easier to bound stage by stage (SWE-Protégé)" | rationale | the pipeline starts to run | pipeline
+3 | the candidate runs on the cold-open issue (tag "concept · not a real trajectory"): Localize's tool ring shows only run_command, read_file and the graph tools | restricted tools | its result drops into state | Localize
+3 | Localize writes to session state: localized = "src/stats.py:6" | output_key in action | Reproduce starts | state box
+3 | Reproduce starts with include_contents = none: its own tape starts nearly empty and reads only {localized} | a clean context | it writes its repro | Reproduce
+3 | Reproduce writes /tmp/repro.py and runs it → red; state gains repro = "fails" | the second output | the loop bracket lights | state box
+3 | the LoopAgent bracket lights "iteration 1 of max_iterations"; Patch runs edit_file on line 6 | bounded retry | Verify runs | loop bracket
+3 | Verify runs the repro and nearby tests → green; the bracket exits early; Submit calls submit_patch and the gold chip forms | done | the tapes compare | CHIP
+3.5 | OVER four short tapes (one per stage) beside one long tape (single agent), same work | why stages can help: clean contexts | a crack shows on one boundary | tapes
+3 | a crack on the Localize → Reproduce boundary: a detail that never made it into state — "every stage boundary loses information" · "and time may be too tight for many stages" | why stages can hurt | the frame splits | tapes
+3 | split: left the plain LOOP, "one LlmAgent — build this first"; right the staged pipeline | order | a balance appears between them | split
+3 | a balance between them: "adopt the staged design only if it wins on a held-out repository" | the decision rule | the balance tips; one passing run's chip drops away; the RAIL rewrites to "14 Teaching the model" | split → CHIP
+
+## 14 Teaching the model | 0
+3 | WIDE the gold chip of a passing run falls into a funnel's mouth; the funnel tints purple, the chip stays gold | the training material is passing runs | tasks pour in behind it | funnel
+3 | the 129 public cells pour into the funnel (the ≈20 grey ones drop away) | the raw material | new cells arrive | GRID → funnel
+3 | new cells from other repositories join: tag "SWE-smith-style bug injection into other Python repos" | more training tasks | the cells flow into Gemma | GRID → funnel
+3 | the cells flow into the model block: Gemma runs each task many times | sampling runs | runs stream out | model block
+3 | runs stream out as thin ribbons, each ending at a test gate | trajectories | the gate judges | ribbons
+3.5 | the gate: failing ribbons turn grey and fall; passing ribbons glow green — "keep only Gemma's own passing runs (rejection sampling)" | the filter | a counter runs | gate
+3 | a counter of kept ribbons climbs toward "≥ 300 verified trajectories"; small caps "the roadmap's milestone for week 3" | a concrete target | the ribbons wind into a spool | counter
+3 | the green ribbons wind into a spool: "SFT data · Gemma-only" | the dataset | the spool feeds a sheet | spool
+3 | the spool feeds a purple sheet: "LoRA · rank 16 · on a subset of layers" | the first adapter | two dials appear | sheet
+2.5 | two dials beside the sheet: rank · which layers — "ablate both" | what to vary | the sheet flies to the rig | dials
+3.5 | the sheet clips onto the slab-and-cards rig from chapter 4 (2D view); warning tag: "community report: high-rank, all-layer adapters misbehaved on the W4A16 build — smoke-test serving early" | the risk to check first | the held-out block returns | rig
+3 | the rich block returns with two empty bars: "prompt only" vs "prompt + LoRA"; tag "your measurement" | the test that decides | the sheet slides into the tree | bars
+3 | the sheet slides into adapters/ in the TREE | it ships in the bundle | small caps write | TREE
+3 | small caps: "RL comes after SFT, if at all: highest ceiling, highest cost" | ordering | the spool's label unwinds into a ribbon of cards; the RAIL rewrites to "15 Where to start" | spool → cards

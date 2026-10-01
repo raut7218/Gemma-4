@@ -1,0 +1,37 @@
+## 10b Your local evaluation | 0
+3 | WIDE the public grid sits in a dashed outline: "your offline copy of the scoring pipeline" | you need your own scoreboard | a gold patch drops onto every cell | GRID
+3.5 | gold sweep: the reference (gold) patch drops onto every cell; cells that pass turn green — "the gold patch should pass everywhere" | check the harness, not the agent | the null patch sweeps | GRID
+3 | null sweep: an empty patch drops onto every cell; cells turn red — "the null patch should fail everywhere" | the other side of the check | disagreements flash | GRID
+3 | about 20 cells disagree and turn grey: "where your copy disagrees: fix the harness or exclude the task" | calibrate before you measure | the grey cells drop out | GRID
+3 | the grey cells drop out; small caps "the roadmap's lever 1 — first experiment" | where this comes from | the rich block lifts | GRID
+3 | the rich block lifts out again: "held-out repository" | measure on code you didn't tune on | three empty bars rise | GRID
+3 | three empty bars, one per repository; tag "your numbers" | per-repo scores | a leaderboard probe appears beside | bars
+3.5 | a single daily probe arrow from the bundle to the public leaderboard; small caps "spend it on your best held-out configuration" | how to use the one daily submission | a log line types | probe
+3 | under it a log line types: "config · local score per repo · leaderboard score · one observation" | write everything down | the log line slides into a file tree; the RAIL rewrites to "12 What you submit" | log → TREE
+
+## 14b What your prompt has to teach | 0
+3 | FULL "The tool descriptions are fixed. The prompt is yours." | why the prompt carries guidance | a blank page slides in | page
+3 | WIDE a blank page "prompts/system.md" (tag "suggested structure") beside the loop | the prompt as a document | the first section writes | page
+3 | section 1 writes: "the issue" — {problem_description} highlighted, filled from session state | the task comes first | section 2 writes | page
+3.5 | section 2 "workflow": explore → reproduce → fix → rerun → think about edge cases (the R06 order) | the order of work | the loop lights in that order | page, LOOP
+3 | the loop lights its steps in that order as the section underlines | the workflow made visible | section 3 writes | LOOP
+3 | section 3 "reading": "read only the lines you need" — the read_file window from chapter 6 drops in beside | protect the window | section 4 writes | page
+3 | section 4 "editing": "copy old_string exactly; one match" — the edit view's three match stages flash | avoid edit errors | section 5 writes | page
+3 | section 5 "search": "search_similar_code takes a symbol name, not a sentence" — the query tag snaps to a node | use the graph tool correctly | section 6 writes | page
+3 | section 6 "hygiene": "scratch in /tmp · never touch pytest.ini or conftest.py · don't edit tests" — the three habits fall in | keep the patch clean | section 7 writes | page
+3 | section 7 "budget": "call get_status — it's free; submit before the budget runs out" — the meters glow | finish every task with a diff | section 8 writes | page
+3 | section 8 "finish": "check git status, then submit_patch" — the careful run's last two icons light | a clean ending | the page shrinks beside its measurements | page
+3 | the page shrinks; beside it the held-out bars: "change one section at a time, measure every change" | prompts are experiments | the page folds into the skills tile; the RAIL rewrites to "16 Skills, sub-agents and notes" | page → tool ring
+
+## 14c Skills, sub-agents and notes | 0
+3 | OVER the tool ring; a new tile slides in with a dashed edge: "skills/<name>/SKILL.md + scripts" | extend the agent without changing the tools | the tile opens | tool ring
+3 | the tile opens: a SKILL.md page and a scripts/ folder; "a script runs in the sandbox and costs one tool call" | how skills work | three suggested skills slide in | skill
+3 | three suggested skills (tag "general, not repo-specific"): "repo map" · "repro scaffold" · "diff check" | ideas from the roadmap | the first runs | skills
+3 | "repo map" runs: one call returns a compact map of the repository instead of many listings (concept) | fewer calls for orientation | the next runs | skills
+3 | "repro scaffold" runs: one call writes a repro template into /tmp (concept) | a faster first check | the next runs | skills
+3 | "diff check" runs: one call prints git status and the diff size before submitting (concept) | hygiene in one call | a sub-agent hangs off the loop | skills
+3.5 | WIDE a read-only sub-agent hangs off the main loop: it reads many files on its own tape, then returns a short summary into the main tape | clean context for exploration | the two tapes compare | sub-agent, TAPE
+3 | the main tape gains only a thin summary block, while the sub-agent's tape is full; tag "concept" | why sub-agents protect the window | the sub-agent's tape clears | tapes
+3 | a small file "/tmp/notes.md" appears in the /tmp tray: "keep a notes file — it survives in the sandbox while the context only grows" | notes outside the window | a line writes | notes
+3 | "short observations · notes in /tmp · read-only sub-agents that return summaries" — the three practices stack as one line | context engineering in one line | the line folds into the anatomy slots | practices
+3 | the practices file into the "context" slot of the six-part anatomy, which glows | where these belong | a passing run's gold chip drops away; the RAIL rewrites to "17 Teaching the model" | slots → CHIP

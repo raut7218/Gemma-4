@@ -1,0 +1,41 @@
+@font-face { font-family: 'CM'; src: url('../fonts/KaTeX_Main-Regular.ttf'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'CM'; src: url('../fonts/KaTeX_Main-Bold.ttf'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'CM'; src: url('../fonts/KaTeX_Main-Italic.ttf'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'CM'; src: url('../fonts/KaTeX_Main-BoldItalic.ttf'); font-weight: 700; font-style: italic; }
+@font-face { font-family: 'CMI'; src: url('../fonts/KaTeX_Math-Italic.ttf'); }
+@font-face { font-family: 'CMT'; src: url('../fonts/KaTeX_Typewriter-Regular.ttf'); }
+@font-face { font-family: 'CMS'; src: url('../fonts/KaTeX_SansSerif-Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'CMS'; src: url('../fonts/KaTeX_SansSerif-Bold.ttf'); font-weight: 700; }
+
+html, body { margin: 0; padding: 0; background: #0E1116; overflow: hidden; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0E1116;
+  font-family: 'CM', serif; color: #ECE9E2; -webkit-font-smoothing: antialiased; }
+#bg { position: absolute; left: -480px; top: -270px; width: 2880px; height: 1620px; pointer-events: none; }
+#world { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+#hud { position: absolute; inset: 0; z-index: 800; pointer-events: none; }
+.el { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+.el-arrow, .el-path, .el-ring, .el-dot { width: 1920px; height: 1080px; left: 0; top: 0; }
+.fullsvg { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+.boxsvg { position: absolute; overflow: visible; }
+.vers { position: relative; display: grid; }
+.ver { grid-area: 1 / 1; white-space: nowrap; }
+.el-text .ver, .el-box .ver { white-space: normal; }
+.el-box { display: flex; align-items: center; justify-content: center; }
+.el-box .vers { position: relative; z-index: 1; width: 100%; }
+.el-mono { font-family: 'CMT', monospace; }
+.el-mono .ver { white-space: pre; }
+.el-three canvas { display: block; }
+.el-num { font-family: 'CM', serif; font-variant-numeric: tabular-nums; }
+
+/* type helpers */
+.c-blue { color: #58C4DD; } .c-teal { color: #5CD0B3; } .c-green { color: #83C167; }
+.c-yellow { color: #F4D35E; } .c-gold { color: #F0AC5F; } .c-red { color: #FC6255; }
+.c-purple { color: #B48EDB; } .c-dim { color: #9AA3AD; } .c-ink { color: #ECE9E2; }
+.i { font-style: italic; }
+.m { font-family: 'CMT', monospace; }
+.sans { font-family: 'CMS', sans-serif; }
+.cap { font-family: 'CMS', sans-serif; letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.42em; }
+.plate { background: rgba(21,26,33,0.92); padding: 0.18em 0.45em; border-radius: 10px; }
+.u { border-bottom: 3px solid currentColor; }
+.hl { background: rgba(244,211,94,0.16); border-radius: 6px; padding: 0 0.15em; }
+.del { color: #FC6255; } .add { color: #83C167; }
