@@ -70,3 +70,6 @@ If your chapter uses a 3D module, list it first: `--scenes three_rig.mjs,ch04_mo
 
 ## Frame one
 Elements in the film's first comp are set finished at t = 0. Give one an explicit `from: {...}` (e.g. `from: {o: 1, s: 0.94}`) to start it in that finished-looking state and settle it over `dur` (power2.out) so the first second is not frozen.
+
+## Cuts land on beats
+A `cut: true` comp that would start on a half beat is snapped by the engine: the previous comp holds half a beat longer (or, if this comp is shorter than 2.5 beats, gives half a beat), so every whoosh sits on the music's beat and the rest of the timeline does not move.

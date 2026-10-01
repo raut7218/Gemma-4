@@ -60,7 +60,14 @@ const srv = await serve();
 const port = srv.address().port;
 const t0 = Date.now();
 
-if (args.probe) {
+if (args.info) {
+  // write the timeline (duration, chapters, sound cues) without rendering
+  const page = await openPage(browser, port);
+  const info = await page.evaluate(() => ({ dur: FILM.duration, ch: FILM.CHAPTERS, cues: FILM.CUES }));
+  fs.writeFileSync(args.info === true ? path.join(ROOT, 'out', 'timeline_info.json') : args.info, JSON.stringify(info, null, 1));
+  console.log('duration', info.dur, 'cues', info.cues.length);
+  await page.close();
+} else if (args.probe) {
   // list the elements visible at the given times: id, position, opacity, text
   const page = await openPage(browser, port);
   for (const t of String(args.probe).split(',').map(Number)) {

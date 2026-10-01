@@ -369,6 +369,15 @@
         // where the object is carried in, and in a standalone chapter test, where it is created)
         els[id] = prev && prev.els[id] && !delta[id].replace ? Object.assign({}, prev.els[id], delta[id], { type: prev.els[id].type, in: undefined, from: undefined, at: delta[id].at, dur: delta[id].dur, ease: delta[id].ease }) : delta[id];
       }
+      // a cut must land on a whole beat (the music's beat): if it would start on a half beat, the
+      // previous composition holds half a beat longer and this one starts half a beat later and ends
+      // where it would have — nothing after it moves.
+      if (opts.cut && prev && Math.abs(cursor - Math.round(cursor)) > 1e-6 && beats >= 2.5) {
+        prev.beats += 0.5; prev.d = prev.beats * T.BEAT; cursor += 0.5; beats -= 0.5;
+      } else if (opts.cut && prev && Math.abs(cursor - Math.round(cursor)) > 1e-6 && prev.beats >= 2.5) {
+        // too short to give up half a beat: the previous composition gives it instead
+        prev.beats -= 0.5; prev.d = prev.beats * T.BEAT; cursor -= 0.5; beats += 0.5;
+      }
       const cam = opts.cam ? Object.assign({}, opts.cam) : (prev ? prev.cam : undefined);
       const c = Object.assign({ t: cursor * T.BEAT, d: beats * T.BEAT, beats }, opts, { els, cam });
       COMPS.push(c);
