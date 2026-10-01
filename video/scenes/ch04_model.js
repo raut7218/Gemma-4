@@ -321,7 +321,7 @@
   for (let i = 0; i < 4; i++) Object.assign(L4, capLabel('c04_l4_' + i, 'NVIDIA<br>L4', { at: 1.0 + 0.25 * i, size: 24, lh: 1.1 }));
   c(4.5, {
     c04_name: 'fade', c04_pl: 'shrink', c04_bits: 'shrink', c04_w4: 'shrink', c04_qat: 'shrink',
-    rig: R({ yaw: -0.42, pitch: 42, dist: 16.5, tx: 0.2, ty: 0.4, tz: -0.1, cards: 1 }, { x: 900, y: 500, s: 1 }),
+    rig: R({ yaw: -0.42, pitch: 42, dist: 16.5, tx: 0.2, ty: 0.4, tz: -0.1, cards: 1 }, { x: 900, y: 548, s: 0.9 }),
     ...L4,
   }, { cut: true, sfx: [{ at: 0.6, kind: 'tick' }, { at: 0.9, kind: 'tick' }, { at: 1.2, kind: 'tick' }, { at: 1.5, kind: 'tick' }] });
 
@@ -396,14 +396,14 @@
   // the line growing toward the viewer while the rig eases back a step — no fast camera move
   c(2.5, {
     c04_vllm: { s: 1.16, y: 176, dur: 1.75, ease: 'power2.inOut' },
-    rig: { o: 0.5, s: 1.04, dur: 1.75, ease: 'power2.inOut' },
+    rig: { o: 0.5, s: 0.94, dur: 1.75, ease: 'power2.inOut' },
     c04_l4_0: { o: 0.5, dur: 1.2 }, c04_l4_1: { o: 0.5, dur: 1.2 }, c04_l4_2: { o: 0.5, dur: 1.2 }, c04_l4_3: { o: 0.5, dur: 1.2 },
   }, { drift: 0.4 });
 
   // 138 (4.5) — camera rises to 50°: the whole slab again, "the same weights, frozen"
   c(4.5, {
     c04_vllm: 'up', c04_l4_0: 'fade', c04_l4_1: 'fade', c04_l4_2: 'fade', c04_l4_3: 'fade',
-    rig: R({ pitch: 50, yaw: -0.4, dist: 15.5, tz: 0.1, ty: 0.2, dock: 0, seams: 0, glow: 0 }, { pdur: 3.0, o: 1, s: 1, dur: 1.4, ease: 'power2.inOut' }),
+    rig: R({ pitch: 50, yaw: -0.4, dist: 15.5, tz: 0.1, ty: 0.2, dock: 0, seams: 0, glow: 0 }, { pdur: 3.0, o: 1, s: 0.9, dur: 1.4, ease: 'power2.inOut' }),
     ...pinLabel('c04_frozen', 'the same weights, <span class="c-blue">frozen</span>', { at: 2.2, in: 'wipe' }),
   });
 
@@ -478,7 +478,7 @@
   // 150 (4.5) — the product lies on the slab as a thin purple film; "rank r ≤ 128 here"
   c(4.5, {
     c04_pl3: 'right', c04_bai2: 'right', c04_eq: 'right',
-    rig: R({ yaw: -0.36, film: 1 }, { x: 920, y: 520, s: 1, pdur: 2.2 }),
+    rig: R({ yaw: -0.36, film: 1 }, { x: 920, y: 545, s: 0.95, pdur: 2.2 }),
     c04_rank: { type: 'text', html: '<span class="plate">the update <span class="i c-purple">B·A</span> · <span class="c-yellow">rank r ≤ 128</span> here</span>', size: 50, x: 960, y: 150, in: 'wipe', at: 1.4, z: 6 },
   }, { sfx: [{ at: 1.0, kind: 'pop' }] });
 
@@ -499,6 +499,8 @@
   c(4.5, {
     c04_ad: 'up',
     rig: R({ pitch: 40, yaw: -0.52, dist: 16 }, { o: 1 }),
+    // the model's name returns on the slab: the sampling card will grow out of this label
+    c04_name: { type: 'text', html: '<span class="plate m">gemma-4-31b-it-qat-w4a16-ct</span>', size: 40, color: T.BLUE, x: 960, y: 540, in: 'wipe', at: 1.4, z: 6 },
     c04_way: { type: 'text', html: '<span class="plate">LoRA: <span class="c-purple">the only way to change the model’s weights</span></span>', size: 50, x: 960, y: 150, in: 'wipe', at: 0.5, z: 6 },
   });
 
@@ -518,14 +520,16 @@
   const lineEl = (i, at, dx = 0) => ({ ['c04_y' + i]: { type: 'mono', html: LN[i], size: 40, align: 'left', ax: 0, x: CARD.x - CARD.w / 2 + 56 + dx, y: CARD.y - CARD.h / 2 + 140 + i * 62, in: 'wipe', at, z: 6 } });
   c(4.5, {
     c04_way: 'fade',
-    rig: 'fade',
-    c04_yf: { type: 'box', x: CARD.x, y: CARD.y, w: CARD.w, h: CARD.h, stroke: '#3A4654', fill: PANEL, sw: 2.5, rad: 18, html: '', in: 'scale', at: 0.4, z: 5 },
+    // the card grows out of the model-name label on the slab (≈1040, 812 world px at this framing) while the 3D fades
+    rig: { o: 0, at: 0.15, dur: 0.95, ease: 'power2.in' },
+    c04_name: { o: 0, at: 0.45, dur: 0.4, ease: 'power2.in' },
+    c04_yf: { type: 'box', x: CARD.x, y: CARD.y, w: CARD.w, h: CARD.h, stroke: '#3A4654', fill: PANEL, sw: 2.5, rad: 18, html: '', in: 'none', from: { x: 1040, y: 812, w: 590, h: 56, o: 1 }, at: 0, dur: 1.15, ease: 'power3.inOut', z: 5 },
     c04_yn: { type: 'text', html: '<span class="m" style="color:#F0AC5F">configs/sampling.yaml</span>', size: 34, align: 'left', ax: 0, x: CARD.x - CARD.w / 2 + 56, y: CARD.y - CARD.h / 2 + 60, in: 'fade', at: 0.7, z: 6 },
     ...lineEl(0, 1.0), ...lineEl(1, 1.35), ...lineEl(2, 1.7),
   }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
 
   // 157 (3.5) — max_output_tokens ≤ 32,768
-  c(3.5, { ...lineEl(3, 0.2) }, { cam: { x: 960, y: 580, s: 1.05 } });
+  c(3.5, { rig: null, c04_name: null, ...lineEl(3, 0.2) }, { cam: { x: 960, y: 580, s: 1.05 } });
   // 158 (4.5) — thinking_level NONE … HIGH
   c(4.5, { ...lineEl(4, 0.2) }, { cam: { x: 960, y: 600, s: 1.08 } });
   // 159 (3.5) — thinking_budget (default 4,096)
@@ -576,7 +580,7 @@
   // same params tween on from there (its tween starts from the carried value; standalone it starts at 0)
   c(4.5, {
     rail: { ver: 5, at: 0.3, dur: 0.9 },
-    tape: { params: Object.assign({}, TAPE.params, { ticks: 0.14 }), at: 2.35, pdur: 1.025, pease: 'power1.in' },
+    tape: { params: Object.assign({}, TAPE.params, { ticks: 0 }), at: 2.35, pdur: 1.025, pease: 'power1.in' },
     c04_32k: { y: 330, o: 0, at: 0, dur: 3.3, ease: 'power2.in' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 

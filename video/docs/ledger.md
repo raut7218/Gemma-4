@@ -74,3 +74,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 
 ## Film critic — chapters 4–6, round 1 — one more pass (15 items; ch06_r1: 6 fixed, 3 partly, 1 not) — docs/critic/f04_06_r1.md
 - ch05/ch06 fixes for film round 1 items 1, 4, 5, 6, 7, 8, 11, 12, 13 applied by a fixer agent. Engine: morph stagger now counts only changed elements, capped at 0.3 s (it had counted every element on stage, delaying morphs by up to ~1.5 s).
+- ch04 fixes for film round 1 items 2, 3, 9, 10, 14, 15 applied by a fixer agent (cards rebuilt and seated, plinth 1.25× footprint, rim light, plate morphs into the slab, slab ΔE 4.0–5.3). Its tape pre-roll (ticks 0.14 at the cut) was reverted because ch5 now moves the tape from its own first frame.
