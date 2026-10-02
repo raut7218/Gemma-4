@@ -209,7 +209,7 @@
   const CHIP3D = { x: 760, y: 470 };   // the 3D chip's screen point when it appears (measured)
   // 256 (2) — stage 6 (camera 42°): container B rises on the same plinth; the chip arcs A → B
   c(2, {
-    c07_gx: 'up', c07_gxl: 'up', c07_ev: 'down', c07_chip: { x: CHIP3D.x, y: CHIP3D.y, s: 0.22, o: 1, dur: 0.5, ease: 'power3.in' },
+    c07_gx: 'up', c07_gxl: 'up', c07_ev: 'down', c07_chip: { x: CHIP3D.x, y: CHIP3D.y, s: 0.2, o: 0, dur: 0.48, ease: 'power3.in' },
     c07_stg: { ver: 3 },
     c07_3d: { o: 1, dur: 0.45, params: P3({ two: 1, bIn: 1, chipArc: 1, ...P6 }), pdur: 1.5, pease: 'power2.inOut' },
   }, { cut: false, cam: { x: 960, y: 540, s: 1 } });
@@ -217,6 +217,7 @@
   const PB = { tx: 2.6, dist: 12.6, pitch: 42, yaw: 0.4, ty: 1.15 };
   const STEP = ['<span class="c-dim">step 1 ·</span> apply the patch', '<span class="c-dim">step 2 ·</span> reset any test files the hidden tests touch', '<span class="c-dim">step 3 ·</span> apply the hidden tests', '<span class="c-dim">step 4 ·</span> run pytest'];
   c(4.5, {
+    c07_chip: null,
     c07_3d: { params: P3({ chipGone: 1, ...PB, testIn: 1 }), pdur: 2.4, pease: 'power3.inOut' },
     c07_lB: lab(cap('container B · fresh and clean', T.GREEN), { size: 30, at: 1.4 }),
     c07_step: { type: 'text', versions: STEP.map(plate), ver: 0, size: 48, x: 960, y: 990, in: 'wipe', at: 0.4, z: 8 },
@@ -253,19 +254,23 @@
   c(4.5, {
     ...outT,
     c07_step: { ver: 3, dur: 0.6 },
-    c07_3d: { o: 1, dur: 0.6, params: P3({ pass: 1, verdict: 1, tx: 3.9, yaw: 0.42 }), pdur: 2.4, pease: 'power2.inOut' },
+    c07_3d: { o: 1, dur: 0.6, params: P3({ pass: 1, verdict: 1, tx: 3.9, yaw: 0.42, dist: 13.2 }), pdur: 2.4, pease: 'power2.inOut' },
     c07_ok: { type: 'text', html: '<span class="m c-green">exit 0</span> → <span class="c-green">resolved</span>', size: 64, align: 'left', ax: 0, x: 1250, y: 380, in: 'wipe', at: 1.6 },
   }, { cut: true, sfx: [0, 1, 2, 3, 4].map((i) => ({ at: 0.6 + i * 0.3, kind: 'click' })) });
+  const GH = { x: 1520, y: 660 };
   // 263 (4.5) — a red ghost beside it: anything else → not resolved
   c(4.5, {
-    c07_ghost: { type: 'box', w: 440, h: 300, x: 1500, y: 650, stroke: T.RED, fill: 'rgba(252,98,85,0.05)', rad: 24, sw: 3, html: '<span class="c-red">anything else</span>', size: 44, in: 'draw', at: 0.3, o: 0.85 },
-    c07_ghd: { type: 'rect', x: 1500, y: 528, w: 433, h: 50, fill: 'rgba(252,98,85,0.14)', rad: 20, in: 'fade', at: 0.7 },
-    c07_no: { type: 'text', html: '→ <span class="c-red">not resolved</span>', size: 56, x: 1500, y: 870, in: 'wipe', at: 1.2 },
+    c07_ghost: { type: 'box', w: 460, h: 330, x: GH.x, y: GH.y, stroke: T.RED, fill: 'rgba(252,98,85,0.06)', rad: 26, sw: 3, html: '', in: 'draw', at: 0.3 },
+    c07_ghd: { type: 'rect', x: GH.x, y: GH.y - 165 + 30, w: 453, h: 56, fill: 'rgba(252,98,85,0.16)', rad: 22, in: 'fade', at: 0.8 },
+    c07_ght: { type: 'text', html: cap('a ghost run', T.RED), size: 24, x: GH.x, y: GH.y - 165 + 30, in: 'fade', at: 0.9 },
+    c07_gh1: { type: 'text', html: '<span class="c-red">anything else</span>', size: 46, x: GH.x, y: GH.y - 10, in: 'wipe', at: 0.9 },
+    c07_no: { type: 'text', html: '→ <span class="c-red">not resolved</span>', size: 46, x: GH.x, y: GH.y + 80, in: 'wipe', at: 1.4 },
   });
+  const PW = { tx: 0, dist: 17, pitch: 38, yaw: 0.3, ty: 0.9 };
   // 264 (3.5) — 3D wide (camera 38°): A and B on one plinth
   c(3.5, {
-    c07_ok: 'fade', c07_ghost: 'fade', c07_ghd: 'fade', c07_no: 'fade', c07_step: 'down',
-    c07_3d: { params: P3({ tx: 0, dist: 15, pitch: 38, yaw: 0.3, ty: 0.9 }), pdur: 2.4, pease: 'power3.inOut' },
+    c07_ok: 'fade', c07_ghost: 'fade', c07_ghd: 'fade', c07_ght: 'fade', c07_gh1: 'fade', c07_no: 'fade', c07_step: 'down',
+    c07_3d: { params: P3(PW), pdur: 2.4, pease: 'power3.inOut' },
   }, { cut: true });
   // 265 (4.5) — you shape A; the organizers fix B
   c(4.5, {

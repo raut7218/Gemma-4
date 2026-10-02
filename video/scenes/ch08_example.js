@@ -210,8 +210,8 @@
     ...logPush([{ id: 'c08_c5', lines: 2, html: `${call(5, 'edit_file')}<br>${cmd('src/stats.py')}` }]),
     c08_calls: { val: 5, dur: 0.4, at: 0.3 },
     ...codeEls({ in: 'fade', textIn: 'fade' }),
-    c08_old: { type: 'mono', html: '<span class="del">old: return total / len(xs)</span>', size: 22, ax: 0, x: 690, y: 330, in: 'left', at: 0.3, z: 5 },
-    c08_new: { type: 'mono', html: '<span style="color:#F0AC5F">new: return total / len(xs) if xs else 0</span>', size: 22, ax: 0, x: 690, y: 368, in: 'right', at: 0.6, z: 5 },
+    c08_old: { type: 'mono', html: '<span class="del">old: return total / len(xs)</span>', size: 22, ax: 0, x: 700, y: 322, in: 'left', at: 0.3, z: 5 },
+    c08_new: { type: 'mono', html: '<span style="color:#F0AC5F">new: return total / len(xs) if xs else 0</span>', size: 22, ax: 0, x: 700, y: 358, in: 'right', at: 0.6, z: 5 },
     c08_hl: { type: 'rect', x: 960, y: lineY(6), w: 560, h: CLH + 4, fill: 'rgba(240,172,95,0.22)', rad: 6, in: 'grow', z: 2, at: 1.4, dur: 0.6 },
     c08_ok1: { type: 'text', html: '<span class="c-green">edit applied</span> · 1 match', size: 30, x: 960, y: 800, in: 'wipe', at: 2.2 },
   }, { cam: CAMCODE, sfx: [{ at: 0.3, kind: 'click' }, { at: 1.5, kind: 'tick' }] });
@@ -227,7 +227,7 @@
   // 292 (4.5) — the raw result in the same shape
   c(4.5, {
     ...logPush([{ id: 'c08_j2', lines: 2.35, gap: 8, html: `<div style="border:2px solid #3A4654;border-radius:8px;padding:0 10px;width:540px;box-sizing:border-box;background:rgba(21,26,33,0.9)">${m('{"status": "ok", "stdout": "0",', T.DIM)}<br>${m(' "exit_code": 0}', T.GREEN)}</div>`, spec: { in: 'fade', dur: 0.8, at: 0.4 } }]),
-    c08_jt2: { type: 'text', html: 'success,<br><span class="c-dim">in the same shape</span>', size: 40, lh: 1.3, x: 960, y: 330, in: 'wipe', at: 1.4, z: 8 },
+    c08_jt2: { type: 'text', html: 'success,<br><span class="c-dim">in the same shape</span>', size: 40, lh: 1.3, x: 960, y: 300, in: 'wipe', at: 1.4, z: 8 },
   }, { cam: camLog() });
   // 293 (2) — call 7: nearby existing tests
   c(2, { c08_jt2: 'up', ...logPush([{ id: 'c08_c7', lines: 2, html: `${call(7, 'run_command')}<br>${cmd('$ python3 -m pytest tests/test_stats.py -q')}`, spec: { dur: 1.0, ease: 'none' } }]), c08_calls: { val: 7, dur: 0.4, at: 0.3 } }, { cam: camLog(), sfx: [{ at: 0.3, kind: 'click' }] });

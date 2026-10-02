@@ -139,8 +139,8 @@ window.THREE_SCENES.containers = {
     const vd = cl(p.verdict || 0);
     ud.hm.emissiveIntensity = 0.25 + 0.75 * vd; ud.edges.material.opacity = Math.min(1, ud.edges.material.opacity + 0.15 * vd);
     // the chip: appears on A's workspace as the arc starts (the 2D chip lands there), arcs to B's workspace
-    const arc = cl(p.chipArc || 0), ch = Math.max(cl(p.chipIn || 0), cl(arc / 0.12));
-    s.chip.visible = arc > 0.015 && (p.chipGone || 0) < 0.99;
+    const arc = cl(p.chipArc || 0), ch = Math.max(cl(p.chipIn || 0), cl((arc - 0.08) / 0.12));
+    s.chip.visible = arc > 0.08 && (p.chipGone || 0) < 0.99;
     const ax = s.A.position.x - 0.55, bx = s.B.position.x - 0.55;
     // rests on top of the workspace block (top at y 0.98), sinks into B's block when applied
     s.chip.position.set(lerp(ax, bx, arc), 1.04 + Math.sin(Math.PI * arc) * 1.8 - (p.chipGone || 0) * 0.12 + (1 - ch) * 0.3, lerp(-0.3, -0.35, arc));
