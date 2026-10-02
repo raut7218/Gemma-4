@@ -11,12 +11,13 @@ const C = (h) => new THREE.Color(h);
 function makeCase(colorHex) {
   const g = new THREE.Group();
   const glass = new THREE.MeshStandardMaterial({ color: C(colorHex), transparent: true, opacity: 0.13, roughness: 0.15, metalness: 0.0, depthWrite: false, side: THREE.DoubleSide });
+  glass.userData.o = 0.13;
   const shell = new THREE.Mesh(new RoundedBoxGeometry(3.6, 2.2, 2.6, 4, 0.16), glass);
   shell.position.y = 1.1; g.add(shell);
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.6, 2.2, 2.6)), new THREE.LineBasicMaterial({ color: C(colorHex), transparent: true, opacity: 0.85 }));
   edges.position.y = 1.1; g.add(edges);
   // header strip: an open rim band around the top edge (the interior stays visible)
-  const hm = new THREE.MeshStandardMaterial({ color: C(colorHex), roughness: 0.45, emissive: C(colorHex), emissiveIntensity: 0.25 });
+  const hm = new THREE.MeshStandardMaterial({ color: C(colorHex), roughness: 0.32, metalness: 0.05, emissive: C(colorHex), emissiveIntensity: 0.25, transparent: true, opacity: 1 });
   const header = new THREE.Group();
   for (const [x, z, w, d] of [[0, 1.24, 3.62, 0.14], [0, -1.24, 3.62, 0.14], [1.74, 0, 0.14, 2.62], [-1.74, 0, 0.14, 2.62]]) {
     const m = new THREE.Mesh(new RoundedBoxGeometry(w, 0.24, d, 2, 0.04), hm); m.position.set(x, 2.2, z); m.castShadow = true; header.add(m);
@@ -24,9 +25,11 @@ function makeCase(colorHex) {
   // the front band is taller, like the 2D header strip
   const front = new THREE.Mesh(new RoundedBoxGeometry(3.62, 0.42, 0.16, 2, 0.05), hm); front.position.set(0, 2.06, 1.24); header.add(front);
   g.add(header);
-  const floor = new THREE.Mesh(new RoundedBoxGeometry(3.5, 0.08, 2.5, 2, 0.03), new THREE.MeshStandardMaterial({ color: 0x232930, roughness: 0.85 }));
+  // the floor: the same slate for A and B (never near-black), a step lighter than the plinth's edge
+  const fm = new THREE.MeshStandardMaterial({ color: 0x3a434e, roughness: 0.8, transparent: true, opacity: 1 });
+  const floor = new THREE.Mesh(new RoundedBoxGeometry(3.5, 0.08, 2.5, 2, 0.03), fm);
   floor.position.y = 0.04; floor.receiveShadow = true; g.add(floor);
-  g.userData = { glass, edges, header };
+  g.userData = { glass, edges, header, hm, fm };
   return g;
 }
 
@@ -41,22 +44,28 @@ window.THREE_SCENES.containers = {
     const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(-7, 9, 6); key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024); key.shadow.radius = 6; Object.assign(key.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 40 });
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0xa9dcff, 2.4); rim.position.set(6, 6, -9); scene.add(rim);
-    scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x0b0e12, 0.6));
-    const plinth = new THREE.Mesh(new RoundedBoxGeometry(12, 0.36, 5.4, 4, 0.08), new THREE.MeshStandardMaterial({ color: 0x2a3038, roughness: 0.82 }));
+    // cool rim light from behind (opposite the key), grazing the top edges and the plinth's back edge
+    const rim = new THREE.DirectionalLight(0x9fd4ff, 3.6); rim.position.set(3, 4.5, -10); scene.add(rim);
+    const rim2 = new THREE.DirectionalLight(0x9fd4ff, 1.4); rim2.position.set(9, 2.5, -6); scene.add(rim2);
+    scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x0b0e12, 0.55));
+    // the plinth: a lighter stone than the slate blocks, with a darker skirt and a cool lit back edge
+    const plinth = new THREE.Mesh(new RoundedBoxGeometry(12, 0.36, 5.4, 4, 0.08), new THREE.MeshStandardMaterial({ color: 0x4a525c, roughness: 0.78 }));
     plinth.position.y = -0.18; plinth.receiveShadow = true; scene.add(plinth);
-    const skirt = new THREE.Mesh(new RoundedBoxGeometry(12.3, 0.12, 5.7, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x1a1f25, roughness: 0.9 }));
+    const skirt = new THREE.Mesh(new RoundedBoxGeometry(12.3, 0.12, 5.7, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x262c33, roughness: 0.9 }));
     skirt.position.y = -0.41; scene.add(skirt);
+    // the rim catching the plinth's back edge (a thin cool highlight, part of the plinth bevel)
+    const backEdge = new THREE.Mesh(new RoundedBoxGeometry(11.84, 0.05, 0.06, 2, 0.02), new THREE.MeshStandardMaterial({ color: 0x9fd4ff, emissive: C('#9fd4ff'), emissiveIntensity: 0.55, roughness: 0.4 }));
+    backEdge.position.set(0, -0.01, -2.66); scene.add(backEdge);
 
     const A = makeCase(T.BLUE); scene.add(A);
     const B = makeCase(T.GREEN); scene.add(B);
     // A's parts
-    const ws = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.9, 1.5, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x3b4a5a, roughness: 0.6, metalness: 0.1, emissive: C(T.BLUE), emissiveIntensity: 0 }));
+    const ws = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.9, 1.5, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x5a7189, roughness: 0.55, metalness: 0.1, emissive: C(T.BLUE), emissiveIntensity: 0 }));
     ws.position.set(-0.55, 0.53, 0.1); ws.castShadow = true; ws.receiveShadow = true; A.add(ws);
     const tray = new THREE.Group();
-    const trayBase = new THREE.Mesh(new RoundedBoxGeometry(1.1, 0.08, 0.9, 2, 0.03), new THREE.MeshStandardMaterial({ color: 0x4a5560, roughness: 0.7, emissive: C(T.DIM), emissiveIntensity: 0 }));
+    const trayBase = new THREE.Mesh(new RoundedBoxGeometry(1.1, 0.08, 0.9, 2, 0.03), new THREE.MeshStandardMaterial({ color: 0x6b7784, roughness: 0.65, emissive: C(T.DIM), emissiveIntensity: 0 }));
     tray.add(trayBase);
-    const lip = new THREE.MeshStandardMaterial({ color: 0x56636f, roughness: 0.6 });
+    const lip = new THREE.MeshStandardMaterial({ color: 0x7c8995, roughness: 0.6 });
     for (const [x, z, w, d] of [[0, 0.43, 1.1, 0.05], [0, -0.43, 1.1, 0.05], [0.53, 0, 0.05, 0.9], [-0.53, 0, 0.05, 0.9]]) {
       const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.14, d), lip); m.position.set(x, 0.07, z); tray.add(m);
     }
@@ -82,11 +91,8 @@ window.THREE_SCENES.containers = {
     }
     // the gold chip that travels from A to B
     const chip = new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.12, 0.42, 3, 0.05), new THREE.MeshStandardMaterial({ color: C(T.GOLD), roughness: 0.35, emissive: C(T.GOLD), emissiveIntensity: 0.35 }));
-    chip.castShadow = true; scene.add(chip);
-    // B's verdict rim (a thin ring of light under the case)
-    const rimRing = new THREE.Mesh(new RoundedBoxGeometry(3.8, 0.04, 2.8, 2, 0.02), new THREE.MeshStandardMaterial({ color: 0x111111, emissive: C(T.GREEN), emissiveIntensity: 0 }));
-    rimRing.position.y = 0.03; B.add(rimRing);
-    this.s = { r, scene, cam, A, B, ws, tray, trayBase, plaques, file, wsB, testFile, bars, chip, rimRing, spec };
+    chip.castShadow = true; chip.material.transparent = true; chip.renderOrder = 10; scene.add(chip);
+    this.s = { r, scene, cam, A, B, ws, tray, trayBase, plaques, file, wsB, testFile, bars, chip, spec };
     return Promise.resolve();
   },
   render(p, rec) {
@@ -94,11 +100,16 @@ window.THREE_SCENES.containers = {
     // placement: A alone at centre, or A left and B right
     const two = cl(p.two || 0);
     s.A.position.set(lerp(0, -2.6, two), 0, 0);
-    const bIn = cl(p.bIn || 0);
-    s.B.position.set(2.6, lerp(-2.6, 0, bIn), 0);
-    s.B.visible = bIn > 0.01;
-    s.A.visible = (p.aIn ?? 1) > 0.01;
-    s.A.position.y = lerp(-2.6, 0, cl(p.aIn ?? 1));
+    // B is lowered onto the plinth from above only once A has moved clear (never through A or the plinth)
+    const bk = Math.min(cl(p.bIn || 0), cl((two - 0.55) / 0.45)), be = 1 - Math.pow(1 - bk, 3);
+    s.B.position.set(2.6, (1 - be) * 1.4, 0);
+    s.B.visible = bk > 0.01;
+    const ud = s.B.userData;
+    ud.glass.opacity = ud.glass.userData.o * bk; ud.edges.material.opacity = 0.85 * bk; ud.hm.opacity = bk; ud.fm.opacity = bk;
+    ud.hm.transparent = ud.fm.transparent = bk < 0.999; ud.hm.depthWrite = ud.fm.depthWrite = bk > 0.5;
+    s.wsB.material.transparent = bk < 0.999; s.wsB.material.opacity = bk; s.wsB.material.depthWrite = bk > 0.5;
+    s.A.visible = true;
+    s.A.position.y = 0;
     // plaque warning glow
     // parts light up (lit*): workspace blue, tray grey, plaques white; plaques glow red as a warning
     // lit 0..3 lights them in turn (or litWs / litTray / litPlq individually)
@@ -124,15 +135,16 @@ window.THREE_SCENES.containers = {
       b.visible = k > 0.01; b.position.y = 0.15 + i * 0.13 + (1 - k) * 1.2;
       b.material.emissiveIntensity = 0.8 * cl((p.pass || 0) * 5 - i);
     });
-    s.rimRing.material.emissive.set(C((p.verdict || 0) < 0 ? T.RED : T.GREEN));
-    s.rimRing.material.emissiveIntensity = 1.2 * Math.abs(p.verdict || 0);
-    // the chip: forms over A's workspace, arcs to B's workspace
-    const ch = cl(p.chipIn || 0), arc = cl(p.chipArc || 0);
-    s.chip.visible = ch > 0.01 && (p.chipGone || 0) < 0.99;
+    // the verdict is B's own rim lighting up (header band emissive + brighter edges), not a separate shape
+    const vd = cl(p.verdict || 0);
+    ud.hm.emissiveIntensity = 0.25 + 0.75 * vd; ud.edges.material.opacity = Math.min(1, ud.edges.material.opacity + 0.15 * vd);
+    // the chip: appears on A's workspace as the arc starts (the 2D chip lands there), arcs to B's workspace
+    const arc = cl(p.chipArc || 0), ch = Math.max(cl(p.chipIn || 0), cl(arc / 0.12));
+    s.chip.visible = arc > 0.015 && (p.chipGone || 0) < 0.99;
     const ax = s.A.position.x - 0.55, bx = s.B.position.x - 0.55;
     // rests on top of the workspace block (top at y 0.98), sinks into B's block when applied
     s.chip.position.set(lerp(ax, bx, arc), 1.04 + Math.sin(Math.PI * arc) * 1.8 - (p.chipGone || 0) * 0.12 + (1 - ch) * 0.3, lerp(-0.3, -0.35, arc));
-    s.chip.scale.setScalar(0.4 + 0.6 * ch);
+    s.chip.scale.setScalar(0.6 + 0.4 * ch);
     // camera
     const yaw = p.yaw ?? 0.45, el = ((p.pitch ?? 40) * Math.PI) / 180, d = p.dist ?? 12;
     const tx = p.tx ?? 0, ty = p.ty ?? 1.0, tz = p.tz ?? 0;

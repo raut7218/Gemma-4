@@ -90,7 +90,8 @@
     }
   };
 
-  // the empty failure chart: axis, nine dashed empty slots, labels
+  // the empty failure chart: axis, nine zero-height stubs (no data yet), labels; `pulse` runs a soft highlight
+  // along the stubs (left → right) so the empty chart is alive without implying any bar heights
   const CH_X0 = 260, CH_X1 = 1660, CH_Y = 760;
   const SLOTS = ['looping', 'no submit', 'wrong file', 'overflow', "won't apply", 'over-edit', 'edit tests', 'stray files', 'pytest.ini'];
   DRAW.c09_chart = (ctx, p) => {
@@ -102,11 +103,14 @@
       const k = ease(clamp((p.slots || 0) * 9 * 0.6 - i * 0.6 + 0.6));
       if (k <= 0) return;
       const x = CH_X0 + pitch * (i + 0.5);
+      const hp = (p.pulse || 0) * (SLOTS.length + 3) - 1.5, glow = Math.exp(-((i - hp) ** 2) / 1.6);
       ctx.save(); ctx.globalAlpha *= k * (p.la ?? 1);
-      ctx.setLineDash([9, 9]); ctx.lineDashOffset = -(p.pulse || 0) * 54;
-      ctx.strokeStyle = DRAW.rgba(T.DIM, 0.7); ctx.lineWidth = 2.5;
-      ctx.strokeRect(x - 46, CH_Y - 380 * k, 92, 380 * k - 4);
+      // zero-height stub sitting on the axis
+      DRAW.util.rr(ctx, x - 46 * k, CH_Y - 12, 92 * k, 8, 3);
+      ctx.fillStyle = DRAW.rgba(glow > 0.05 ? T.INK : T.DIM, 0.45 + 0.5 * glow); ctx.fill();
+      // a "0" above each stub: nothing counted yet
       ctx.restore();
+      DRAW.text(ctx, '0', x, CH_Y - 40, { mono: true, size: 28, color: T.DIM, a: k * (p.la ?? 1) * (0.55 + 0.45 * glow) });
       DRAW.text(ctx, nm, x, CH_Y + 40, { size: 28, color: T.DIM, a: k * (p.la ?? 1) });
     });
     ctx.restore();
@@ -157,7 +161,7 @@
   c(4, {
     ...K.rail(9),
     loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { ...LOOP0 } },
-    c09_crack: { type: 'path', d: 'M960,60 L930,120 L985,165 L940,220', sw: 6, color: T.RED, in: 'draw', dur: 0.6, at: 0 },
+    c09_crack: { type: 'path', d: 'M960,60 L930,120 L985,165 L940,220', sw: 4, color: T.RED, fill: 'none', in: 'draw', dur: 0.6, at: 0 },
     c09_ring: { type: 'ring', rad: 380, frac: 1, sw: 3, color: T.RED, o: 0.0, in: 'fade', from: { rad: 300, o: 0.9 }, dur: 2.2, ease: 'expo.out', at: 0.3 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.5, clear: true, keep: ['rail', 'loop'] });
   // 316 (4.5) — the taxonomy names itself

@@ -15,9 +15,9 @@
   const A8 = { x: 960, y: 560, w: 620, h: 760 };
   const panel = (x, at = 0) => ({ type: 'box', w: 610, h: 760, x, y: 560, stroke: '#56616D', fill: 'rgba(21,26,33,0.5)', rad: 22, sw: 2.5, html: '', in: 'draw', dur: 1.2, at });
   const dash = (at = 0) => ({
-    c08_pl: panel(325, at), c08_pr: panel(1595, at),
+    c08_pl: panel(325, at), c08_pr: panel(1595, at + 0.25),
     c08_plh: { type: 'text', html: cap('call log'), size: 26, color: T.DIM, x: 325, y: 208, in: 'fade', at: at + 0.3 },
-    c08_prh: { type: 'text', html: cap('meters'), size: 26, color: T.DIM, x: 1595, y: 208, in: 'fade', at: at + 0.3 },
+    c08_prh: { type: 'text', html: cap('meters'), size: 26, color: T.DIM, x: 1595, y: 208, in: 'fade', at: at + 0.55 },
   });
 
   // ---------------------------------------------------------------- meters: context (vertical), time (horizontal)
@@ -80,7 +80,14 @@
   };
   const logClear = () => { const d = {}; LOG.forEach((r) => { if (!r.gone) d[r.id] = 'fade'; }); LOG = []; scroll = 0; return d; };
   const lastY = () => { const r = LOG[LOG.length - 1]; return LTOP + r.y0 - scroll + r.h / 2; };
-  const camLog = (s = 1.55) => ({ x: 560, y: 640, s });
+  // camera clamp: the panel tops (world y 180) stay >= 120 px below the frame top, including the drift
+  // (drift scales by up to 2.8 % and lifts the centre 8 px), so the HUD rail never sits over a panel header
+  const PTOP = 180;
+  const cl = (x, y, s) => ({ x, y: Math.min(y, PTOP + 8 + 420 / (s * 1.028)), s });
+  const camLog = () => cl(480, 522, 1.22);          // the whole call-log panel + the whole centre panel
+  const METCAM = cl(1395, 540, 1.24);               // the whole centre panel + the whole meters panel
+  const CAMCODE = METCAM;                           // code close-ups: the centre panel whole, meters beside it
+  const WIDE = { x: 960, y: 545, s: 0.97 };         // all three panels, edges never cropped by the drift
   const call = (n, tool, rest = '') => `<span class="c-dim">${n}&ensp;</span>${m(tool, T.TEAL)}${rest ? '&ensp;' + rest : ''}`;
   const cmd = (s) => m(esc(s), T.INK);
   const strip = (s) => `<div style="background:rgba(88,196,221,0.13);border-left:5px solid #58C4DD;padding:0 12px;width:510px;box-sizing:border-box">${s}</div>`;
@@ -101,37 +108,37 @@
   c(3.5, {
     ...K.rail(8),
     ...K.container('contA', 'A', A8),
-    ...dash(0.1),
-    c08_met: meterEl({ rev: 1 }, { at: 1.0, paramsFrom: { rev: 0 }, pdur: 1.4 }),
-    c08_calls: callsEl(0, { at: 1.3 }),
-    c08_callsL: { type: 'text', html: cap('tool calls'), size: 24, color: T.DIM, x: 1720, y: 510, in: 'fade', at: 1.4 },
+    ...dash(0),
+    c08_met: meterEl({ rev: 1 }, { at: 0.5, paramsFrom: { rev: 0 }, pdur: 2.0, pease: 'power2.inOut' }),
+    c08_calls: callsEl(0, { at: 1.0 }),
+    c08_callsL: { type: 'text', html: cap('tool calls'), size: 24, color: T.DIM, x: 1720, y: 510, in: 'fade', at: 1.1 },
   }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht'], cam: { x: 960, y: 540, s: 1 }, drift: 0 });
   // 272 (4.5) — the honesty tag, kept for the whole chapter
+  // (a slow pull-back keeps all three panels whole; the workspace label is the layered second action)
   c(4.5, {
-    // plates behind the HUD rail and tag, so zoomed world text never shows through them
-    c08_rp: { type: 'rect', hud: true, ax: 0, x: 74, y: 66, w: 330, h: 48, rad: 10, fill: 'rgba(14,17,22,0.9)', z: 49, in: 'fade', at: 0.1 },
+    // plate behind the HUD tag (the rail has its own plate), so zoomed world text never shows through it
     c08_tp: { type: 'rect', hud: true, ax: 1, x: 1870, y: 66, w: 840, h: 48, rad: 10, fill: 'rgba(14,17,22,0.9)', z: 49, in: 'fade', at: 0.1 },
-    c08_tag: { type: 'text', hud: true, html: cap('illustrative run · not a real trajectory'), size: 26, color: T.YELLOW, align: 'right', ax: 1, x: 1850, y: 66, in: 'wipe', at: 0.3, dur: 1.2, z: 50 },
-    c08_wsl: { type: 'text', html: cap('workspace'), size: 24, color: T.DIM, x: 960, y: 270, in: 'fade', at: 1.2 },
-  }, { cam: { x: 960, y: 540, s: 1.04 }, drift: 0.6 });
+    c08_tag: { type: 'text', hud: true, html: cap('illustrative run · not a real trajectory'), size: 26, color: T.YELLOW, align: 'right', ax: 1, x: 1850, y: 66, in: 'wipe', at: 0.2, dur: 1.2, z: 50 },
+    c08_wsl: { type: 'text', html: cap('workspace'), size: 24, color: T.DIM, x: 960, y: 270, in: 'rise', at: 1.6, dur: 0.9 },
+  }, { cam: WIDE, drift: 0.6 });
   // 273 (2) — the cold-open issue card lands in the centre
-  c(2, { ...K.issue('c08_issue', { x: 960, y: 520, s: 0.5, in: 'down', z: 5 }) }, { cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 0.5, kind: 'pop' }] });
+  c(2, { ...K.issue('c08_issue', { x: 960, y: 520, s: 0.5, in: 'down', z: 5 }) }, { cam: WIDE, drift: 0.6, sfx: [{ at: 0.5, kind: 'pop' }] });
   // 274 (3.5) — CLOSE the log fills with the first message (six strips)
   const FM = ['problem statement', 'hints (if any)', 'budget', 'environment rules', 'tool notes', 'directory listing · 150 entries'];
   const d274 = logPush(FM.map((s, i) => ({ id: 'c08_fm' + i, lines: 1, gap: 6, html: strip(s), spec: { in: 'left', at: 0.5 + i * 0.22, dur: 0.7 } })));
   c(3.5, {
-    c08_issue: { x: 330, y: 290, s: 0.12, o: 0, dur: 0.8, ease: 'power3.in' },
+    c08_issue: { s: 0.48, dur: 1.2, ease: 'power2.inOut' },
     c08_fmh: { type: 'text', html: cap('the first message'), size: 24, color: T.BLUE, align: 'left', ax: 0, x: LX, y: 246, in: 'fade', at: 0.4 },
     ...d274,
-  }, { cam: { x: 560, y: 560, s: 1.35 }, sfx: FM.map((_, i) => ({ at: 0.55 + i * 0.22, kind: 'tick' })) });
+  }, { cam: camLog(), sfx: FM.map((_, i) => ({ at: 0.55 + i * 0.22, kind: 'tick' })) });
   // 275 (2) — the context meter fills to ≈3.5k in blue
   c(2, {
-    c08_issue: null,
     c08_met: { params: MET({ b: 3500 }), pdur: 1.2, pease: 'power3.out' },
     c08_ctxR: { type: 'text', html: '≈<span class="c-yellow">3.5k</span> tokens', size: 32, align: 'left', ax: 0, x: 1480, y: 872, in: 'fade', at: 0.7 },
-  }, { cam: { x: 1250, y: 560, s: 1.15 } });
+  }, { cam: METCAM });
   // 276 (4.5) — CLOSE the log: think
   c(4.5, {
+    c08_ctxR: 'fade',
     ...logPush([{ id: 'c08_th', lines: 1, gap: 22, html: `<span style="color:#8FA7D9"><i>think:</i> find <span class="m">summarize</span></span>`, spec: { at: 0.4, dur: 1.4 } }]),
     c08_met: { params: MET({ b: 3500, k: 250 }), pdur: 2 },
   }, { cam: camLog() });
@@ -141,24 +148,24 @@
   c(2, {
     ...logPush([{ id: 'c08_r1', lines: 1, gap: 4, html: m('→ src/stats.py:4:def summarize(xs):', T.DIM) }]),
     c08_calls: { val: 1, dur: 0.4, at: 0.3 },
-  }, { cam: { x: 960, y: 540, s: 1 } });
+  }, { cam: WIDE, drift: 0.6 });
   // 279 (2) — the context meter grows by a sliver
-  c(2, { c08_met: { params: MET({ b: 3500, k: 250, t: 120 }), pdur: 1.0 }, c08_sl: { type: 'text', html: '+ a sliver', size: 28, color: T.TEAL, align: 'left', ax: 0, x: 1480, y: 650, in: 'rise', at: 0.4 } }, { cam: { x: 1300, y: 640, s: 1.2 } });
+  c(2, { c08_met: { params: MET({ b: 3500, k: 250, t: 120 }), pdur: 1.0 }, c08_sl: { type: 'text', html: '+ a sliver', size: 28, color: T.TEAL, align: 'left', ax: 0, x: 1480, y: 650, in: 'rise', at: 0.4 } }, { cam: METCAM });
   // 280 (3.5) — CLOSE centre: call 2 read_file lines 1–8
   c(3.5, {
-    c08_sl: 'fade',
+    c08_sl: 'fade', c08_issue: { o: 0, s: 0.42, dur: 0.6, ease: 'power2.in' },
     ...logPush([{ id: 'c08_c2', lines: 2, html: `${call(2, 'read_file')}<br>${cmd('src/stats.py · lines 1–8')}` }]),
     c08_calls: { val: 2, dur: 0.4, at: 0.4 },
     c08_rf: { type: 'text', html: `${m('read_file', T.TEAL)} ${m('src/stats.py')}<br><span class="c-dim">lines 1–8</span>`, size: 30, x: 960, y: 340, in: 'wipe', at: 0.6 },
-  }, { cam: { x: 960, y: 600, s: 1.45 }, sfx: [{ at: 0.4, kind: 'click' }] });
+  }, { cam: camLog(), sfx: [{ at: 0.4, kind: 'click' }] });
   // 281 (2) — the cold-open code panel draws, with a scrollbar
-  c(2, { c08_wsl: 'fade', ...codeEls() }, { cam: { x: 960, y: 560, s: 1.45 } });
+  c(2, { c08_wsl: 'fade', c08_issue: null, ...codeEls() }, { cam: CAMCODE });
   // 282 (2) — line 6 glows red; the meter grows by 8 lines, not the whole file
   c(2, {
     c08_hl: { type: 'rect', x: 960, y: lineY(6), w: 560, h: CLH + 4, fill: 'rgba(252,98,85,0.20)', rad: 6, in: 'grow', z: 2, dur: 0.6 },
     c08_met: { params: MET({ b: 3500, k: 250, t: 260 }), pdur: 1.0 },
     c08_8l: { type: 'text', html: '+ 8 lines,<br><span class="c-dim">not the whole file</span>', size: 30, align: 'left', ax: 0, x: 1480, y: 630, in: 'rise', at: 0.4 },
-  }, { cam: { x: 1180, y: 560, s: 1.12 }, sfx: [{ at: 0.1, kind: 'tick' }] });
+  }, { cam: METCAM, sfx: [{ at: 0.1, kind: 'tick' }] });
   // 283 (3.5) — OVER the workspace: /workspace inside a gold edge, /tmp outside
   const WSB = { x: 960, y: 470, w: 540, h: 380 }, TMPB = { x: 960, y: 820, w: 540, h: 150 };
   c(3.5, {
@@ -169,30 +176,32 @@
     c08_wsN: { type: 'text', html: cap('in the patch', T.GOLD), size: 24, align: 'right', ax: 1, x: WSB.x + WSB.w / 2 - 20, y: WSB.y - WSB.h / 2 + 34, in: 'fade', at: 1.2, z: 4 },
     c08_tmp: { type: 'box', ...TMPB, stroke: '#6F7883', fill: 'rgba(154,163,173,0.04)', rad: 16, html: '', in: 'draw', at: 0.8, z: 3 },
     c08_tmpT: { type: 'text', html: m('/tmp', T.DIM), size: 30, align: 'left', ax: 0, x: TMPB.x - TMPB.w / 2 + 24, y: TMPB.y - 40, in: 'fade', at: 1.1, z: 4 },
-  }, { cam: { x: 960, y: 600, s: 1.25 } });
+  }, { cam: WIDE, drift: 0.6 });
   // 284 (2) — call 3: run_command writes /tmp/repro.py with a heredoc
   c(2, {
     ...CODE_IDS.reduce((a, k) => Object.assign(a, { [k]: null }), {}),
     ...logPush([{ id: 'c08_c3', lines: 3, html: `${call(3, 'run_command')}<br>${cmd("$ cat > /tmp/repro.py <<'EOF'")}<br>${cmd('  … EOF')}`, spec: { dur: 1.2 } }]),
     c08_calls: { val: 3, dur: 0.4, at: 0.3 },
-  }, { cam: { x: 700, y: 600, s: 1.08 }, sfx: [{ at: 0.3, kind: 'click' }] });
+  }, { cam: camLog(), sfx: [{ at: 0.3, kind: 'click' }] });
   // 285 (2) — the file appears outside the gold edge
   c(2, {
     c08_repro: { type: 'box', w: 260, h: 56, x: 1050, y: TMPB.y + 20, stroke: T.DIM, fill: 'rgba(154,163,173,0.10)', rad: 10, html: m('repro.py', T.INK), size: 28, in: 'pop', at: 0.3, z: 5 },
-  }, { cam: { x: 960, y: 700, s: 1.3 }, sfx: [{ at: 0.35, kind: 'pop' }] });
+  }, { cam: camLog(), sfx: [{ at: 0.35, kind: 'pop' }] });
   const WS_IDS = ['c08_ws', 'c08_wsT', 'c08_wsF', 'c08_wsN', 'c08_tmp', 'c08_tmpT', 'c08_repro'];
   // 286 (3.5) — CLOSE log: call 4 → ZeroDivisionError
   c(3.5, {
     ...logPush([{ id: 'c08_c4', lines: 3, html: `${call(4, 'run_command')}<br>${cmd('$ python3 /tmp/repro.py')}<br>${m('ZeroDivisionError: division by zero', T.RED)}`, spec: { dur: 1.6, ease: 'none' } }]),
-    c08_calls: { val: 4, dur: 0.4, at: 0.3 }, c08_fmh: 'fade', ...Object.fromEntries(WS_IDS.map((k) => [k, 'fade'])),
+    c08_calls: { val: 4, dur: 0.4, at: 0.3 }, c08_fmh: 'fade',
+    c08_repro: { stroke: T.RED, fill: 'rgba(252,98,85,0.14)', at: 1.4, dur: 0.4, ease: 'power2.out' },
   }, { cam: camLog(), sfx: [{ at: 0.3, kind: 'click' }, { at: 1.5, kind: 'tick' }] });
   // 287 (3.5) — the raw result behind that line: JSON
   c(3.5, logPush([{ id: 'c08_j1', lines: 2.35, gap: 8, html: `<div style="border:2px solid #3A4654;border-radius:8px;padding:0 10px;width:540px;box-sizing:border-box;background:rgba(21,26,33,0.9)">${m('{"status": "error", …,', T.DIM)}<br>${m(' "exit_code": 1}', T.DIM)}</div>`, spec: { in: 'fade', dur: 0.8, at: 0.5 } }]), { cam: camLog() });
   // 288 (4.5) — "now there is a test the agent can see"
   c(4.5, {
-    c08_jt: { type: 'text', html: cap('what the model reads: JSON, not a terminal'), size: 24, color: T.DIM, align: 'left', ax: 0, x: LX, y: lastY() + 52, in: 'fade', at: 0.2, z: 5 },
+    ...Object.fromEntries(WS_IDS.map((k) => [k, 'fade'])),
+    c08_jt: { type: 'text', html: cap('what the model reads:<br>JSON, not a terminal'), size: 24, lh: 1.6, color: T.DIM, x: 960, y: 740, in: 'fade', at: 0.2, z: 5 },
     c08_see: { type: 'text', html: 'now there is<br><span class="c-green">a test the agent can see</span>', size: 40, lh: 1.3, maxw: 580, x: 960, y: 540, in: 'wipe', at: 0.8, z: 8 },
-  }, { cam: { x: 600, y: 640, s: 1.4 } });
+  }, { cam: camLog() });
   // 289 (2.5) — reading beat: underline "a test the agent can see"
   F.beat(2.5, { id: 'c08_see', mode: 'underline', w: 450, dx: 0, under: 62, color: T.GREEN });
   // 290 (4.5) — CLOSE code: call 5 edit_file; line 6 rewrites; edit applied · 1 match
@@ -204,12 +213,12 @@
     c08_old: { type: 'mono', html: '<span class="del">old: return total / len(xs)</span>', size: 22, ax: 0, x: 690, y: 330, in: 'left', at: 0.3, z: 5 },
     c08_new: { type: 'mono', html: '<span style="color:#F0AC5F">new: return total / len(xs) if xs else 0</span>', size: 22, ax: 0, x: 690, y: 368, in: 'right', at: 0.6, z: 5 },
     c08_hl: { type: 'rect', x: 960, y: lineY(6), w: 560, h: CLH + 4, fill: 'rgba(240,172,95,0.22)', rad: 6, in: 'grow', z: 2, at: 1.4, dur: 0.6 },
-    c08_ok1: { type: 'text', html: '<span class="c-green">edit applied</span> · 1 match', size: 30, x: 960, y: 860, in: 'wipe', at: 2.2 },
-  }, { cam: { x: 960, y: 590, s: 1.45 }, sfx: [{ at: 0.3, kind: 'click' }, { at: 1.5, kind: 'tick' }] });
+    c08_ok1: { type: 'text', html: '<span class="c-green">edit applied</span> · 1 match', size: 30, x: 960, y: 800, in: 'wipe', at: 2.2 },
+  }, { cam: CAMCODE, sfx: [{ at: 0.3, kind: 'click' }, { at: 1.5, kind: 'tick' }] });
   // the code text rewrites line 6 inside the same comp (ver tween, layered)
   FILM.COMPS[FILM.COMPS.length - 1].els.c08_code = Object.assign({}, FILM.COMPS[FILM.COMPS.length - 1].els.c08_code, { ver: 1, from: { ver: 0, o: 0 }, dur: 1.6, at: 0.4 });
   // 291 (3.5) — CLOSE log: call 6 → 0 (green)
-  const CODEOUT = Object.fromEntries([...CODE_IDS, 'c08_old', 'c08_new', 'c08_hl', 'c08_ok1'].map((k) => [k, 'fade']));
+  const CODEOUT = Object.fromEntries(['c08_old', 'c08_new', 'c08_hl', 'c08_ok1'].map((k) => [k, 'fade']));
   c(3.5, {
     ...CODEOUT,
     ...logPush([{ id: 'c08_c6', lines: 3, html: `${call(6, 'run_command')}<br>${cmd('$ python3 /tmp/repro.py')}<br>${m('0', T.GREEN)}`, spec: { dur: 1.4, ease: 'none' } }]),
@@ -218,30 +227,30 @@
   // 292 (4.5) — the raw result in the same shape
   c(4.5, {
     ...logPush([{ id: 'c08_j2', lines: 2.35, gap: 8, html: `<div style="border:2px solid #3A4654;border-radius:8px;padding:0 10px;width:540px;box-sizing:border-box;background:rgba(21,26,33,0.9)">${m('{"status": "ok", "stdout": "0",', T.DIM)}<br>${m(' "exit_code": 0}', T.GREEN)}</div>`, spec: { in: 'fade', dur: 0.8, at: 0.4 } }]),
-    c08_jt2: { type: 'text', html: 'success,<br><span class="c-dim">in the same shape</span>', size: 40, lh: 1.3, x: 960, y: 540, in: 'wipe', at: 1.4, z: 8 },
-  }, { cam: { x: 600, y: 640, s: 1.4 } });
+    c08_jt2: { type: 'text', html: 'success,<br><span class="c-dim">in the same shape</span>', size: 40, lh: 1.3, x: 960, y: 330, in: 'wipe', at: 1.4, z: 8 },
+  }, { cam: camLog() });
   // 293 (2) — call 7: nearby existing tests
-  c(2, { c08_jt2: 'up', ...logPush([{ id: 'c08_c7', lines: 2, html: `${call(7, 'run_command')}<br>${cmd('$ python3 -m pytest tests/test_stats.py -q')}`, spec: { dur: 1.0, ease: 'none' } }]), c08_calls: { val: 7, dur: 0.4, at: 0.3 } }, { cam: camLog(1.45), sfx: [{ at: 0.3, kind: 'click' }] });
+  c(2, { c08_jt2: 'up', ...logPush([{ id: 'c08_c7', lines: 2, html: `${call(7, 'run_command')}<br>${cmd('$ python3 -m pytest tests/test_stats.py -q')}`, spec: { dur: 1.0, ease: 'none' } }]), c08_calls: { val: 7, dur: 0.4, at: 0.3 } }, { cam: camLog(), sfx: [{ at: 0.3, kind: 'click' }] });
   // 294 (2) — result: passed
-  c(2, logPush([{ id: 'c08_r7', lines: 1, gap: 4, html: `${m('.......', T.GREEN)}&ensp;<span class="c-green">passed</span>`, spec: { dur: 0.8 } }]), { cam: camLog(1.45), sfx: [{ at: 0.35, kind: 'tick' }] });
+  c(2, logPush([{ id: 'c08_r7', lines: 1, gap: 4, html: `${m('.......', T.GREEN)}&ensp;<span class="c-green">passed</span>`, spec: { dur: 0.8 } }]), { cam: camLog(), sfx: [{ at: 0.35, kind: 'tick' }] });
   // 295 (3) — call 8: git status --short
   c(3, {
     ...logPush([{ id: 'c08_c8', lines: 3, html: `${call(8, 'run_command')}<br>${cmd('$ git status --short')}<br>${m(' M src/stats.py', T.GOLD)}&ensp;<span class="c-dim">(no /tmp/repro.py)</span>`, spec: { dur: 1.2 } }]),
     c08_calls: { val: 8, dur: 0.4, at: 0.3 },
-  }, { cam: camLog(1.45), sfx: [{ at: 0.3, kind: 'click' }] });
+  }, { cam: camLog(), sfx: [{ at: 0.3, kind: 'click' }] });
   // 296 (3.5) — CLOSE meters: the run fits
   c(3.5, {
     c08_met: { params: MET({ b: 3500, k: 700, t: 1500, time: 0.22 }), pdur: 1.6, pease: 'power3.out' },
-    c08_fit: { type: 'text', html: 'the run <span class="c-green">fits</span>', size: 40, x: 1595, y: 272, in: 'wipe', at: 0.6 },
+    c08_fit: { type: 'text', html: 'the run <span class="c-green">fits</span>', size: 40, x: 1610, y: 322, in: 'wipe', at: 0.6 },
     c08_far: { type: 'text', html: cap('far below 32k'), size: 24, color: T.BLUE, align: 'left', ax: 0, x: 1480, y: 650, in: 'fade', at: 1.2 },
-  }, { cam: { x: 1595, y: 580, s: 1.4 } });
+  }, { cam: METCAM });
   // 297 (2) — submit_patch (free): the gold chip forms
   c(2, {
-    c08_ctxR: 'fade', c08_far: 'fade',
+    c08_far: 'fade', ...Object.fromEntries(CODE_IDS.map((k) => [k, 'quick'])),
     ...logPush([{ id: 'c08_c9', lines: 1, html: `${m('submit_patch', T.TEAL)}&ensp;<span class="c-dim">(free)</span>`, spec: { dur: 0.6 } }]),
     ...K.chip('c08_chip', { x: 960, y: 520, s: 1.3, at: 0.3, z: 6 }),
     c08_chipL: { type: 'text', html: '1 file · 1 line changed', size: 30, color: T.DIM, x: 960, y: 620, in: 'fade', at: 0.7 },
-  }, { cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 0.35, kind: 'pop' }] });
+  }, { cam: WIDE, drift: 0.6, sfx: [{ at: 0.35, kind: 'pop' }] });
   // 298 (2) — the chip travels into a small container B
   const BX = 1595;
   c(2, {
@@ -249,7 +258,7 @@
     ...K.container('c08_B', 'B', { x: BX, y: 560, w: 520, h: 600, head: 'container B' }),
     c08_chip: { x: BX, y: 380, s: 0.9, dur: 1.1, ease: 'expo.inOut', at: 0.3 },
     c08_chipL: 'fade',
-  });
+  }, { drift: 0.6 });
   // 299 (4.5) — the hidden test cells stay neutral grey
   const cells = {};
   for (let i = 0; i < 5; i++) cells['c08_tc' + i] = { type: 'rect', x: BX, y: 500 + i * 70, w: 400, h: 44, fill: '#3A4452', rad: 7, in: 'down', at: 0.2 + i * 0.1, z: 3 };
@@ -257,17 +266,17 @@
     ...cells,
     c08_q: { type: 'text', html: '?', size: 64, color: T.DIM, x: BX + 200, y: 855, in: 'fade', at: 1.6 },
     c08_dec: { type: 'text', html: plate('on a real task, <span class="c-ink">this is where it’s decided</span>'), size: 46, color: T.DIM, x: 960, y: 1000, in: 'wipe', at: 1.0, z: 9 },
-  }, { sfx: [0, 1, 2, 3, 4].map((i) => ({ at: 0.25 + i * 0.1, kind: 'tick' })) });
+  }, { drift: 0.6, sfx: [0, 1, 2, 3, 4].map((i) => ({ at: 0.25 + i * 0.1, kind: 'tick' })) });
   // 300 (2.5) — reading beat: "this is where it's decided" stays bright; the rest sinks
   const DIMS = ['contA', 'contA_hd', 'contA_ht', 'c08_pl', 'c08_pr', 'c08_plh', 'c08_chip', 'c08_B', 'c08_B_hd', 'c08_B_ht', 'c08_q', ...Object.keys(cells), ...LOG.filter((r) => !r.gone).map((r) => r.id)];
-  c(2.5, { ...Object.fromEntries(DIMS.map((k) => [k, { o: 0.33, dur: 0.6 }])), c08_dec: { s: 1.08, dur: 1.4, ease: 'expo.out' } }, { cam: { x: 960, y: 760, s: 1.1 }, drift: 0.4 });
+  c(2.5, { ...Object.fromEntries(DIMS.map((k) => [k, { o: 0.33, dur: 0.6 }])), c08_dec: { s: 1.08, dur: 1.4, ease: 'expo.out' } }, { cam: cl(960, 760, 1.06), drift: 0.4 });
 
   // 301 (4.5) — FULL "Same task. Careless agent."
   logClear();
   c(4.5, {
     c08_full: { type: 'text', html: 'Same task. <span class="c-red">Careless agent.</span>', size: 120, x: 960, y: 520, in: 'wipe', dur: 1.3, at: 0.2 },
     c08_fsub: { type: 'text', html: cap('the same illustrative issue, a different run'), size: 28, color: T.DIM, x: 960, y: 660, in: 'fade', at: 1.4 },
-  }, { clear: true, keep: ['rail', 'c08_tag', 'c08_rp', 'c08_tp'], cut: true, cam: { x: 960, y: 540, s: 1 } });
+  }, { clear: true, keep: ['rail', 'c08_tag', 'c08_tp'], cut: true, cam: { x: 960, y: 540, s: 1 } });
   // 302 (3.5) — WIDE the dashboard returns, reset; call 1 reads a large, unrelated file
   c(3.5, {
     c08_full: 'up', c08_fsub: 'up',
@@ -277,37 +286,37 @@
     c08_callsL: { type: 'text', html: cap('tool calls'), size: 24, color: T.DIM, x: 1720, y: 510, in: 'fade', at: 0.6 },
     ...logPush([{ id: 'c08_x1', lines: 2, html: `${call(1, 'read_file')}<br>${cmd('src/plotting.py')}&ensp;<span class="c-red">(unrelated)</span>`, spec: { at: 1.2 } }]),
     c08_big: { type: 'text', html: `${m('src/plotting.py')}<br><span class="c-dim">a large file, read whole</span>`, size: 30, x: 960, y: 520, in: 'fade', at: 1.5 },
-  }, { cut: false, sfx: [{ at: 1.25, kind: 'click' }] });
+  }, { cut: false, cam: WIDE, drift: 0.6, sfx: [{ at: 1.25, kind: 'click' }] });
   // 303 (2) — the context meter jumps by a big teal block
-  c(2, { c08_met: { params: MET({ b: 3500, t: 3600 }), pdur: 0.9, pease: 'power3.out' } }, { sfx: [{ at: 0.2, kind: 'tick' }] });
+  c(2, { c08_met: { params: MET({ b: 3500, t: 3600 }), pdur: 0.9, pease: 'power3.out' } }, { drift: 0.6, sfx: [{ at: 0.2, kind: 'tick' }] });
   // 304 (2) — calls 2–4: three more large reads; the meter passes half
   c(2, {
     ...logPush([2, 3, 4].map((n, i) => ({ id: 'c08_x' + n, lines: 1, gap: 6, html: `${call(n, 'read_file')} ${cmd(['src/report.py', 'src/io.py', 'src/cli.py'][i])}`, spec: { at: 0.1 + i * 0.3, dur: 0.5 } }))),
     c08_calls: { val: 4, dur: 0.9, at: 0.2 },
     c08_met: { params: MET({ b: 3500, k: 1800, t: 14400 }), pdur: 1.3, pease: 'power2.inOut' },
-  }, { sfx: [0, 1, 2].map((i) => ({ at: 0.12 + i * 0.3, kind: 'click' })) });
+  }, { drift: 0.6, sfx: [0, 1, 2].map((i) => ({ at: 0.12 + i * 0.3, kind: 'click' })) });
   // 305 (2) — the edit lands with no reproduction and no test run
   c(2, {
     c08_big: 'fade',
     ...logPush([{ id: 'c08_x5', lines: 2, html: `${call(5, 'edit_file')} ${cmd('src/stats.py')}<br><span class="c-red">no reproduction · no test run</span>`, spec: { dur: 0.7 } }]),
     c08_calls: { val: 5, dur: 0.4, at: 0.2 },
     c08_ed: { type: 'mono', html: '<span style="color:#F0AC5F">return total / len(xs) if xs else 0</span>', size: 24, x: 960, y: 420, in: 'fade', at: 0.3 },
-  }, { sfx: [{ at: 0.2, kind: 'click' }] });
+  }, { drift: 0.6, sfx: [{ at: 0.2, kind: 'click' }] });
   // 306 (2) — write_file creates notes.txt inside /workspace
   c(2, {
     ...logPush([{ id: 'c08_x6', lines: 1, html: `${call(6, 'write_file')} ${cmd('notes.txt')}`, spec: { dur: 0.6 } }]),
     c08_calls: { val: 6, dur: 0.4, at: 0.2 },
     c08_ws2: { type: 'text', html: m('/workspace/', T.DIM), size: 28, x: 960, y: 560, in: 'fade', at: 0.1 },
     c08_notes: { type: 'box', w: 280, h: 62, x: 960, y: 640, stroke: T.GOLD, fill: 'rgba(240,172,95,0.12)', rad: 10, html: m('notes.txt', T.INK), size: 30, in: 'pop', at: 0.4 },
-  }, { sfx: [{ at: 0.2, kind: 'click' }, { at: 0.45, kind: 'pop' }] });
+  }, { drift: 0.6, sfx: [{ at: 0.2, kind: 'click' }, { at: 0.45, kind: 'pop' }] });
   // 307 (2) — the chip forms with two files: the fix and notes.txt
   c(2, {
     c08_ed: { x: 960, y: 800, s: 0.3, o: 0, dur: 0.6, ease: 'power3.in' }, c08_notes: { x: 960, y: 800, s: 0.3, o: 0, dur: 0.6, ease: 'power3.in', at: 0.1 }, c08_ws2: 'fade',
     ...K.chip('c08_chip', { x: 960, y: 800, s: 1.2, at: 0.5 }),
     c08_chipL: { type: 'text', html: `${m('src/stats.py')} + ${m('notes.txt', T.RED)}`, size: 26, x: 960, y: 880, in: 'fade', at: 0.8 },
-  }, { sfx: [{ at: 0.55, kind: 'pop' }] });
+  }, { drift: 0.6, sfx: [{ at: 0.55, kind: 'pop' }] });
   // 308 (2) — split: careful (left) vs careless (right), meters side by side
-  const keepTag = ['rail', 'c08_tag', 'c08_rp', 'c08_tp'];
+  const keepTag = ['rail', 'c08_tag', 'c08_tp'];
   const dl = logClear();
   c(2, {
     c08_mA: meterEl({ b: 3500, k: 700, t: 1500, time: 0.22 }, { x: 960 - 900, at: 0.2, paramsFrom: { rev: 0 }, pdur: 0.9 }),
@@ -352,9 +361,11 @@
   // 314 (2) — the last four; the line cracks red at "submit"; the LOOP returns; RAIL → 09
   const fadeAll = Object.fromEntries([...[0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => ['c08_i' + i, 'c08_tn' + i]), ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => 'c08_ia' + i), 'c08_ih'].map((k) => [k, { o: 0, dur: 0.45, at: 0.95, ease: 'power2.in' }]));
   c(2, {
-    ...fadeAll, c08_tag: 'fade', c08_rp: 'fade', c08_tp: 'fade',
-    c08_i8: { stroke: T.RED, fill: 'rgba(252,98,85,0.18)', at: 0.45, dur: 0.3, ease: 'power2.out' },
-    c08_crack: { type: 'path', d: `M${IX(8) - 10},${IY - 70} L${IX(8) + 14},${IY - 20} L${IX(8) - 12},${IY + 16} L${IX(8) + 10},${IY + 70}`, sw: 5, color: T.RED, in: 'draw', at: 0.45, dur: 0.35, z: 6 },
+    ...fadeAll, c08_tag: 'fade', c08_tp: 'fade',
+    // the "submit" pill cracks red: a red overlay + crack appear at once, hold, then swell a touch and fade
+    // with the rest (expo.in: ~full until +0.95 s, gone by +1.4 s), so nothing is left beside the LOOP
+    c08_i8r: { type: 'box', w: 198, h: 96, x: IX(8), y: IY, stroke: T.RED, fill: 'rgba(252,98,85,0.22)', rad: 48, html: ICON[8], size: 34, z: 5, in: 'fade', o: 0, s: 1.1, from: { o: 1, s: 1 }, at: 0.45, dur: 0.95, ease: 'expo.in' },
+    c08_crack: { type: 'path', d: `M${IX(8) - 10},${IY - 70} L${IX(8) + 14},${IY - 20} L${IX(8) - 12},${IY + 16} L${IX(8) + 10},${IY + 70}`, sw: 4, color: T.RED, fill: 'none', z: 6, in: 'fade', o: 0, from: { o: 1 }, at: 0.45, dur: 0.95, ease: 'expo.in' },
     loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { cx: 960, cy: 540, r: 300, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 }, paramsFrom: { draw: 0, labels: 0 }, in: 'fade', dur: 0.3, at: 0.95, pdur: 0.55, pease: 'power2.out' },
     rail: { ver: 9 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [{ at: 0.5, kind: 'tick' }] });

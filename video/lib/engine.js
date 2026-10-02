@@ -398,8 +398,8 @@
       const delta = {};
       let opts = { drift: 0.4, beatCam: cam0 };
       if (o.mode === 'push') {
-        const s1 = (cam0.s || 1) * (o.scale || 1.22);
-        opts.cam = { x: (cam0.x ?? 960) + (ex - (cam0.x ?? 960)) * 0.7, y: (cam0.y ?? 540) + (ey - (cam0.y ?? 540)) * 0.7, s: s1 };
+        const s1 = (cam0.s || 1) * (o.scale || 1.12);
+        opts.cam = { x: (cam0.x ?? 960) + (ex - (cam0.x ?? 960)) * 0.5, y: (cam0.y ?? 540) + (ey - (cam0.y ?? 540)) * 0.5, s: s1 };
         delta[o.id] = { s: (el.s ?? 1) * 1.05 };
         if (prev.els.rail) { delta.rail = { o: 0, dur: 0.35 }; opts.railHidden = true; }
       } else {

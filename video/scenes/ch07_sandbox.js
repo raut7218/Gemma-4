@@ -22,10 +22,12 @@
   // ---------------------------------------------------------------- 3D
   const P0 = { yaw: 0.45, pitch: 40, dist: 9.5, tx: 0, ty: 1.0, tz: 0, two: 0, aIn: 1, bIn: 0, lit: 0, plaqueGlow: 0, fileIn: 0, fileGold: 0, fileMove: 0, bars: 0, pass: 0, verdict: 0, chipIn: 0, chipArc: 0, chipGone: 0, testIn: 0, testFlip: 0 };
   let P3cur = { ...P0 };
+  // screen rectangle of the 3D case A's rim at the P0 framing (measured from stills)
+  const SIL = { x: 960, y: 560, w: 640, h: 420 };
   const P3 = (o) => (P3cur = Object.assign({}, P3cur, o));
   // HTML labels pinned to anchors: id -> [anchor, dx, dy]
   const PIN = {
-    c07_lA: ['aTop', 0, -40], c07_lws: ['ws', -300, -10], c07_ltmp: ['tray', 250, 40], c07_lplq: ['plaques', 220, -60],
+    c07_lA: ['aTop', 0, -40], c07_lws: ['ws', -300, -10], c07_ltmp: ['tray', 250, 40], c07_lplq: ['plaques', 300, -115],
     c07_lmach: ['aBase', 150, 70], c07_loff: ['aBase', 172, 70], c07_lB: ['bTop', 0, -40], c07_ltest: ['bTest', 230, -40],
     c07_shape: ['aBase', 0, 80], c07_fixed: ['bBase', 0, 80],
   };
@@ -36,22 +38,37 @@
       const e = FILM.EL[id], a = AN[PIN[id][0]];
       if (e && a) { e.proxy.x = a[0] + PIN[id][1]; e.proxy.y = a[1] + PIN[id][2]; }
     }
+    // leader from the plaque label down to the plaques
+    const L = FILM.EL.c07_lpll, a = AN.plaques, lb = FILM.EL.c07_lplq;
+    if (L && a && lb) { Object.assign(L.proxy, { x: 960, y: 540, x1: lb.proxy.x - 225, y1: lb.proxy.y + 16, x2: a[0] + 6, y2: a[1] - 6 }); }
   });
   const lab = (html, o = {}) => Object.assign({ type: 'text', html: plate(html), size: 38, x: 960, y: 540, in: 'fade', z: 6 }, o);
 
   // ================================================================ compositions
   // 238 (4) — OVER six stages draw as a track; container A waits below
+  // the terminal from chapter 6 stays alive inside A (same pixels; chapter-local copies replace ch6's ids)
+  const T2 = { x: 960, y: 600, w: 700, h: 430 };
+  const TERM = {
+    c07_tm: { type: 'box', ...T2, stroke: T.TEAL, fill: 'rgba(21,26,33,0.97)', sw: 2, rad: 12, html: '', z: 6, in: 'none', at: -0.17 },
+    c07_tmh: { type: 'text', html: `${m('run_command', T.TEAL)}&ensp;bash in ${m('/workspace')}`, size: 30, align: 'left', ax: 0, x: T2.x - T2.w / 2 + 30, y: T2.y - T2.h / 2 + 36, z: 7, in: 'none', at: -0.17 },
+    c07_tmp2: { type: 'mono', versions: ['<span class="c-dim">/workspace $</span>', '<span class="c-dim">/workspace $</span> <span style="background:#ECE9E2">&nbsp;</span>'], ver: 1, size: 30, ax: 0, x: T2.x - T2.w / 2 + 30, y: T2.y - 30, z: 7, in: 'none', at: -0.17 },
+  };
   c(4, {
     ...K.rail(7),
     ...K.container('contA', 'A', A0),
+    c06_tm: 'quick', c06_tmh: 'quick', c06_tmp2: 'quick', c06_tmc: 'down',
+    ...TERM,
     c07_line: { type: 'rect', x: 960, y: SY, w: 1525, h: 3, fill: '#3A4654', in: 'grow', dur: 1.6, at: 0.2 },
     ...track,
-  }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht'], cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: STAGES.map((_, i) => ({ at: 0.4 + i * 0.28, kind: 'tick' })) });
+  }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht'], cam: { x: 960, y: 540, s: 1 }, drift: 0.7, sfx: STAGES.map((_, i) => ({ at: 0.4 + i * 0.28, kind: 'tick' })) });
 
   // 239 (2.5) — stage 1 compile: the bundle's YAML becomes an agent tree
   const toChip = (i) => ({
-    contA: { x: SX(i), y: SY, w: 292, h: 72, o: 0, dur: 0.5, ease: 'power2.in' },
-    contA_hd: { x: SX(i), y: SY, w: 280, h: 60, o: 0, dur: 0.6 }, contA_ht: { x: SX(i), y: SY, o: 0, dur: 0.4 },
+    contA: { x: SX(i), y: SY, w: 292, h: 72, o: 0, at: 0, dur: 0.95, ease: 'power3.inOut' },
+    contA_hd: { x: SX(i), y: SY, w: 280, h: 56, o: 0, at: 0, dur: 0.8, ease: 'power3.inOut' }, contA_ht: { x: SX(i), y: SY, s: 0.4, o: 0, at: 0, dur: 0.6, ease: 'power3.in' },
+    c07_tm: { x: SX(i), y: SY, w: 240, h: 50, o: 0, at: 0, dur: 0.85, ease: 'power3.inOut' },
+    c07_tmh: { x: SX(i) - 100, y: SY, s: 0.3, o: 0, at: 0, dur: 0.6, ease: 'power3.in' },
+    c07_tmp2: { x: SX(i) - 100, y: SY, s: 0.3, o: 0, at: 0, dur: 0.6, ease: 'power3.in' },
   });
   const YL = [
     `<span class="c-dim">model:</span> gemma-4-31b-it-qat-w4a16-ct`,
@@ -61,7 +78,7 @@
   ];
   c(2.5, {
     ...toChip(2), ...lightStage(0),
-    ...K.file('c07_yaml', 'agent.yaml', YL, { x: 560, y: 600, w: 820, size: 29, frame: { at: 0.4 }, text: { at: 0.6 } }),
+    ...K.file('c07_yaml', 'agent.yaml', YL, { x: 560, y: 600, w: 820, size: 29, frame: { at: 0.55 }, text: { at: 0.75 } }),
     c07_ytag: { type: 'text', html: cap('illustrative'), size: 24, color: T.DIM, align: 'right', ax: 1, x: 950, y: 395, in: 'fade', at: 0.6 },
     c07_yarr: { type: 'arrow', x1: 995, y1: 600, x2: 1120, y2: 600, color: T.DIM, sw: 4, head: 18, in: 'draw', at: 0.6 },
     c07_n0: { type: 'box', w: 300, h: 84, x: 1450, y: 440, stroke: T.BLUE, fill: 'rgba(88,196,221,0.10)', rad: 16, html: 'LlmAgent', size: 38, in: 'pop', at: 0.8 },
@@ -72,7 +89,7 @@
   }, { sfx: [{ at: 0.85, kind: 'pop' }] });
   // 240 (4.5) — "no Python entry points · every agent declares the same base model"
   c(4.5, {
-    contA: null, contA_hd: null, contA_ht: null,
+    c07_tm: null, c07_tmh: null, c07_tmp2: null,
     c07_bm0: { type: 'text', html: cap('same base model', T.BLUE), size: 24, x: 1450, y: 510, in: 'rise', at: 1.2 },
     c07_bm1: { type: 'text', html: cap('same base model', T.BLUE), size: 24, x: 1290, y: 720, in: 'rise', at: 1.45 },
     c07_bm2: { type: 'text', html: cap('same base model', T.BLUE), size: 24, x: 1610, y: 720, in: 'rise', at: 1.7 },
@@ -97,25 +114,34 @@
   const AP = { x: 960, y: 620, w: 1100, h: 620 };
   c(4.5, {
     ...out2, ...lightStage(2),
-    ...K.container('contA', 'A', AP),
+    // container A unfolds again out of the stage-3 pill it folded into
+    ...(() => { const k = K.container('contA', 'A', AP); return { contA: { ...k.contA, o: 1, at: 0.05, dur: 1.0, ease: 'power3.out' }, contA_hd: { ...k.contA_hd, o: 1, at: 0.15, dur: 0.95, ease: 'power3.out' }, contA_ht: { ...k.contA_ht, s: 1, o: 1, at: 0.5, dur: 0.6, ease: 'power2.out' } }; })(),
     c07_p1: { type: 'text', html: '<span class="c-red">×</span>&ensp;no git history after <span class="m">base_commit</span>', size: 50, align: 'left', ax: 0, x: 560, y: 520, in: 'wipe', at: 0.9 },
     c07_p2: { type: 'text', html: '<span class="c-red">×</span>&ensp;network off', size: 50, align: 'left', ax: 0, x: 560, y: 640, in: 'wipe', at: 1.5 },
     c07_p3: { type: 'text', html: '<span class="c-green">✓</span>&ensp;dependencies preinstalled', size: 50, align: 'left', ax: 0, x: 560, y: 760, in: 'wipe', at: 2.1 },
   }, { cut: false });
 
   // 243 (3.5) — 3D container A as an architectural model on a plinth (camera 40°)
+  const HDY = AP.y - AP.h / 2 + 30;
+  const fold = (id, k) => ({ [id]: { x: 960 - 120, y: HDY, s: 0.3, o: 0, at: k * 0.06, dur: 0.5, ease: 'power3.in' } });
   c(3.5, {
-    ...trackOut, contA: 'zoom', contA_hd: 'zoom', contA_ht: 'quick', c07_p1: 'zoom', c07_p2: 'zoom', c07_p3: 'zoom',
-    c07_3d: { type: 'three', scene: 'containers', x: 960, y: 540, w: 1920, h: 1080, z: 1, in: 'fade', dur: 0.8, at: 0.2, params: P3({}), paramsFrom: { dist: 6.5, yaw: 0.3 }, pdur: 2.6, pease: 'power3.out' },
+    ...trackOut, ...fold('c07_p1', 0), ...fold('c07_p2', 1), ...fold('c07_p3', 2),
+    // the 2D outline shrinks onto the 3D case's rim as the model fades in under it
+    contA: { ...SIL, o: 0, at: 0.3, dur: 1.0, ease: 'power2.inOut' },
+    contA_hd: { x: SIL.x, y: SIL.y - SIL.h / 2 + 18, w: SIL.w - 7, h: 30, o: 0, at: 0.3, dur: 0.8, ease: 'power2.inOut' },
+    contA_ht: { x: SIL.x, y: SIL.y - SIL.h / 2 + 18, s: 0.6, o: 0, at: 0.2, dur: 0.6, ease: 'power2.in' },
+    c07_3d: { type: 'three', scene: 'containers', x: 960, y: 540, w: 1920, h: 1080, z: 1, in: 'fade', dur: 0.9, at: 0.45, params: P3({}), paramsFrom: { dist: P0.dist * 0.9, yaw: 0.38 }, pdur: 2.8, pease: 'power3.out' },
     c07_stg: { type: 'text', hud: true, versions: [3, 4, 5, 6].map((n) => cap(`stage ${n}&ensp;·&ensp;${STAGES[n - 1]}`)), ver: 0, size: 26, color: T.DIM, align: 'right', ax: 1, x: 1840, y: 66, in: 'fade', at: 0.6 },
     c07_lA: lab(cap('container A · offline sandbox', T.BLUE), { size: 30, at: 1.6 }),
   }, { cut: true });
   // 244 (4.5) — the real parts light, with HTML labels
   c(4.5, {
+    contA: null, contA_hd: null, contA_ht: null, c07_p1: null, c07_p2: null, c07_p3: null,
     c07_3d: { params: P3({ lit: 3, yaw: 0.55 }), pdur: 3.0, pease: 'power1.inOut' },
     c07_lws: lab(`${m('/workspace', T.BLUE)} <span class="c-dim">(the repository)</span>`, { at: 0.3 }),
     c07_ltmp: lab(`${m('/tmp')} <span class="c-dim">(scratch)</span>`, { at: 1.3 }),
     c07_lplq: lab(`${m('pytest.ini')} · ${m('conftest.py')}`, { at: 2.3 }),
+    c07_lpll: { type: 'arrow', x1: 0, y1: 0, x2: 10, y2: 10, color: T.INK, sw: 2.5, head: 0, in: 'draw', dur: 0.6, at: 2.2, z: 5 },
   }, { sfx: [{ at: 0.3, kind: 'tick' }, { at: 1.3, kind: 'tick' }, { at: 2.3, kind: 'tick' }] });
   // 245 (4.5) — the machine
   c(4.5, {
@@ -124,29 +150,33 @@
     c07_loff: lab('<span class="c-red">offline</span>', { size: 40, align: 'left', ax: 0, at: 1.2 }),
   });
   // 246 (2.5) — reading beat: the camera pushes in on "offline"
+  const PUSH = { dist: 8.6, ty: 0.55, tx: 0.5 }, PBACK = { dist: P0.dist, ty: P0.ty, tx: 0 };
   const dimLabels = (o) => Object.fromEntries(['c07_lA', 'c07_lws', 'c07_ltmp', 'c07_lplq', 'c07_lmach'].map((k) => [k, { o, dur: 0.6 }]));
-  c(2.5, { ...dimLabels(0.45), c07_3d: { o: 0.55, dur: 0.6 }, c07_loff: { s: 1.15, dur: 1.2, ease: 'expo.out' } }, { cam: { x: 990, y: 800, s: 1.3 }, drift: 0.4 });
+  // the push is a slow continuous dolly of the 3D camera toward the base (the labels ride their anchors)
+  c(2.5, { ...dimLabels(0.45), c07_lpll: { o: 0.45, dur: 0.6 }, c07_3d: { params: P3(PUSH), pdur: 1.875, pease: 'sine.inOut' }, c07_loff: { s: 1.2, dur: 1.4, ease: 'power3.out' } }, { drift: 0.4 });
   // 247 (4.5) — the plaques glow red: do not modify
   c(4.5, {
-    ...dimLabels(1), c07_lmach: 'fade', c07_loff: 'fade', c07_3d: { o: 1, dur: 0.6, params: P3({ plaqueGlow: 1 }), pdur: 1.6 },
-    c07_lplq: { html: plate(`<span class="c-red">${m('pytest.ini')} · ${m('conftest.py')}</span>`), color: T.RED },
+    ...dimLabels(1), c07_lpll: { o: 1, dur: 0.6, color: T.RED }, c07_lmach: 'fade', c07_loff: 'fade', c07_3d: { params: P3({ ...PBACK, plaqueGlow: 1 }), pdur: 2.4, pease: 'sine.inOut' },
+    // the label stays bright ink on its plate; the red is an accent bar
+    c07_lplq: { html: `<span class="plate" style="border-left:6px solid #FC6255">${m('pytest.ini')} · ${m('conftest.py')}</span>` },
     c07_dnm: { type: 'text', html: plate('the harness commits these as the baseline — <span class="c-red">do not modify</span>'), size: 46, x: 960, y: 1000, in: 'wipe', at: 0.8, z: 8 },
   }, { cam: { x: 960, y: 540, s: 1 } });
   // 248 (2.5) — reading beat: underline "do not modify"
   F.beat(2.5, { id: 'c07_dnm', mode: 'underline', w: 300, dx: 410, under: 34, color: T.RED });
 
   // 249 (2) — stage 4: a 2D LOOP spins above the 3D case (camera 45°)
+  const P4 = { pitch: 45, ty: 3.6, dist: 12.5, yaw: 0.5, tx: 0 };
   const LP = { cx: 960, cy: 560, r: 240, draw: 1, labels: 1, ring: 0, exit: 0, hi: -1, stopped: 0 };
   c(2, {
-    c07_dnm: 'down', c07_lA: 'fade', c07_lws: 'fade', c07_ltmp: 'fade', c07_lplq: 'fade',
+    c07_dnm: 'down', c07_lA: 'fade', c07_lws: 'fade', c07_ltmp: 'fade', c07_lplq: 'fade', c07_lpll: 'quick',
     c07_stg: { ver: 1 },
-    c07_3d: { params: P3({ pitch: 45, ty: 3.1, dist: 11.5, yaw: 0.5, plaqueGlow: 0, lit: 0, fileIn: 1 }), pdur: 1.4, pease: 'power3.out' },
+    c07_3d: { params: P3({ ...P4, plaqueGlow: 0, lit: 0, fileIn: 1 }), pdur: 1.5, pease: 'power2.inOut' },
     c07_loop: { type: 'canvas', draw: 'loop', x: 960, y: 300, s: 0.75, z: 5, in: 'fade', at: 0.2, params: { ...LP, dot: 1.2 }, paramsFrom: { dot: 0 }, pdur: 1.3, pease: 'none' },
   }, { cut: true });
   // 250 (2.5) — end conditions stack beside the case: submit_patch()
   const END = (n) => ({ type: 'text', size: 50, align: 'left', ax: 0, x: 1180, y: 470 + n * 130, in: 'left', at: 0.3 });
   c(2.5, {
-    c07_3d: { params: P3({ tx: 1.9 }), pdur: 1.2, pease: 'power3.inOut' },
+    c07_3d: { params: P3({ tx: P4.tx + 1.9 }), pdur: 1.4, pease: 'power2.inOut' },
     c07_loop: { x: 660, params: { ...LP, dot: 2.5 }, pdur: 1.875, pease: 'none', dur: 1.2 },
     c07_endh: { type: 'text', html: cap('the loop ends on'), size: 28, color: T.DIM, align: 'left', ax: 0, x: 1180, y: 370, in: 'fade', at: 0.2 },
     c07_end0: { ...END(0), html: m('submit_patch()', T.GOLD), at: 0.5 },
@@ -163,7 +193,7 @@
   c(4.5, {
     c07_loop: 'fade', c07_endh: 'right', c07_end0: 'right', c07_end1: 'right', c07_end2: 'right',
     c07_stg: { ver: 2 },
-    c07_3d: { o: 0.22, dur: 0.8, params: P3({ tx: 0, ty: 1.0, pitch: 40, yaw: 0.45, chipIn: 1 }), pdur: 2 },
+    c07_3d: { o: 0.22, dur: 0.8, params: P3({ tx: 0, ty: P0.ty, dist: P0.dist, pitch: 40, yaw: 0.45 }), pdur: 2 },
     c07_gx: { type: 'mono', html: `<span class="c-dim">$</span> git add -N . &amp;&amp; git diff HEAD`, size: 64, x: 960, y: 380, in: 'wipe', at: 0.4, dur: 2.0, ease: 'none', z: 6 },
     c07_gxl: { type: 'text', html: cap('the harness, after the loop'), size: 28, color: T.DIM, x: 960, y: 290, in: 'fade', at: 0.3, z: 6 },
   }, { cut: true, sfx: [{ at: 0.45, kind: 'click' }] });
@@ -175,17 +205,19 @@
   // 255 (2.5) — reading beat: the sentence stays bright, the rest sinks to a third
   c(2.5, { c07_gx: { o: 0.33, dur: 0.6 }, c07_gxl: { o: 0.33, dur: 0.6 }, c07_chip: { o: 0.33, dur: 0.6 }, c07_ev: { s: 1.08, dur: 1.4, ease: 'expo.out' } }, { cam: { x: 960, y: 700, s: 1.12 }, drift: 0.4 });
 
+  const P6 = { dist: 16.5, pitch: 42, yaw: 0.35, ty: 0.9, tx: 0 };
+  const CHIP3D = { x: 760, y: 470 };   // the 3D chip's screen point when it appears (measured)
   // 256 (2) — stage 6 (camera 42°): container B rises on the same plinth; the chip arcs A → B
   c(2, {
-    c07_gx: 'up', c07_gxl: 'up', c07_ev: 'down', c07_chip: { x: 700, y: 470, s: 0.4, o: 0, dur: 0.6, ease: 'power3.in' },
+    c07_gx: 'up', c07_gxl: 'up', c07_ev: 'down', c07_chip: { x: CHIP3D.x, y: CHIP3D.y, s: 0.22, o: 1, dur: 0.5, ease: 'power3.in' },
     c07_stg: { ver: 3 },
-    c07_3d: { o: 1, dur: 0.6, params: P3({ two: 1, bIn: 1, chipArc: 1, dist: 14.5, pitch: 42, yaw: 0.35, ty: 0.8 }), pdur: 1.5, pease: 'power2.inOut' },
+    c07_3d: { o: 1, dur: 0.45, params: P3({ two: 1, bIn: 1, chipArc: 1, ...P6 }), pdur: 1.5, pease: 'power2.inOut' },
   }, { cut: false, cam: { x: 960, y: 540, s: 1 } });
   // 257 (4.5) — B step 1: apply the patch
+  const PB = { tx: 2.6, dist: 12.6, pitch: 42, yaw: 0.4, ty: 1.15 };
   const STEP = ['<span class="c-dim">step 1 ·</span> apply the patch', '<span class="c-dim">step 2 ·</span> reset any test files the hidden tests touch', '<span class="c-dim">step 3 ·</span> apply the hidden tests', '<span class="c-dim">step 4 ·</span> run pytest'];
   c(4.5, {
-    c07_chip: null,
-    c07_3d: { params: P3({ chipGone: 1, tx: 2.6, dist: 10, pitch: 42, yaw: 0.4, ty: 1.0, testIn: 1 }), pdur: 2.4, pease: 'power3.inOut' },
+    c07_3d: { params: P3({ chipGone: 1, ...PB, testIn: 1 }), pdur: 2.4, pease: 'power3.inOut' },
     c07_lB: lab(cap('container B · fresh and clean', T.GREEN), { size: 30, at: 1.4 }),
     c07_step: { type: 'text', versions: STEP.map(plate), ver: 0, size: 48, x: 960, y: 990, in: 'wipe', at: 0.4, z: 8 },
   }, { sfx: [{ at: 1.6, kind: 'tick' }] });

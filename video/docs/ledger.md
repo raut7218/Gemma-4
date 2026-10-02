@@ -78,3 +78,6 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 
 ## Film critic — chapters 7–9, round 1 — one more pass (15 items) — docs/critic/f07_09_r1.md
 - Kit: the chapter rail now sits on an opaque background-colour plate (HUD layer), so moving content can never show through it.
+
+## Film critic — chapters 10–12, round 1 — one more pass (10 items; ch10_r1: 5 fixed, 4 partly, 1 not) — docs/critic/f10_12_r1.md
+- Engine: push reading beats made gentler (×1.12, 50% travel) — three critics found pushes cropping content at frame edges.
