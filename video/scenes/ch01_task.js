@@ -439,6 +439,10 @@
     // (same ease and timing as the camera, so on screen it grows steadily); the grid grows around it.
     // out: 'none' — in ch02 it vanishes on top of the identical gold cell of the grid.
     c01_slot: { x: gx, y: gy, w: 112, h: 64, rad: 9, stroke: T.GOLD, fill: '#6F5435', at: 0.0, dur: 0.72, ease: 'power3.inOut' },
+    // as the card lands, a gold ripple runs out of the cell and leaves the frame (and fades to 0) exactly at the
+    // cut, so the last ~0.8 s is not frozen; at the cut it is invisible and off-screen (hand-off unchanged)
+    c01_rip: { type: 'box', x: gx, y: gy, w: 350, h: 216, rad: 26, stroke: T.GOLD, fill: 'rgba(0,0,0,0)', sw: 1.6, html: '', o: 0, z: 6,
+      in: 'fade', from: { o: 0.95, w: 112, h: 64, rad: 9 }, at: 0.6, dur: 0.85, ease: 'power1.in', out: 'none' },
     grid: { type: 'canvas', draw: 'grid', x: 960, y: 500, in: 'fade', dur: 0.2, at: 0.15, params: Object.assign({}, GRID120, { reveal: 1, gold: 55, goldGlow: 1, dim: 0, sweep: 0, split: 0, ring: 0, lock: 0, repo: 0, count: 0 }), paramsFrom: { reveal: 0, goldGlow: 0 }, pdur: 1.3, pease: 'power2.out' },
     rail: { ver: 2 },
   }, { cam: { x: gx, y: gy, s: 6 }, drift: 0 });
