@@ -28,8 +28,9 @@
   // ---------------------------------------------------------------- meters: context (vertical), time (horizontal)
   const MS = 580 / 32768;
   DRAW.c08_met = (ctx, p, sp) => {
-    const x = sp.mx, top = 300, h = 580, w = 96, bot = top + h, rv = clamp(p.rev ?? 1);
-    ctx.save(); ctx.globalAlpha *= rv;
+    // rev 0..1 assembles the meters in turn: the context column first, then the time bar draws out
+    const x = sp.mx, top = 300, h = 580, w = 96, bot = top + h, rev = clamp(p.rev ?? 1), rv = clamp(rev / 0.6), rt = clamp((rev - 0.4) / 0.6);
+    ctx.save(); const a0 = ctx.globalAlpha; ctx.globalAlpha = a0 * rv;
     ctx.beginPath(); ctx.roundRect(x, top, w, h * ease(rv), 10); ctx.fillStyle = 'rgba(21,26,33,0.95)'; ctx.fill(); ctx.strokeStyle = '#3A4654'; ctx.lineWidth = 2.5; ctx.stroke();
     let y = bot - 6;
     [[p.b || 0, T.BLUE], [p.k || 0, T.THINK], [p.t || 0, T.TEAL]].forEach(([tok, col]) => {
@@ -46,11 +47,28 @@
     DRAW.text(ctx, 'CONTEXT', x + w / 2, bot + 36, { size: 24, color: T.DIM, sans: true, caps: true });
     // time
     const tx = x + 180, tw = 300, ty = 760;
-    ctx.beginPath(); ctx.roundRect(tx, ty - 16, tw, 32, 8); ctx.fillStyle = 'rgba(21,26,33,0.95)'; ctx.fill(); ctx.strokeStyle = '#3A4654'; ctx.stroke();
+    ctx.globalAlpha = a0 * rt;
+    ctx.beginPath(); ctx.roundRect(tx, ty - 16, Math.max(16, tw * ease(rt)), 32, 8); ctx.fillStyle = 'rgba(21,26,33,0.95)'; ctx.fill(); ctx.strokeStyle = '#3A4654'; ctx.stroke();
     const tv = clamp(p.time || 0);
     if (tv > 0) { ctx.beginPath(); ctx.roundRect(tx + 5, ty - 11, (tw - 10) * tv, 22, 5); ctx.fillStyle = rgba(T.YELLOW, 0.85); ctx.fill(); }
     DRAW.text(ctx, 'TIME', tx + tw / 2, ty + 48, { size: 24, color: T.DIM, sans: true, caps: true });
     ctx.restore();
+  };
+  // 271: as container A opens into the dashboard, a soft cyan wash runs outward from A's edges across the two
+  // side panels (clipped to them) and fades out; k 0..1 (invisible at 0 and at 1)
+  DRAW.c08_wash = (ctx, p) => {
+    const k = clamp(p.k ?? 1); if (k <= 0 || k >= 1) return;
+    const a = Math.sin(Math.PI * Math.min(1, k * 1.6)) * 0.9 + 0.1 * (1 - k);
+    [[650, 20, 325], [1270, 1900, 1595]].forEach(([x0, x1, cx]) => {
+      const bx = x0 + (x1 - x0) * k, dir = Math.sign(x1 - x0);
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(cx - 305, 180, 610, 760, 22); ctx.clip();
+      const g = ctx.createLinearGradient(bx - dir * 260, 0, bx, 0);
+      g.addColorStop(0, rgba(T.BLUE, 0)); g.addColorStop(0.8, rgba(T.BLUE, 0.16 * a)); g.addColorStop(1, rgba(T.BLUE, 0.32 * a));
+      ctx.fillStyle = g; ctx.fillRect(Math.min(bx, bx - dir * 260), 180, 260, 760);
+      ctx.fillStyle = rgba(T.BLUE, 0.55 * a); ctx.fillRect(bx - 2, 180, 4, 760);
+      ctx.restore();
+    });
   };
   const MET = (o) => Object.assign({ rev: 1, b: 0, k: 0, t: 0, time: 0 }, o);
   const meterEl = (params, o = {}) => Object.assign({ type: 'canvas', draw: 'c08_met', mx: 1370, z: 3, in: 'fade', dur: 0.3, params: MET(params) }, o);
@@ -114,17 +132,22 @@
     ...K.rail(8),
     ...K.container('contA', 'A', A8),
     ...dash0(),
-    c08_met: meterEl({ rev: 1 }, { at: 0.05, paramsFrom: { rev: 0 }, pdur: 2.4, pease: 'power2.inOut' }),
-    c08_calls: callsEl(0, { at: 0.8 }),
-    c08_callsL: { type: 'text', html: cap('tool calls'), size: 24, color: T.DIM, x: 1720, y: 510, in: 'fade', at: 0.9 },
-  }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht', ...(HAS7 ? [PL, PR, PLH, PRH] : [])], cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+    // the three meters assemble in turn across the comp: context column, then the tool-call counter, then the time bar
+    c08_met: meterEl({ rev: 1 }, { at: 0.0, paramsFrom: { rev: 0 }, pdur: 2.55, pease: 'sine.inOut' }),
+    c08_wash: { type: 'canvas', draw: 'c08_wash', z: 1, in: 'none', at: 0.0, params: { k: 1 }, paramsFrom: { k: 0 }, pdur: 2.0, pease: 'power1.out' },
+    c08_calls: callsEl(0, { in: 'pop', at: 0.85, dur: 0.8 }),
+    c08_callsL: { type: 'text', html: cap('tool calls'), size: 24, color: T.DIM, x: 1720, y: 510, in: 'wipe', at: 1.05, dur: 1.0 },
+    // the cut frame is exact (camera at 960/540/1); the slow drift only starts once the comp is under way
+    // (it stays inside the frame: panel edges >= 16 px from the sides), and comp 272 eases back to WIDE
+  }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht', ...(HAS7 ? [PL, PR, PLH, PRH] : [])], cam: { x: 960, y: 540, s: 1 }, drift: 1 });
   // 272 (4.5) — the honesty tag, kept for the whole chapter
   // (a slow pull-back keeps all three panels whole; the workspace label is the layered second action)
   c(4.5, {
     // plate behind the HUD tag (the rail has its own plate), so zoomed world text never shows through it
+    c08_wash: null,
     c08_tp: { type: 'rect', hud: true, ax: 1, x: 1870, y: 66, w: 840, h: 48, rad: 10, fill: 'rgba(14,17,22,0.9)', z: 49, in: 'fade', at: 0.1 },
     c08_tag: { type: 'text', hud: true, html: cap('illustrative run · not a real trajectory'), size: 26, color: T.YELLOW, align: 'right', ax: 1, x: 1850, y: 66, in: 'wipe', at: 0.2, dur: 1.2, z: 50 },
-    c08_wsl: { type: 'text', html: cap('workspace'), size: 24, color: T.DIM, x: 960, y: 270, in: 'rise', at: 1.6, dur: 0.9 },
+    c08_wsl: { type: 'text', html: cap('workspace'), size: 24, color: T.DIM, x: 960, y: 270, in: 'rise', at: 0.95, dur: 0.9 },
   }, { cam: WIDE, drift: 0.4 });
   // 273 (2) — the cold-open issue card lands in the centre
   c(2, { ...K.issue('c08_issue', { x: 960, y: 520, s: 0.5, in: 'down', z: 5 }) }, { cam: WIDE, drift: 0.4, sfx: [{ at: 0.5, kind: 'pop' }] });
