@@ -368,7 +368,7 @@
         // a carried element (already on screen) merges the delta onto its last state, even when the
         // delta repeats the full spec (so a chapter's opening comp works both inside the film,
         // where the object is carried in, and in a standalone chapter test, where it is created)
-        els[id] = prev && prev.els[id] && !delta[id].replace ? Object.assign({}, prev.els[id], delta[id], { type: prev.els[id].type, in: undefined, from: undefined, at: delta[id].at, dur: delta[id].dur, ease: delta[id].ease }) : delta[id];
+        els[id] = prev && prev.els[id] && !delta[id].replace ? Object.assign({}, prev.els[id], delta[id], { type: prev.els[id].type, in: undefined, from: undefined, at: delta[id].at, dur: delta[id].dur, ease: delta[id].ease, pdur: delta[id].pdur, pease: delta[id].pease }) : delta[id];  // timing never carries over between comps
       }
       // a cut must land on a whole beat (the music's beat): if it would start on a half beat, the
       // previous composition holds half a beat longer and this one starts half a beat later and ends

@@ -91,3 +91,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - ch07 fixes for film round 1 items 2–9, 12–14 applied by a fixer agent (B same case as A, chip ΔE 7.9–8.2 inside B, single chip, 2D↔3D transitions, rim light).
 
 ## Film critic round 2 — film 0–450 (ch0–4) — one more pass (11 items; re-check: 14 fixed, 11 partly, 5 not) — docs/critic/r2_a.md
+- Seam stills fixed by a fixer agent (measured longest still ≤ 0.25 s at each of the six seams). Engine: pdur/pease no longer carry over from an element's previous update (a carried loop had inherited a 1.4 s tween and stopped early).
