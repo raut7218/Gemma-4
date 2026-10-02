@@ -311,15 +311,14 @@
   // 269 (2) — the words fall into container A, which shrinks into the centre panel; the side panels start
   const HR = KW.flatMap((ws, i) => ws.map((_, j) => 'c07_hr' + i + j));
   const fall = Object.fromEntries([0, 1, 2].map((i) => ['c07_h' + i, { x: 960, y: 620, s: 0.25, o: 0, dur: 1.0, ease: 'power3.in', at: i * 0.08 }]).concat(HR.map((k) => [k, { x: 960, y: 620, w: 0, o: 0, dur: 0.6, ease: 'power3.in' }])));
-  const side = (x, at) => ({ type: 'box', w: 610, h: 760, x, y: 560, stroke: '#56616D', fill: 'rgba(21,26,33,0.5)', rad: 22, sw: 2.5, html: '', z: 0, in: 'fade', from: { x: 960, o: 0.2 }, dur: 2.9, ease: 'power2.inOut', at });
+  const side = (x, at) => ({ type: 'box', w: 610, h: 760, x, y: 560, stroke: '#56616D', fill: 'rgba(21,26,33,0.5)', rad: 22, sw: 2.5, html: '', z: 0, in: 'fade', from: { x: 960, o: 0 }, dur: 3.6, ease: 'sine.inOut', at });
   const A8 = K.container('contA', 'A', { x: 960, y: 560, w: 620, h: 760 });
-  c(2, { ...fall, contA: { ...A8.contA, at: 0, dur: 1.1 }, contA_hd: { ...A8.contA_hd, at: 0, dur: 1.1 }, contA_ht: { ...A8.contA_ht, at: 0.05, dur: 1.1 } }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
-  // 270 (4.5) — the side panels slide out from behind A and their headers write in; the RAIL rewrites to 08
+  c(2, { ...fall, contA: { ...A8.contA, at: 0, dur: 1.1 }, contA_hd: { ...A8.contA_hd, at: 0, dur: 1.1 }, contA_ht: { ...A8.contA_ht, at: 0.05, dur: 1.1 }, c07_pl: side(325, 0.5), c07_pr: side(1595, 0.58) }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+  // 270 (4.5) — the side panels finish sliding out from behind A, their headers write in; the RAIL rewrites to 08
   c(4.5, {
     ...Object.fromEntries([0, 1, 2].map((i) => ['c07_h' + i, null]).concat(HR.map((k) => [k, null]))),
-    c07_pl: side(325, 0.0), c07_pr: side(1595, 0.08),
-    c07_plh: { type: 'text', html: cap('call log'), size: 26, color: T.DIM, x: 325, y: 208, in: 'wipe', at: 2.0, dur: 1.1 },
-    c07_prh: { type: 'text', html: cap('meters'), size: 26, color: T.DIM, x: 1595, y: 208, in: 'wipe', at: 2.2, dur: 1.1 },
+    c07_plh: { type: 'text', html: cap('call log'), size: 26, color: T.DIM, x: 325, y: 208, in: 'wipe', at: 1.9, dur: 1.2 },
+    c07_prh: { type: 'text', html: cap('meters'), size: 26, color: T.DIM, x: 1595, y: 208, in: 'wipe', at: 2.1, dur: 1.2 },
     rail: { ver: 8, at: 2.2, dur: 1.0 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();
