@@ -197,15 +197,15 @@
   for (let i = 0; i < 4; i++) {
     data['c03_d' + i] = { type: 'box', x: 1120 + (i % 2) * 40, y: 520 + i * 72, w: 196, h: 60, stroke: T.INK, fill: '#121820', sw: 2.5, rad: 9, size: 30, html: '<span class="cap" style="font-size:1em;color:#ECE9E2">data</span>', in: 'fade', from: { x: 330 - i * 50 }, at: 0.5 + 0.28 * i, dur: 2.4, ease: 'power2.inOut', z: 2 };
   }
-  const t113 = F.now();
+  let t113 = { t: 1e9 };   // the comp itself: its real start t is set from the comp's real start (a cut on a half beat is snapped later by the engine)
   F.hook((t) => {
     for (let i = 0; i < 4; i++) {
-      const t0 = t113 + 0.55 + 0.28 * i, e = FILM.EL['c03_d' + i];
+      const t0 = t113.t + 0.55 + 0.28 * i, e = FILM.EL['c03_d' + i];
       if (!e || t < t0 || t > t0 + 2.4) continue;
       e.proxy.o = Math.max(e.proxy.o, Math.min(1, (t - t0) / 0.35));
     }
   });
-  c(4.5, {
+  t113 = c(4.5, {
     c03_t1: 'left', c03_t2: 'left', c03_t3: 'left', c03_subs: 'left', c03_fl0: 'left', c03_fl1: 'left', c03_hl0: 'left', c03_hl1: 'left', ...rowOut,
     c03_gfl: { type: 'rect', x: 1000, y: G1.bot + 30, w: 1500, h: 4, fill: '#3A4654', rad: 2, in: 'grow', at: 0, dur: 0.9 },
     ...gate('c03_g1', G1, T.GREEN, 0),

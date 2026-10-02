@@ -403,7 +403,7 @@
   c(2, { c02_cfg: { ver: 1, at: 0.1, dur: 0.9 } });
 
   // ---------------------------------------------------------------- 88 (4.5) four dials; you set these
-  const DP = (o) => Object.assign({ x: 1400, y0: LINE0, pitch: PITCH, r: 50, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
+  const DP = (o) => Object.assign({ x: 1400, y0: LINE0, pitch: PITCH, r: 58, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
   c(4.5, {
     c02_dials: { type: 'canvas', draw: 'c02_dials', x: 960, y: 540, in: 'fade', dur: 0.2, params: DP({}), paramsFrom: { a: 0, v0: 0, v1: 0, v2: 0, v3: 0 }, pdur: 2.4, pease: 'power2.out' },
     c02_dcap: { type: 'text', html: '<span class="cap" style="font-size:1em">per-task budgets&ensp;—&ensp;<span class="c-ink">you set these</span></span>', size: 28, color: T.DIM, x: 820, y: 118, in: 'fade', at: 1.4 },

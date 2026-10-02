@@ -541,7 +541,7 @@
   // 160 (4.5) — the card steps left and shrinks a little; the thinking_level line lights up and a
   // leader runs from it to a tall strip on the right: "thinking shares the same 32k window".
   // (no word flies across the card any more — it used to cross the thinking_level line)
-  const CS = 0.8, CDX = -250, cx2 = CARD.x + CDX;
+  const CS = 0.88, CDX = -250, cx2 = CARD.x + CDX;
   const px2 = (x) => cx2 + (x - CARD.x) * CS, py2 = (y) => CARD.y + (y - CARD.y) * CS;
   const shift = {
     c04_yf: { x: cx2, s: CS, dur: 1.0 },
@@ -552,10 +552,10 @@
   c(4.5, {
     ...shift,
     c04_thl: { type: 'rect', x: px2(LX) - 14, ax: 0, y: thinkY, w: 1300 * CS, h: 60, rad: 10, fill: 'rgba(143,167,217,0.16)', in: 'grow', at: 1.0, dur: 0.8, z: 5 },
-    c04_tw: { type: 'text', html: '<span class="cap" style="font-size:1em">thinking</span>', size: 30, color: T.THINK, x: 1560, y: 224, in: 'fade', at: 1.6, z: 7 },
-    c04_tl: { type: 'arrow', x1: cardR + 10, y1: thinkY, x2: 1540, y2: thinkY, color: T.THINK, sw: 3, head: 0, dashed: true, in: 'draw', at: 1.3, dur: 0.6 },
-    c04_strip: { type: 'rect', x: 1560, y: 560, w: 40, h: 600, rad: 8, fill: 'rgba(143,167,217,0.35)', in: 'growh', at: 1.1, dur: 1.2 },
-    c04_stript: { type: 'text', html: 'thinking<br>shares the<br>same <span class="c-yellow">32k</span><br>window', size: 46, lh: 1.2, align: 'left', ax: 0, x: 1610, y: 560, in: 'wipe', at: 1.9 },
+    c04_tw: { type: 'text', html: '<span class="cap" style="font-size:1em">thinking</span>', size: 30, color: T.THINK, x: 1520, y: 224, in: 'fade', at: 1.6, z: 7 },
+    c04_tl: { type: 'arrow', x1: cardR + 10, y1: thinkY, x2: 1500, y2: thinkY, color: T.THINK, sw: 3, head: 0, dashed: true, in: 'draw', at: 1.3, dur: 0.6 },
+    c04_strip: { type: 'rect', x: 1520, y: 560, w: 40, h: 600, rad: 8, fill: 'rgba(143,167,217,0.35)', in: 'growh', at: 1.1, dur: 1.2 },
+    c04_stript: { type: 'text', html: 'thinking<br>shares the<br>same <span class="c-yellow">32k</span><br>window', size: 46, lh: 1.2, align: 'left', ax: 0, x: 1570, y: 560, in: 'wipe', at: 1.9 },
   }, { cam: { x: 960, y: 560, s: 1 } });
 
   // 161 (4.5) — FULL: the summary line builds, part 1
