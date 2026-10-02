@@ -69,9 +69,11 @@
   // ================================================================ 467 (4.5) the prompt is yours
   c(4.5, {
     ...K.rail(14),
-    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, in: 'fade', params: LOOP({ dot: 1.2 }), pease: 'none' },
-    c14_s1: txt('The <span class="c-teal">tool descriptions</span> are fixed.', { x: 1230, y: 460, size: 72, in: 'left' }),
-    c14_s2: txt('The <span class="c-blue">prompt</span> is yours.', { x: 1230, y: 610, size: 72, in: 'right', at: 1.3 }),
+    // the dot keeps running forward round the LOOP the whole comp; the sentences wait for the old frame to
+    // clear and the camera to settle back to 1:1, then enter into the empty right half (never across the LOOP)
+    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, in: 'fade', params: LOOP({ dot: 3.4 }), paramsFrom: { dot: 1.5 }, pease: 'none' },
+    c14_s1: txt('The <span class="c-teal">tool descriptions</span> are fixed.', { x: 1230, y: 460, size: 72, in: 'right', at: 0.75 }),
+    c14_s2: txt('The <span class="c-blue">prompt</span> is yours.', { x: 1230, y: 610, size: 72, in: 'rise', at: 1.65 }),
   }, { clear: true, keep: ['loop'], cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 
   // ================================================================ 468–480 the page and the dashboard
@@ -301,34 +303,61 @@
     c14_pr3: txt('read-only sub-agents that return summaries', { x: 960, y: 660, size: 64, in: 'left', at: 1.5 }),
     c14_prk: cap('context engineering', { x: 960, y: 270, size: 28, at: 0.2 }),
   }, { cut: true });
-  // 494 (2.5) the practices file into the "context" slot of the anatomy
-  const SLOTS = [['model', 440, 470], ['control flow', 960, 470], ['tools', 1480, 470], ['context', 440, 690], ['environment', 960, 690], ['verifier / selector', 1480, 690]];
+  // 494 (2.5) the three lines fold into one pill at the centre; the six-part anatomy returns in ch13's two
+  // columns (same slots, same labels, same words); the pill files into "context", which glows
+  const SL = [
+    { k: 'model', x: 330, y: 300, d: 'fixed · change it only through <span class="c-purple">LoRA</span>' },
+    { k: 'control flow', x: 330, y: 560, d: 'your YAML agents' },
+    { k: 'tools', x: 330, y: 820, d: '<span class="c-teal">9 fixed</span> + skills + sub-agents' },
+    { k: 'context', x: 1590, y: 300, d: 'the <span class="c-yellow">32k</span> window' },
+    { k: 'environment', x: 1590, y: 560, d: 'offline container' },
+    { k: 'verifier / selector', x: 1590, y: 820, d: 'you create it' },
+  ];
+  const SW = 520, SH = 190;
+  // the folding pill: k 0..0.3 forms at the centre, 0.42..0.85 flies to the context slot, 0.85..1 opens into it
+  D.c14_fold = (ctx, p) => {
+    const k = U.clamp(p.k || 0);
+    if (k <= 0 || k >= 1) return;
+    const kin = U.ease(U.clamp(k / 0.3)), mv = U.ease(U.clamp((k - 0.42) / 0.43)), op = U.clamp((k - 0.85) / 0.15);
+    const x = 960 + (SL[3].x - 960) * mv, y = 540 + (SL[3].y - 540) * mv;
+    const w = (560 + (SW - 560) * op) * (0.7 + 0.3 * kin), h = (96 + (SH - 96) * op) * (0.7 + 0.3 * kin);
+    const a = kin * (1 - op);
+    ctx.save(); ctx.globalAlpha *= a;
+    U.rr(ctx, x - w / 2, y - h / 2, w, h, Math.min(h / 2, 48)); ctx.fillStyle = T.BG; ctx.fill(); ctx.fillStyle = rgba(T.BLUE, 0.16); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = T.BLUE; ctx.stroke(); ctx.restore();
+    D.text(ctx, 'context engineering', x, y + 2, { size: 40, a: a * (1 - U.clamp((mv - 0.75) / 0.25)), color: T.INK });
+  };
   const sl = {};
-  SLOTS.forEach(([n, x, y], i) => {
-    sl['c14_sb' + i] = { type: 'box', x, y, w: 460, h: 160, stroke: '#3A4654', fill: 'rgba(21,26,33,0.6)', sw: 3, rad: 18, html: `<span class="cap c-dim" style="font-size:0.6em">${n}</span>`, size: 40, in: 'draw', dur: 0.6, at: 0.05 * i };
+  SL.forEach((o, i) => {
+    const at = 0.45 + 0.07 * i;
+    sl['c14_sb' + i] = { type: 'box', x: o.x, y: o.y, w: SW, h: SH, stroke: '#3A4654', fill: 'rgba(21,26,33,0.6)', sw: 3, rad: 20, html: '', in: 'draw', dur: 0.8, at };
+    sl['c14_sl' + i] = cap(o.k, { x: o.x, y: o.y - 58, size: 26, at: at + 0.15 });
+    sl['c14_sd' + i] = txt(o.d, { x: o.x, y: o.y + 22, size: 40, maxw: 470, lh: 1.15, color: T.DIM, at: at + 0.25, dur: 0.8, z: 3 });
   });
   c(2.5, {
     ...sl, c14_prk: 'fade',
-    c14_pr1: { x: 440, y: 690, s: 0.15, o: 0, at: 0.5, dur: 0.8, ease: 'power3.in' },
-    c14_pr2: { x: 440, y: 690, s: 0.15, o: 0, at: 0.6, dur: 0.8, ease: 'power3.in' },
-    c14_pr3: { x: 440, y: 690, s: 0.15, o: 0, at: 0.7, dur: 0.8, ease: 'power3.in' },
-    c14_sb3: Object.assign({}, sl.c14_sb3, { stroke: T.BLUE, fill: 'rgba(88,196,221,0.2)', html: '<span class="cap c-blue" style="font-size:0.6em">context</span>', at: 0 }),
-  }, { sfx: [{ at: 1.4, kind: 'tick' }] });
+    c14_pr1: { y: 540, s: 0.3, o: 0, at: 0, dur: 0.42, ease: 'power3.in' },
+    c14_pr2: { s: 0.3, o: 0, at: 0, dur: 0.42, ease: 'power3.in' },
+    c14_pr3: { y: 540, s: 0.3, o: 0, at: 0, dur: 0.42, ease: 'power3.in' },
+    c14_fold: { type: 'canvas', draw: 'c14_fold', x: 960, y: 540, in: 'none', at: 0.15, params: { k: 0.999 }, paramsFrom: { k: 0 }, pdur: 1.65, pease: 'none', z: 6 },
+    c14_cg: { type: 'canvas', draw: 'c14_pulse', pcol: T.BLUE, x: 960, y: 540, in: 'none', at: 1.5, params: { x: SL[3].x, y: SL[3].y, w: SW, h: SH, ph: 0.5, a: 1, rad: 26 }, paramsFrom: { ph: 0 }, pdur: 0.35, pease: 'power2.out' },
+  }, { cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 1.55, kind: 'tick' }] });
   // 495 (4.5) the model slot pulses; a passing run's gold chip drops from the top
   c(4.5, {
-    c14_pr1: null, c14_pr2: null, c14_pr3: null,
-    c14_sb3: { fill: 'rgba(88,196,221,0.08)' },
-    c14_sb0: { stroke: T.BLUE, at: 0.2 },
-    c14_mp: { type: 'canvas', draw: 'c14_pulse', pcol: T.BLUE, x: 960, y: 540, in: 'none', at: 0.2, params: { x: 440, y: 470, w: 460, h: 160, ph: 2, a: 1, rad: 24 }, paramsFrom: { ph: 0 }, pease: 'none' },
-    c14_q2: txt('and the <span class="c-blue">model</span> itself?', { x: 960, y: 900, size: 76, at: 0.5 }),
+    c14_pr1: null, c14_pr2: null, c14_pr3: null, c14_fold: null,
+    c14_sb3: { stroke: T.BLUE, fill: 'rgba(88,196,221,0.08)' }, c14_sl3: { color: T.BLUE },
+    c14_cg: { params: { x: SL[3].x, y: SL[3].y, w: SW, h: SH, ph: 1, a: 1, rad: 26 }, pdur: 1.4, pease: 'power2.inOut' },
+    c14_sb0: { stroke: T.BLUE, at: 0.2 }, c14_sl0: { color: T.BLUE, at: 0.2 },
+    c14_mp: { type: 'canvas', draw: 'c14_pulse', pcol: T.BLUE, x: 960, y: 540, in: 'none', at: 0.2, params: { x: SL[0].x, y: SL[0].y, w: SW, h: SH, ph: 2, a: 1, rad: 26 }, paramsFrom: { ph: 0 }, pease: 'none' },
+    c14_q2: txt('and the <span class="c-blue">model</span><br>itself?', { x: 960, y: 600, size: 76, lh: 1.15, at: 0.5 }),
     ...K.chip('chip', { x: 960, y: 220, s: 1.2, in: 'down', at: 1.8 }),
   }, { sfx: [{ at: 2.0, kind: 'pop' }] });
   // 496 (4.5) the RAIL rewrites to 15; hand-off: the chip at the top centre
   const slDim = {};
-  SLOTS.forEach((_, i) => { if (i !== 0) slDim['c14_sb' + i] = { o: 0.35, at: 0.3 }; });
+  SL.forEach((_, i) => { if (i !== 0) { slDim['c14_sb' + i] = { o: 0.35, at: 0.3 }; slDim['c14_sl' + i] = { o: 0.35, at: 0.3 }; slDim['c14_sd' + i] = { o: 0.35, at: 0.3 }; } });
   c(4.5, {
-    ...slDim,
-    c14_mp: { params: { x: 440, y: 470, w: 460, h: 160, ph: 4, a: 1, rad: 24 }, pease: 'none' },
+    ...slDim, c14_cg: null,
+    c14_mp: { params: { x: SL[0].x, y: SL[0].y, w: SW, h: SH, ph: 4, a: 1, rad: 26 }, pease: 'none' },
     c14_q2: { s: 1.04, dur: 2.5, ease: 'sine.inOut' },
     ...K.chip('chip', { x: 960, y: 220, s: 1.2 }),
     rail: { ver: 15, at: 0.6 },

@@ -68,7 +68,7 @@
   // small film-object glyphs for the six questions; params a
   D.c16_icons = (ctx, p) => {
     ctx.save(); ctx.globalAlpha *= p.a ?? 1;
-    const G = [[380, 320], [960, 320], [1540, 320], [380, 600], [960, 600], [1540, 600]];
+    const G = [[380, 362], [960, 362], [1540, 362], [380, 642], [960, 642], [1540, 642]];
     G.forEach(([x, y], i) => {
       ctx.save(); ctx.translate(x, y);
       if (i === 0) { ctx.scale(0.22, 0.22); D.loop(ctx, { cx: 0, cy: 30, r: 200, draw: 1, labels: 0, dot: -1 }); }
@@ -93,7 +93,7 @@
   const BX = (i) => 140 + i * 120, BH = (i) => 520 - 45 * i, BASE = 960;
   const bars = {};
   for (let i = 0; i < 9; i++) {
-    bars['c16_b' + i] = { type: 'rect', x: BX(i), y: BASE, ay: 1, w: 84, h: BH(i), fill: '#56616D', rad: 6, in: 'growh', at: 0.3 + 0.1 * i, dur: 1.2 };
+    bars['c16_b' + i] = { type: 'rect', x: BX(i), y: BASE, ay: 1, w: 84, h: BH(i), fill: '#56616D', rad: 6, in: 'growh', at: 0.05 + 0.12 * i, dur: 2.2, ease: 'power2.inOut' };
     bars['c16_n' + i] = { type: 'text', html: Y(i + 1), size: 40, x: BX(i), y: BASE + 42, in: 'rise', at: 0.5 + 0.1 * i };
   }
   const HEAD = [
@@ -121,29 +121,29 @@
     c16_head: { type: 'text', versions: HEAD, ver: 0, size: 56, align: 'left', ax: 0, x: 140, y: 175, in: 'wipe', at: 0.3 },
     c16_why: { type: 'text', versions: WHY, ver: 0, size: 40, lh: 1.2, align: 'left', ax: 0, x: 140, y: 255, maxw: 1000, in: 'fade', at: 0.9 },
     c16_tag: tag('the roadmap’s hypothesis, not a result', { x: 1840, ax: 1, align: 'right', y: 130, at: 1.2 }),
-  }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+  }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0.5 });
   // bar emphasis helper
   const lift = (sel) => { const d = {}; for (let i = 0; i < 9; i++) d['c16_b' + i] = sel.includes(i) ? { fill: T.BLUE, y: BASE - 30, o: 1, dur: 0.8, ease: 'expo.out' } : { fill: '#56616D', y: BASE, o: 0.4, dur: 0.6 }; return d; };
   const head = (v) => ({ c16_head: { ver: v, dur: 0.6 }, c16_why: { ver: v, dur: 0.6 } });
   // reading cards
   const CARD = {
-    R01: ['R01 · harness guide (60′)', 'most early zero scores come from harness mechanics'],
-    R02: ['R02 · a participant’s local harness (30′)', '109/129 gold patches pass locally'],
-    R05: ['R05 · start simple (25′)'], R06: ['R06 · explore, reproduce, fix, rerun (20′)'],
-    R07: ['R07 · mini-swe-agent (30′)'], R10: ['R10 · ADK mechanics (60′)'],
-    R09: ['R09 · context as a finite attention budget (25′)'], R11: ['R11 · Gemma 4 model card (30′)'],
+    R01: ['R01 · harness guide (60&nbsp;min)', 'most early zero scores come from harness mechanics'],
+    R02: ['R02 · a participant’s local harness (30&nbsp;min)', '109/129 gold patches pass locally'],
+    R05: ['R05 · start simple (25&nbsp;min)'], R06: ['R06 · explore, reproduce, fix, rerun (20&nbsp;min)'],
+    R07: ['R07 · mini-swe-agent (30&nbsp;min)'], R10: ['R10 · ADK mechanics (60&nbsp;min)'],
+    R09: ['R09 · context as a finite attention budget (25&nbsp;min)'], R11: ['R11 · Gemma 4 model card (30&nbsp;min)'],
   };
   const card = (k, y, at, h = 100) => ({
     type: 'box', x: 1520, y, w: 680, h, stroke: T.INK, fill: 'rgba(21,26,33,0.96)', sw: 2.5, rad: 14, size: 36, lh: 1.2, in: 'right', at, z: 4,
     html: `<div style="padding:0 26px;text-align:left">${CARD[k][0].replace(/^(R\d\d)/, '<span class="c-yellow">$1</span>')}${CARD[k][1] ? `<br><span class="c-dim" style="font-size:0.85em">${CARD[k][1]}</span>` : ''}</div>`,
   });
-  let trayN = 0;
-  const toTray = (keys) => { const d = {}; keys.forEach((k) => { d['c16_' + k] = { x: 1390 + trayN * 8, y: 700 + trayN * 8, s: 0.3, o: 0.9, dur: 0.9, ease: 'expo.inOut', z: 3 + trayN }; trayN++; }); return d; };
+  const retire = (keys) => { const d = {}; keys.forEach((k) => { d['c16_' + k] = 'right'; }); return d; };
 
   // 516 (3.5) bar 1 lifts: the gold/null sweep replays on the grid behind it
   const G129 = { cols: 13, rows: 10, cw: 100, ch: 58, gap: 12, count: 129 };
   c(3.5, {
     ...lift([0]), ...head(1),
+    spool: { x: 1800, y: 975, s: 0.5, dur: 1.2, ease: 'expo.inOut' },
     c16_grid: { type: 'canvas', draw: 'grid', x: 1520, y: 400, s: 0.46, in: 'fade', params: Object.assign({}, G129, { reveal: 1, gold: -1, dim: 0, sweep: 1.6, split: 0 }), paramsFrom: { reveal: 0, sweep: 0 }, pdur: 2.6, pease: 'power1.inOut' },
     c16_gl: txt('<span class="c-gold">gold</span> patch → should <span class="c-green">pass</span><br><span class="c-dim">null</span> patch → should <span class="c-red">fail</span>', { x: 1520, y: 640, size: 38, lh: 1.25, at: 0.8 }),
   }, { sfx: [{ at: 0.2, kind: 'tick' }] });
@@ -151,11 +151,11 @@
   c(4.5, {
     c16_grid: { o: 0.25 }, c16_gl: 'fade',
     c16_R01: card('R01', 300, 0.3, 130), c16_R02: card('R02', 460, 0.9, 130),
-    c16_rk: cap('read for lever 1', { x: 1190, ax: 0, align: 'left', y: 205, size: 24, at: 0.4 }),
+    c16_rk1: cap('read for lever 1', { x: 1190, ax: 0, align: 'left', y: 205, size: 24, color: T.YELLOW, at: 0.4 }),
   });
   // 518 (4.5) bar 2: eval_config dials sweep against the 6-minute ruler
   c(4.5, {
-    ...lift([1]), ...head(2), ...toTray(['R01', 'R02']), c16_grid: 'fade', c16_rk: 'fade',
+    ...lift([1]), ...head(2), ...retire(['R01', 'R02']), c16_grid: 'fade', c16_rk1: 'fade',
     c16_dials: { type: 'canvas', draw: 'c16_dials', x: 960, y: 540, in: 'fade', params: { sweep: 1.4, a: 1 }, paramsFrom: { sweep: 0 }, pease: 'power1.inOut' },
     c16_ruler: { type: 'canvas', draw: 'ruler', x: 960, y: 540, in: 'fade', at: 0.3, blocks: [[0, 5.4, T.BLUE, 'agent loop']], params: { x: 1200, y: 560, w: 620, max: 6, ticks: 1, draw: 1, show: 1, a: 1 }, paramsFrom: { ticks: 0, draw: 0, show: 0 }, pdur: 2.2 },
     c16_rchip: { type: 'box', x: 1755, y: 470, w: 110, h: 44, stroke: T.GOLD, fill: 'rgba(240,172,95,0.15)', sw: 3, rad: 10, html: '<span class="m c-gold" style="font-size:0.7em">diff</span>', size: 30, in: 'pop', at: 2.4 },
@@ -172,21 +172,22 @@
   c(4.5, {
     c16_loop: 'fade', c16_wf: 'fade',
     c16_R05: card('R05', 270, 0.2), c16_R06: card('R06', 390, 0.45), c16_R07: card('R07', 510, 0.7), c16_R10: card('R10', 630, 0.95),
-    c16_rk: cap('read for lever 3', { x: 1190, ax: 0, align: 'left', y: 195, size: 24, at: 0.3 }),
+    c16_rk3: cap('read for lever 3', { x: 1190, ax: 0, align: 'left', y: 195, size: 24, color: T.YELLOW, at: 0.3 }),
   });
   // 521 (4.5) bar 4: three tapes (thinking levels); cards R09 · R11
   const TP = (y, th, n) => ({ type: 'canvas', draw: 'tape', x: 960, y: 540, in: 'fade', at: 0.3, params: { x: 1190, y, w: 660, h: 50, first: 1, n, sliver: 1, ticks: 0, crack: 0, think: th }, paramsFrom: { n: 0 }, pease: 'power2.inOut' });
   c(4.5, {
-    ...lift([3]), ...head(4), ...toTray(['R05', 'R06', 'R07', 'R10']), c16_rk: 'fade',
+    ...lift([3]), ...head(4), ...retire(['R05', 'R06', 'R07', 'R10']), c16_rk3: 'fade',
     c16_t0: TP(290, 0, 7), c16_t1: TP(400, 0.3, 6), c16_t2: TP(510, 0.9, 5),
     c16_tl0: cap('thinking_level none', { x: 1190, ax: 0, align: 'left', y: 245, size: 24, at: 0.2 }),
     c16_tl1: cap('low', { x: 1190, ax: 0, align: 'left', y: 355, size: 24, at: 0.3 }),
     c16_tl2: cap('high', { x: 1190, ax: 0, align: 'left', y: 465, size: 24, at: 0.4 }),
-    c16_R09: card('R09', 610, 1.3, 90), c16_R11: card('R11', 705, 1.6, 90),
+    c16_rk4: cap('read for lever 4', { x: 1190, ax: 0, align: 'left', y: 590, size: 24, color: T.YELLOW, at: 1.1 }),
+    c16_R09: card('R09', 660, 1.3, 90), c16_R11: card('R11', 760, 1.6, 90),
   });
   // 522 (4.5) bars 5 and 6: the failure chart gains its first tally; the funnel spins once
   c(4.5, {
-    ...lift([4, 5]), ...head(5), ...toTray(['R09', 'R11']), c16_t0: 'fade', c16_t1: 'fade', c16_t2: 'fade', c16_tl0: 'fade', c16_tl1: 'fade', c16_tl2: 'fade',
+    ...lift([4, 5]), ...head(5), ...retire(['R09', 'R11']), c16_rk4: 'fade', c16_t0: 'fade', c16_t1: 'fade', c16_t2: 'fade', c16_tl0: 'fade', c16_tl1: 'fade', c16_tl2: 'fade',
     c16_fail: { type: 'canvas', draw: 'c16_fail', x: 960, y: 540, in: 'fade', at: 0.35, params: { tally: 1, a: 1 }, paramsFrom: { tally: 0 }, pdur: 0.6, pease: 'power2.out' },
     c16_funnel: { type: 'canvas', draw: 'c16_funnel', x: 960, y: 540, in: 'fade', at: 0.4, params: { spin: 1, a: 1 }, paramsFrom: { spin: 0 }, pdur: 2.4, pease: 'power2.inOut' },
   }, { sfx: [{ at: 0.7, kind: 'tick' }] });
@@ -201,7 +202,8 @@
   const barsOut = {};
   for (let i = 0; i < 9; i++) { barsOut['c16_b' + i] = 'fade'; barsOut['c16_n' + i] = 'fade'; }
   const pile = {};
-  ['R01', 'R02', 'R05', 'R06', 'R07', 'R10', 'R09', 'R11'].forEach((k, i) => { pile['c16_' + k] = { x: 960 + (i - 3.5) * 10, y: 430 + (i - 3.5) * 10, s: 0.9, o: 1, r: (i - 3.5) * 1.2, dur: 1.1, ease: 'expo.inOut', at: 0.05 * i }; });
+  const PK = ['R01', 'R02', 'R05', 'R06', 'R07', 'R10', 'R09', 'R11'];
+  PK.forEach((k, i) => { pile['c16_P' + k] = Object.assign(card(k, 430 + (i - 3.5) * 12, 0.1 + 0.07 * i, 120), { x: 960 + (i - 3.5) * 12, s: 0.9, r: (i - 3.5) * 1.2, in: i % 2 ? 'right' : 'left', dur: 0.9, ease: 'expo.out', z: 4 + i }); });
   c(4.5, {
     ...barsOut, ...pile, c16_head: 'up', c16_why: 'up', c16_rest: 'fade', c16_rl: 'fade', c16_rlL: 'fade', spool: 'fade',
     c16_pl: txt(`the read-first tier: ${Y(11)} readings · ${Y('≈7')} hours`, { x: 960, y: 760, size: 60, at: 0.9 }),
@@ -216,7 +218,7 @@
     [id + 'L']: txt(html, { x: cx(d) + 14, ax: 0, align: 'left', y: below ? y1 + 22 : y1, size: 40, at: at + 0.3 }),
   });
   const cardsOut = {};
-  ['R01', 'R02', 'R05', 'R06', 'R07', 'R10', 'R09', 'R11'].forEach((k) => { cardsOut['c16_' + k] = { x: cx(U_(9, 24)), y: CALY, s: 0.05, o: 0, dur: 0.9, ease: 'power3.in' }; });
+  PK.forEach((k) => { cardsOut['c16_P' + k] = { x: cx(U_(9, 24)), y: CALY, s: 0.05, o: 0, dur: 0.9, ease: 'power3.in' }; });
   c(4.5, {
     ...cardsOut, c16_pl: 'fade', c16_pl2: 'fade', c16_tag: 'fade',
     calendar: { type: 'canvas', draw: 'calendar', x: 960, y: 540, in: 'fade', spans: [[U_(9, 24), U_(10, 1), T.BLUE, 0.3], [U_(10, 1), U_(10, 8), T.BLUE, 0.3], [U_(10, 15), U_(10, 22), T.PURPLE, 0.35], [U_(11, 12), U_(11, 13), T.RED, 0.6]], params: { x: 210, y: CALY, w: 1500, draw: 1, dot: -1, span0: 1, span1: 1, span2: 0, span3: 0 }, paramsFrom: { draw: 0, span0: 0, span1: 0 }, pdur: 2.2 },
@@ -247,7 +249,7 @@
   const qs = {};
   QS.forEach(([q, n], i) => {
     qs['c16_qb' + i] = { type: 'box', x: QP[i][0], y: QP[i][1], w: 540, h: 240, stroke: '#3A4654', fill: 'rgba(21,26,33,0.85)', sw: 2.5, rad: 18, html: '', in: 'down', at: 0.06 * i };
-    qs['c16_q' + i] = { type: 'text', html: `${Y(q)} · ${n}`, size: 40, ax: 0.5, x: QP[i][0], y: QP[i][1] + 55, in: 'down', at: 0.06 * i + 0.05, z: 3 };
+    qs['c16_q' + i] = { type: 'text', html: `${Y(q)} · ${n}`, size: 38, ax: 0, align: 'left', x: QP[i][0] - 240, y: QP[i][1] + 62, in: 'down', at: 0.06 * i + 0.05, z: 3 };
   });
   c(2, {
     c16_fpL: null, c16_pt: 'up', c16_ptk: 'fade', c16_ptl: 'up',
@@ -255,26 +257,32 @@
     c16_icons: { type: 'canvas', draw: 'c16_icons', x: 960, y: 540, in: 'fade', at: 0.5, dur: 0.6, params: { a: 1 }, z: 3 },
     c16_qk: tag('the roadmap’s research questions · hypotheses', { x: 960, y: 190, size: 28, at: 0.3 }),
   }, { cut: true, sfx: [{ at: 0.3, kind: 'click' }] });
-  // 529 (4.5) the questions dock onto the TREE beside the file you would change; the chip lifts out
-  const TY = 540, LH = 40 * 1.55;
-  const lineY = (i) => TY - (8 * LH) / 2 + LH * (i + 0.5);
-  const DOCK = [1, 4, 6, 3, 2, 5]; // Q1 agent.yaml · Q2 sub_agents · Q3 adapters · Q4 sampling · Q5 prompts · Q6 skills
+  // 529 (2.5) the questions dock onto the full bundle TREE, each beside the file you would change to test it
+  const TS = 44, TY = 560, LH = TS * 1.55, TOP = TY - (8 * LH + 0.3 * TS) / 2;
+  const lineY = (i) => TOP + LH * 1.5 + 0.3 * TS + LH * i; // i = 0 agent.yaml … 6 eval_config.yaml; -1 = submission/
+  // Q1 agent.yaml (loop vs staged) · Q2 eval_config.yaml (the hard time cap) · Q3 adapters (self-distillation)
+  // Q4 configs/sampling.yaml (thinking level) · Q5 skills (a code-graph tool) · Q6 adapters (memorisation vs skill)
+  const DOCK = [[0, 0], [6, 0], [5, 0], [2, 0], [4, 0], [5, 1]];
+  const QX = 1000;
   const dock = {};
-  QS.forEach(([q, n], i) => { dock['c16_q' + i] = { x: 920, ax: 0, y: lineY(DOCK[i]), size: 34, dur: 1.0, ease: 'expo.inOut', at: 0.05 * i }; dock['c16_qb' + i] = 'shrink'; });
+  // the cards fold away and each question slides in along its own row (no question crosses another)
+  QS.forEach(([q, n], i) => { dock['c16_q' + i] = 'shrink'; dock['c16_qb' + i] = 'shrink'; dock['c16_d' + i] = { type: 'text', html: `${Y(q)} · ${n}`, x: QX + DOCK[i][1] * 420, ax: 0, align: 'left', y: lineY(DOCK[i][0]), size: 36, in: 'right', at: 0.25 + 0.12 * i, z: 3 }; });
+  const arrows = {};
+  [0, 2, 4, 5, 6].forEach((r, k) => { arrows['c16_ar' + r] = { type: 'arrow', x1: QX - 24, y1: lineY(r), x2: 880, y2: lineY(r), color: T.YELLOW, sw: 3, head: 14, in: 'draw', at: 0.9 + 0.08 * k, dur: 0.6 }; });
   c(2.5, {
     c16_icons: 'quick',
-    ...K.tree('tree', { x: 140, y: TY, size: 40, el: { in: 'fade', dur: 0.6, at: 0.2 } }),
-    ...dock,
-    c16_arrows: { type: 'text', html: Array.from({ length: 6 }, () => '←').join('<br>'), size: 34, lh: 1.82, color: T.DIM, x: 860, y: lineY(3.5), in: 'fade', at: 1.0 },
+    ...K.tree('tree', { x: 140, y: TY, size: TS, el: { in: 'fade', dur: 0.6, at: 0.45 } }),
+    ...dock, ...arrows,
     c16_qk: { y: 200 },
   }, { sfx: [{ at: 1.0, kind: 'tick' }] });
   // (2) the chip lifts out of the tree; the RAIL rewrites to 17
-  const qOut = { c16_arrows: 'fade', c16_qk: 'fade' };
-  QS.forEach((_, i) => { qOut['c16_q' + i] = 'right'; });
+  const qOut = { c16_qk: 'fade' };
+  QS.forEach((_, i) => { qOut['c16_d' + i] = 'right'; });
+  Object.keys(arrows).forEach((k) => { qOut[k] = 'fade'; });
   c(2, {
     ...qOut,
     tree: { x: 50, s: 0.6, o: 0.45, dur: 1.0, ease: 'expo.inOut' },
-    ...K.chip('chip', { x: 960, y: 540, s: 1.6, at: 0.35, from: { y: lineY(6), x: 500, s: 0.5, o: 0 }, dur: 1.0, ease: 'expo.out', in: 'fade' }),
+    ...K.chip('chip', { x: 960, y: 540, s: 1.6, at: 0.1, from: { x: 560, y: lineY(-1), s: 0.42, o: 1 }, dur: 1.3, ease: 'expo.inOut', in: 'fade' }),
     rail: { ver: 17, at: 0.4 },
-  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [{ at: 0.4, kind: 'pop' }] });
+  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [{ at: 0.1, kind: 'pop' }] });
 })();

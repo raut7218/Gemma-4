@@ -30,8 +30,8 @@
   };
   // the gold cell's glow on the end frame; params a, x, y
   D.c17_glow = (ctx, p) => {
-    const a = clamp(p.a || 0); if (a <= 0) return;
-    ctx.save(); ctx.globalAlpha = a; ctx.shadowColor = T.GOLD; ctx.shadowBlur = 40;
+    const a = clamp((p.a || 0) * 3); if (a <= 0) return;
+    ctx.save(); ctx.globalAlpha = a; ctx.shadowColor = T.GOLD; ctx.shadowBlur = 30 + 22 * Math.sin((p.a || 0) * Math.PI * 4) ** 2;
     U.rr(ctx, p.x - 56, p.y - 32, 112, 64, 9); ctx.fillStyle = rgba(T.GOLD, 0.45); ctx.fill();
     ctx.strokeStyle = T.GOLD; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
   };
@@ -96,30 +96,41 @@
     c17_tA: txt('<span class="c-teal">9 fixed tools</span>&ensp;·&ensp;work in <span class="c-blue">A</span>, judged in <span class="c-green">B</span>&ensp;·&ensp;keep the <span class="c-gold">patch</span> clean', { x: 960, y: 940, size: 46, at: 1.2 }),
   }, { cut: true, cam: { x: 960, y: 520, s: 1 } });
 
-  // ================================================================ 534 (4.5) the TREE: what to build first
+  // ================================================================ 534 (4.5) the full bundle TREE: what to build first, each item docked on the files it touches
   const BUILD = [
     '<span class="c-yellow">1</span> · a local harness: gold/null sweep',
     '<span class="c-yellow">2</span> · one <span class="c-blue">LlmAgent</span> with a sane <span class="m">eval_config</span>',
     '<span class="c-yellow">3</span> · log every run, hold out a repository',
   ];
+  const TS = 40, TLH = TS * 1.55, TTOP = 540 - (8 * TLH + 0.3 * TS) / 2;
+  const tY = (i) => TTOP + TLH * 1.5 + 0.3 * TS + TLH * i; // -1 submission/ · 0 agent.yaml … 6 eval_config.yaml
+  const CY = [330, 540, 750];
   const cards = {};
-  BUILD.forEach((h, i) => { cards['c17_c' + i] = { type: 'box', x: 1430, y: 400 + i * 160, w: 780, h: 130, stroke: T.INK, fill: 'rgba(21,26,33,0.95)', sw: 2.5, rad: 16, html: `<div style="padding:0 28px;text-align:left">${h}</div>`, size: 38, lh: 1.2, in: 'right', at: 0.7 + 0.45 * i }; });
+  BUILD.forEach((h, i) => { cards['c17_c' + i] = { type: 'box', x: 1440, y: CY[i], w: 760, h: 130, stroke: T.INK, fill: 'rgba(21,26,33,0.95)', sw: 2.5, rad: 16, html: `<div style="padding:0 28px;text-align:left">${h}</div>`, size: 38, lh: 1.2, in: 'right', at: 0.5 + 0.55 * i }; });
+  const hl = (id, i, at) => ({ [id]: { type: 'rect', ax: 0, x: 128, y: tY(i), w: 700, h: TLH - 8, fill: 'rgba(88,196,221,0.16)', rad: 8, in: 'grow', at, z: 0 } });
+  const ar = (id, i, ty, tx, at) => ({ [id]: { type: 'arrow', x1: 1052, y1: CY[i], x2: tx, y2: ty, color: T.YELLOW, sw: 3, head: 14, in: 'draw', at, dur: 0.6 } });
   c(4.5, {
     contA: 'left', contA_hd: 'left', contA_ht: 'left', loop: 'left', c17_tA: 'down',
     contB: 'fade', contB_hd: 'fade', contB_ht: 'fade',
     ...Object.fromEntries(Object.keys(bars).map((k) => [k, 'fade'])),
-    ...K.tree('tree', { x: 140, y: 540, size: 36, el: { s: 1, o: 1, in: 'fade', at: 0.2 } }),
-    c17_bk: cap('what to build first', { x: 1430, y: 255, size: 28, color: T.YELLOW, at: 0.4 }),
+    ...K.tree('tree', { x: 140, y: 540, size: TS, el: { s: 1, o: 1, in: 'fade', at: 0.15 } }),
+    c17_bk: cap('what to build first', { x: 1440, y: 215, size: 28, color: T.YELLOW, at: 0.3 }),
     ...cards,
-  }, { cam: { x: 960, y: 540, s: 1 }, sfx: [0, 1, 2].map((i) => ({ at: 0.8 + 0.45 * i, kind: 'click' })) });
+    ...ar('c17_a0', 0, tY(-1), 470, 0.95),
+    ...hl('c17_h1', 0, 1.45), ...hl('c17_h2', 6, 1.55),
+    ...ar('c17_a1', 1, tY(0), 520, 1.5), ...ar('c17_a2', 1, tY(6), 640, 1.6),
+    c17_h3: { type: 'rect', ax: 0, x: 128, y: tY(5), w: 700, h: TLH - 8, fill: 'rgba(180,142,219,0.18)', rad: 8, in: 'grow', at: 2.1, z: 0 },
+    c17_lat: cap('the logged passing runs feed <span class="m" style="text-transform:none">adapters/</span> later', { x: 1440, y: 845, size: 24, color: T.PURPLE, at: 2.3 }),
+  }, { cam: { x: 960, y: 540, s: 1 }, sfx: [0, 1, 2].map((i) => ({ at: 0.6 + 0.55 * i, kind: 'click' })) });
 
   // ================================================================ 535 (4.5) the chip flies into container B; its tests wait
   const bars2 = {};
-  for (let i = 0; i < 6; i++) bars2['c17_ub' + i] = { type: 'rect', x: 960, y: 420 + i * 62, w: 460, h: 36, fill: '#3A4452', rad: 7, in: 'down', at: 1.2 + 0.06 * i };
+  for (let i = 0; i < 6; i++) bars2['c17_ub' + i] = { type: 'rect', x: 960, y: 430 + i * 54, w: 460, h: 36, fill: '#3A4452', rad: 7, in: 'down', at: 1.2 + 0.06 * i };
   c(4.5, {
-    tree: 'left', c17_bk: 'fade', c17_c0: 'right', c17_c1: 'right', c17_c2: 'right',
+    tree: 'left', c17_bk: 'fade', c17_c0: 'right', c17_c1: 'right', c17_c2: 'right', c17_lat: 'fade',
+    c17_a0: 'quick', c17_a1: 'quick', c17_a2: 'quick', c17_h1: 'left', c17_h2: 'left', c17_h3: 'left',
     ...K.container('c17_B', 'B', { x: 960, y: 500, w: 640, h: 640 }),
-    ...K.chip('chip', { x: 960, y: 270, s: 1.2, in: 'fade', from: { x: 300, y: 700, s: 0.6, o: 1 }, dur: 1.4, ease: 'expo.inOut', at: 0.3 }),
+    ...K.chip('chip', { x: 960, y: 325, s: 1.0, in: 'fade', from: { x: 300, y: 700, s: 0.6, o: 1 }, dur: 1.4, ease: 'expo.inOut', at: 0.3 }),
     ...bars2,
     c17_py: { type: 'mono', html: '<span class="c-dim">$</span> pytest&ensp;<span class="c-dim">…</span>', size: 40, x: 960, y: 770, in: 'wipe', at: 1.7 },
     c17_goal: txt('<span class="c-green">exit 0</span> is what you are building toward', { x: 960, y: 935, size: 58, at: 2.0 }),
@@ -127,44 +138,40 @@
 
   // ================================================================ 536–538 the call to action
   c(4, {
-    c17_cta: { type: 'text', html: 'Enter the competition.', size: 130, x: 960, y: 520, in: 'zoom', dur: 1.2 },
+    c17_cta: { type: 'text', html: '<span class="plate">Enter the competition.</span>', size: 130, x: 960, y: 520, in: 'zoom', at: 0.5, dur: 1.2 },
   }, { clear: true, keep: ['rail'], cut: true, cam: { x: 960, y: 540, s: 1 } });
   c(4.5, {
     c17_cta: { y: 380, s: 0.85, dur: 1.0, ease: 'expo.inOut' },
     c17_name: txt('Google – The <span class="c-blue">Gemma 4</span> Developer Agent Competition · on Kaggle', { x: 960, y: 560, size: 54, maxw: 1700, at: 0.7 }),
   });
+  // 538 (+539) the deadline; the RAIL unfolds into a row of 17 chapter ticks that light in sequence
+  const ticks = {};
+  for (let k = 1; k <= 17; k++) ticks['c17_tk' + k] = { type: 'rect', x: 960 + (k - 9) * 52, y: 860, w: 5, h: 40, rad: 3, fill: k === 17 ? T.GOLD : T.INK, in: 'growh', at: 1.0 + 0.07 * k, dur: 0.4 };
   c(4.5, {
     c17_dl: txt('final submission: <span class="c-red">2 December 2026</span>, 23:59 UTC', { x: 960, y: 700, size: 54, at: 0.3 }),
     c17_name: { s: 0.98 },
-  });
-  // 539 (2) the RAIL unfolds into 17 ticks that light in sequence
-  const ticks = {};
-  for (let k = 1; k <= 17; k++) ticks['c17_tk' + k] = { type: 'rect', x: 330, y: 170 + (k - 1) * 46, w: 46, h: 5, rad: 3, fill: k === 17 ? T.GOLD : T.INK, in: 'grow', at: 0.05 * k, dur: 0.4 };
-  c(2, {
-    c17_cta: 'up', c17_name: 'up', c17_dl: 'up',
-    rail: { o: 0, dur: 0.5 },
-    c17_tl: { type: 'rect', x: 330, y: 170 + 8 * 46, w: 3, h: 16 * 46, fill: '#3A4654', in: 'growh', dur: 0.6 },
+    rail: { o: 0, dur: 0.6, at: 0.9 },
     ...ticks,
-  }, { sfx: [{ at: 0.1, kind: 'tick' }] });
-  // 540 (4.5) end card over the dim grid: sources
-  const tickOut = { c17_tl: 'fade' };
+  }, { sfx: [{ at: 1.05, kind: 'tick' }] });
+  // 540 (3) end card over the dim grid: sources
+  const tickOut = {};
   for (let k = 1; k <= 17; k++) tickOut['c17_tk' + k] = 'fade';
   const SRC = 'sources: the competition page and the organizers’ harness guide (via a participant’s digest), community reports, and the Gemma 4 Developer Agent Research Roadmap';
-  c(4.5, {
-    ...tickOut,
+  c(3, {
+    ...tickOut, c17_cta: 'up', c17_name: 'up', c17_dl: 'up',
     grid: { type: 'canvas', draw: 'grid', x: 960, y: 500, in: 'fade', params: GP({ dim: 0.85, goldGlow: 0 }), paramsFrom: { reveal: 0 }, pdur: 2.0, pease: 'power2.out', at: 0.2 },
-    c17_src: txt(`<span class="plate">${SRC}</span>`, { x: 960, y: 500, size: 40, maxw: 1500, lh: 1.5, color: T.INK, at: 0.6, dur: 1.6 }),
-    c17_lab: cap('<span class="plate">hypotheses, concepts and derived values are labelled</span>', { x: 960, y: 690, size: 28, color: T.YELLOW, at: 1.6 }),
+    c17_src: txt(`<span class="plate">${SRC}</span>`, { x: 960, y: 500, size: 40, maxw: 1500, lh: 1.5, color: T.INK, at: 0.5, dur: 1.4 }),
+    c17_lab: cap('<span class="plate">hypotheses, concepts and derived values are labelled</span>', { x: 960, y: 690, size: 28, color: T.YELLOW, at: 1.2 }),
   }, { cut: true });
-  // 541 (3.5) end frame: the gold cell glows; the title
+  // 541 (7) end frame: the gold cell glows; the title, the CTA and the sources hold ≥ 3.5 s before the fade
   const [gx, gy] = D.gridCell(55, { w: 1920, h: 1080 }, GRID120, 960, 500);
-  c(3.5, {
+  c(7, {
     c17_src: { y: 960, size: 26, color: T.DIM, dur: 1.0, ease: 'expo.inOut' },
     c17_lab: { y: 1030, size: 24, dur: 1.0, ease: 'expo.inOut' },
-    c17_glow: { type: 'canvas', draw: 'c17_glow', x: 960, y: 540, in: 'none', params: { a: 1, x: gx, y: gy }, paramsFrom: { a: 0 }, pdur: 1.6, pease: 'power2.out', at: 0.3 },
-    c17_title: txt('<span class="plate">The <span class="c-blue">Gemma 4</span> Developer Agent Competition</span>', { x: 960, y: 290, size: 90, at: 0.5, dur: 1.4 }),
-    c17_end: txt('<span class="plate">Enter on Kaggle&ensp;·&ensp;final submission <span class="c-red">2 Dec 2026</span>, 23:59 UTC</span>', { x: 960, y: 690, size: 44, at: 1.2 }),
-  }, { sfx: [{ at: 0.35, kind: 'tick' }] });
+    c17_glow: { type: 'canvas', draw: 'c17_glow', x: 960, y: 540, in: 'none', params: { a: 1, x: gx, y: gy }, paramsFrom: { a: 0 }, pease: 'sine.inOut', at: 0.1 },
+    c17_title: txt('<span class="plate" style="white-space:nowrap">The <span class="c-blue">Gemma 4</span> Developer Agent Competition</span>', { x: 960, y: 290, size: 80, maxw: 1840, at: 0.15, dur: 1.0 }),
+    c17_end: txt('<span class="plate" style="white-space:nowrap">Enter on Kaggle&ensp;·&ensp;final submission <span class="c-red">2 Dec 2026</span>, 23:59 UTC</span>', { x: 960, y: 690, size: 46, maxw: 1840, at: 0.45, dur: 1.0 }),
+  }, { sfx: [{ at: 0.15, kind: 'tick' }] });
   // (1) fade to black on the last beat
   const all = {};
   ['grid', 'c17_src', 'c17_lab', 'c17_glow', 'c17_title', 'c17_end'].forEach((k) => { all[k] = { o: 0, dur: 0.6, ease: 'power2.in', at: 0.05 }; });

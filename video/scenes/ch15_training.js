@@ -221,26 +221,28 @@
   c(4.5, {
     c15_flow: { params: FK({ flow: 3.5 }), pease: 'none' },
     c15_keep: 'up', c15_rs: 'fade',
-    c15_ge: { type: 'text', html: '<span class="c-yellow">≥</span>', size: 130, x: 1530, y: 470, in: 'pop', at: 1.7 },
-    c15_cnt: { type: 'num', val: 300, size: 150, color: T.YELLOW, x: 1700, y: 470, in: 'count', dur: 2.0, ease: 'power3.out', at: 0.2 },
-    c15_cntL: txt('verified trajectories', { x: 1640, y: 600, size: 44, at: 0.6 }),
-  }, { sfx: [{ at: 1.75, kind: 'pop' }] });
+    // no counting numerals (they would read as measured values): the target pops in whole, tagged at the counter
+    c15_ge: { type: 'text', html: '<span class="c-yellow">≥</span>', size: 130, x: 1530, y: 470, in: 'pop', at: 0.9 },
+    c15_cnt: { type: 'num', val: 300, size: 150, color: T.YELLOW, x: 1700, y: 470, in: 'scale', from: { s: 0.6, o: 0 }, dur: 1.2, ease: 'expo.out', at: 1.0 },
+    c15_cntT: tag('a target', { x: 1840, ax: 1, align: 'right', y: 375, size: 26, at: 1.4 }),
+    c15_cntL: txt('verified trajectories', { x: 1640, y: 600, size: 44, at: 0.4 }),
+  }, { sfx: [{ at: 1.0, kind: 'pop' }] });
   // 505 (4.5) small caps: the roadmap's milestone for week 3
   c(4.5, {
     c15_flow: { params: FK({ flow: 5.5 }), pease: 'none' },
-    c15_ms: cap('the roadmap’s milestone for week 3 · a target', { x: 1640, y: 680, size: 26, color: T.YELLOW, at: 0.3 }),
+    c15_ms: cap('the roadmap’s milestone for week 3 · not a result', { x: 1640, y: 680, size: 26, color: T.YELLOW, at: 0.3 }),
     c15_cnt: { s: 1.04, dur: 3.0, ease: 'sine.inOut' },
   });
   // 506 (2.5) reading beat: "≥ 300 verified trajectories" stays bright; the rest sinks to a third
   c(2.5, {
     c15_flow: { params: FK({ flow: 6.5, ra: 0.33, fa: 0.33 }), pdur: 1.0, pease: 'power2.out' },
-    c15_model: { o: 0.33 }, c15_mt: { o: 0.33 }, c15_ill: { o: 0.33 }, c15_ms: { o: 0.33 },
+    c15_model: { o: 0.33 }, c15_mt: { o: 0.33 }, c15_ill: { o: 0.33 }, c15_ms: { o: 0.33 }, c15_cntT: { o: 0.6 },
     c15_cnt: { s: 1.1 }, c15_ge: { s: 1.06 },
   }, { cam: { x: 1500, y: 520, s: 1.25 }, drift: 0.4 });
   // 507 (4.5) the green ribbons wind into a spool: SFT data · Gemma-only
   c(4.5, {
     c15_flow: { params: FK({ flow: 7, ra: 0.33, fa: 0, gate: 0, wind: 1, sx: 900, sy: 500 }), pdur: 1.6, pease: 'power2.inOut' },
-    c15_model: 'fade', c15_mt: 'fade', c15_ill: 'fade', c15_ms: 'fade', c15_cnt: 'fade', c15_ge: 'fade', c15_cntL: 'fade',
+    c15_model: 'fade', c15_mt: 'fade', c15_ill: 'fade', c15_ms: 'fade', c15_cnt: 'fade', c15_ge: 'fade', c15_cntL: 'fade', c15_cntT: 'fade',
     spool: SPOOL({ x: 900, y: 500, in: 'scale', at: 1.0 }),
     c15_wind: { type: 'canvas', draw: 'c15_wind', x: 960, y: 540, in: 'fade', at: 1.0, params: { x: 900, y: 500, spin: 1.2, a: 1 }, pease: 'none' },
     c15_sd: txt('SFT data&ensp;·&ensp;<span class="c-blue">Gemma</span>-only', { x: 900, y: 690, size: 54, at: 1.6 }),
@@ -300,13 +302,22 @@
     c15_thl: { type: 'rect', ax: 0, x: 990, y: lineY(5), w: 470, h: LH - 6, fill: 'rgba(180,142,219,0.18)', rad: 8, in: 'grow', at: 0.6, z: 0 },
     c15_sheet: { x: 1640, y: lineY(5), w: 170, h: 56, size: 28, dur: 0.9, ease: 'expo.inOut', at: 0.3 },
   }, { sfx: [{ at: 1.1, kind: 'tick' }] });
-  // 514 (4.5) RL comes after SFT, if at all; the RAIL rewrites to 16
-  c(4.5, {
+  // 514 (2 + 2.5) RL comes after SFT, if at all; under the fading line the nine lever bars of ch16 start growing
+  // (they carry into ch16 under the same ids, so the cut has no still stretch); the RAIL rewrites to 16
+  c(2, {
     c15_ho: 'fade', c15_hoT: 'fade', c15_b1: 'fade', c15_b2: 'fade', c15_b1L: 'fade', c15_b2L: 'fade', c15_bT: 'fade',
     tree: 'fade', c15_thl: 'fade', c15_sheet: 'fade',
-    c15_rl: txt('RL comes after SFT, if at all', { x: 820, y: 470, size: 72, at: 0.45 }),
-    c15_rl2: txt('<span class="c-dim">highest ceiling,</span> <span class="c-red">highest cost</span>', { x: 820, y: 590, size: 56, at: 1.1 }),
+    c15_rl: txt('RL comes after SFT, if at all', { x: 820, y: 470, size: 72, at: 0.3 }),
+    c15_rl2: txt('<span class="c-dim">highest ceiling,</span> <span class="c-red">highest cost</span>', { x: 820, y: 590, size: 56, at: 0.8 }),
     spool: SPOOL(),
+  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.5 });
+  const LBX = (i) => 140 + i * 120, LBH = (i) => 520 - 45 * i;
+  const lev = {};
+  for (let i = 0; i < 9; i++) lev['c16_b' + i] = { type: 'rect', x: LBX(i), y: 960, ay: 1, w: 84, h: LBH(i) * 0.55, fill: '#56616D', rad: 6, in: 'growh', at: 0.1 + 0.05 * i, dur: 1.35, ease: 'power1.out' };
+  c(2.5, {
+    c15_rl: { y: 300, s: 0.82, o: 0.0, dur: 1.4, ease: 'power2.in', at: 0.1 },
+    c15_rl2: { y: 390, s: 0.82, o: 0.0, dur: 1.2, ease: 'power2.in', at: 0.0 },
+    ...lev,
     rail: { ver: 16, at: 0.6 },
-  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+  }, { drift: 0.5 });
 })();

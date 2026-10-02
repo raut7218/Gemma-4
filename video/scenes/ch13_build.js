@@ -32,24 +32,30 @@
     ctx.shadowColor = sp.pcol || T.RED; ctx.shadowBlur = 26;
     U.rr(ctx, p.x - p.w / 2 - 10, p.y - p.h / 2 - 10, p.w + 20, p.h + 20, 26); ctx.stroke(); ctx.restore();
   };
-  // the six families, drawn in local coordinates around (0, 0)
+  // the six families, drawn in local coordinates around (0, 0); L = alpha of the inner words
+  // (the words fade out when the shapes shrink into the overview grid, where they would be unreadable)
+  const LP = (L) => ({ cx: 0, cy: 20, r: 200, draw: 1, labels: L, ring: 0, dot: -1, exit: 0, hi: -1 });
   const FAM = [
-    (ctx, col) => {
+    (ctx, col, L) => {
       const xs = [-360, 0, 360], nm = ['localize', 'repair', 'validate'];
-      xs.forEach((x, i) => pill(ctx, x, 0, 250, 88, col, nm[i], 36));
+      xs.forEach((x, i) => { pill(ctx, x, 0, 250, 88, col, '', 36); if (L > 0.01) D.text(ctx, nm[i], x, 2, { size: 36, a: L, color: T.INK }); });
       arr(ctx, -232, 0, -132, 0, T.DIM); arr(ctx, 128, 0, 228, 0, T.DIM);
     },
-    (ctx) => { D.loop(ctx, { cx: 0, cy: 20, r: 200, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 }); },
-    (ctx) => {
-      D.loop(ctx, { cx: 0, cy: 20, r: 200, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 });
+    (ctx, col, L) => { D.loop(ctx, LP(L)); },
+    (ctx, col, L) => {
+      D.loop(ctx, LP(L));
       const x = 173, y = 120;
       ctx.save(); U.rr(ctx, x - 175, y - 62, 350, 124, 14); ctx.fillStyle = T.PANEL; ctx.fill();
       ctx.strokeStyle = T.TEAL; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
-      D.text(ctx, 'for f in files:', x - 150, y - 22, { mono: true, size: 28, color: T.TEAL, align: 'left' });
-      D.text(ctx, '    check(f)', x - 150, y + 22, { mono: true, size: 28, color: T.TEAL, align: 'left' });
+      if (L > 0.01) {
+        D.text(ctx, 'for f in files:', x - 150, y - 22, { mono: true, size: 28, a: L, color: T.TEAL, align: 'left' });
+        D.text(ctx, '    check(f)', x - 150, y + 22, { mono: true, size: 28, a: L, color: T.TEAL, align: 'left' });
+      }
+      // wordless: two code bars stand in for the lines
+      if (L < 0.99) { ctx.save(); ctx.globalAlpha *= 1 - L; ctx.fillStyle = rgba(T.TEAL, 0.8); U.rr(ctx, x - 140, y - 34, 220, 22, 8); ctx.fill(); U.rr(ctx, x - 90, y + 12, 200, 22, 8); ctx.fill(); ctx.restore(); }
     },
-    (ctx) => {
-      D.loop(ctx, { cx: 0, cy: 20, r: 200, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 });
+    (ctx, col, L) => {
+      D.loop(ctx, LP(L));
       const x = 173, y = 120;
       ctx.save(); U.rr(ctx, x - 135, y - 50, 270, 100, 50); ctx.fillStyle = T.BG; ctx.fill(); ctx.restore();
       const N = [[-95, -20], [-20, -45], [70, -30], [-60, 35], [25, 30], [110, 20]];
@@ -59,21 +65,22 @@
       N.forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, 12, 0, Math.PI * 2); ctx.fillStyle = T.TEAL; ctx.fill(); });
       ctx.restore();
     },
-    (ctx, col) => {
+    (ctx, col, L) => {
       ctx.save(); U.rr(ctx, -470, -50, 110, 100, 12); ctx.strokeStyle = T.INK; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
-      D.text(ctx, 'issue', -415, 0, { size: 28, color: T.DIM });
+      if (L > 0.01) D.text(ctx, 'issue', -415, 0, { size: 28, a: L, color: T.DIM });
       [-180, -60, 60, 180].forEach((yy) => {
         D.polyline(ctx, [[-358, 0], [-150, yy]], 1, { color: rgba(T.DIM, 0.8), w: 3 });
         ctx.save(); U.rr(ctx, -150, yy - 24, 130, 48, 10); ctx.fillStyle = rgba(T.GOLD, 0.14); ctx.fill(); ctx.strokeStyle = T.GOLD; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
         D.polyline(ctx, [[-20, yy], [160, 0]], 1, { color: rgba(T.DIM, 0.8), w: 3 });
       });
-      pill(ctx, 250, 0, 180, 84, col, 'judge', 34);
+      pill(ctx, 250, 0, 180, 84, col, '', 34);
+      if (L > 0.01) D.text(ctx, 'judge', 250, 2, { size: 34, a: L, color: T.INK });
       arr(ctx, 342, 0, 392, 0, T.DIM);
       ctx.save(); U.rr(ctx, 398, -26, 110, 52, 10); ctx.fillStyle = rgba(T.GOLD, 0.2); ctx.fill(); ctx.strokeStyle = T.GOLD; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
     },
-    (ctx) => {
+    (ctx, col, L) => {
       ctx.save(); ctx.translate(0, -90); ctx.scale(0.72, 0.72);
-      D.loop(ctx, { cx: 0, cy: 0, r: 200, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 }); ctx.restore();
+      D.loop(ctx, { cx: 0, cy: 0, r: 200, draw: 1, labels: L, ring: 0, dot: -1, exit: 0, hi: -1 }); ctx.restore();
       [-310, 310].forEach((cx) => {
         D.polyline(ctx, [[cx * 0.35, 20], [cx, 150]], 1, { color: rgba(T.DIM, 0.8), w: 3, dash: [10, 10] });
         ctx.save(); ctx.translate(cx, 215); ctx.scale(0.38, 0.38);
@@ -81,20 +88,23 @@
       });
     },
   ];
-  // params: a0..a5 (each big), row 0..1 (shrink into a row), f0..f5 (fit: +1 forward, <0 recede), m (A+B merge away)
+  // close-up scale of each family (fills the frame under the title), and the overview grid (3 × 2)
+  const FS = [1.4, 1.45, 1.38, 1.38, 1.4, 1.3];
+  const GX = [360, 960, 1560], GY = [320, 730], GS = 0.56;
+  // params: a0..a5 (each close up), row 0..1 (shrink into the 3 × 2 overview), f0..f5 (fit: +1 forward, <0 recede), m (A+B merge away)
   D.c13_fam = (ctx, p) => {
     for (let i = 0; i < 6; i++) {
-      const row = U.clamp(p.row || 0), f = p['f' + i] || 0, m = U.clamp(p.m || 0);
+      const row = U.clamp(p.row || 0), f = p['f' + i] || 0, m = U.clamp(p.m || 0), er = U.ease(row);
       let a = Math.max(U.clamp(p['a' + i] || 0), row);
       if (f < 0) a *= lerp(1, 0.28, Math.min(1, -f));
-      const rx = 960 + (i - 2.5) * 300, ry = 500 - 34 * Math.max(0, f);
-      let x = lerp(960, rx, U.ease(row)), y = lerp(560, ry, U.ease(row));
-      let s = lerp(1, 0.31 + 0.05 * Math.max(0, f), U.ease(row));
+      const rx = GX[i % 3], ry = GY[Math.floor(i / 3)] - 20 * Math.max(0, f);
+      let x = lerp(960, rx, er), y = lerp(600, ry, er);
+      let s = lerp(FS[i], GS + 0.04 * Math.max(0, f), er);
       if (i <= 1) { x = lerp(x, 960, U.ease(m)); y = lerp(y, 420, U.ease(m)); s = lerp(s, 0.45, U.ease(m)); }
       a *= 1 - m;
       if (a < 0.003) continue;
       ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.scale(s, s);
-      FAM[i](ctx, f > 0 ? T.BLUE : T.BLUE);
+      FAM[i](ctx, T.BLUE, U.clamp(1 - row * 1.6));
       ctx.restore();
     }
   };
@@ -177,24 +187,30 @@
   // ================================================================ 433 (3.5) six empty slots around the LOOP
   const slots0 = {};
   SL.forEach((s, i) => { slots0['c13_sb' + i] = slotBox(i, { at: 0.15 + 0.16 * i }); slots0['c13_sl' + i] = slotLab(i, { at: 0.45 + 0.16 * i }); });
-  c(3.5, { ...K.rail(13), loop: loopEl(), ...slots0 }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+  // the blue dot sets off round the LOOP at once and the heading writes on, so the empty slots never sit still
+  c(3.5, {
+    ...K.rail(13), ...slots0,
+    loop: Object.assign(loopEl(), { params: LOOP({ dot: 0.85 }), paramsFrom: { dot: -1 }, pdur: 2.6, pease: 'circ.out' }),
+    c13_head: txt('the anatomy of a coding agent', { x: 960, y: 140, size: 48, color: T.INK, at: 0.2, dur: 1.2 }),
+  }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0 });
   // 434 (4.5) model · control flow fill
-  c(4.5, { ...fillSlot(0, 0.2), ...fillSlot(1, 1.5), loop: { params: LOOP({ dot: 1.3 }), pease: 'none' } }, { cam: { x: 960, y: 540, s: 1.02 }, sfx: [{ at: 0.25, kind: 'tick' }, { at: 1.55, kind: 'tick' }] });
+  c(4.5, { ...fillSlot(0, 0.2), ...fillSlot(1, 1.5), loop: { params: LOOP({ dot: 1.85 }), pease: 'none' } }, { cam: { x: 960, y: 540, s: 1.02 }, sfx: [{ at: 0.25, kind: 'tick' }, { at: 1.55, kind: 'tick' }] });
   // 435 (4.5) tools · context fill
-  c(4.5, { ...fillSlot(2, 0.2), ...fillSlot(3, 1.5), loop: { params: LOOP({ dot: 2.6, ring: 1 }), pease: 'none' } }, { sfx: [{ at: 0.25, kind: 'tick' }, { at: 1.55, kind: 'tick' }] });
+  c(4.5, { ...fillSlot(2, 0.2), ...fillSlot(3, 1.5), loop: { params: LOOP({ dot: 2.95, ring: 1 }), pease: 'none' } }, { sfx: [{ at: 0.25, kind: 'tick' }, { at: 1.55, kind: 'tick' }] });
   // 436 (3) environment; the verifier stays empty and pulses red
   c(3, {
     ...fillSlot(4, 0.15),
     c13_sb5: { stroke: T.RED, at: 0.9, dur: 0.6 }, c13_sl5: { color: T.RED, at: 0.9 },
     c13_pulse: { type: 'canvas', draw: 'c13_pulse', pcol: T.RED, in: 'none', params: { x: SL[5].x, y: SL[5].y, w: SW, h: SH, ph: 2, a: 1 }, paramsFrom: { ph: 0 }, pease: 'none', at: 0.7 },
-    loop: { params: LOOP({ dot: 3.4, ring: 1 }), pease: 'none' },
+    loop: { params: LOOP({ dot: 3.7, ring: 1 }), pease: 'none' },
   }, { sfx: [{ at: 0.2, kind: 'tick' }] });
   // 437 (4.5) CLOSE the verifier zooms forward
   const dimSlots = {};
   for (let i = 0; i < 5; i++) { dimSlots['c13_sb' + i] = { o: 0 }; dimSlots['c13_sl' + i] = { o: 0 }; dimSlots['c13_sd' + i] = { o: 0 }; }
   c(4.5, {
     ...dimSlots, c13_pulse: null,
-    loop: { o: 0, params: LOOP({ dot: 3.9, ring: 1 }) },
+    loop: { o: 0, params: LOOP({ dot: 4.2, ring: 1 }) },
+    c13_head: 'up',
     c13_sb5: { x: 960, y: 560, w: 1500, h: 600, fill: 'rgba(21,26,33,0.94)', z: 5, dur: 1.0, ease: 'expo.inOut' },
     c13_sl5: { x: 960, y: 330, size: 34, z: 6, dur: 1.0, ease: 'expo.inOut' },
     c13_v1: txt('nothing built in — <span class="c-red">you create it</span>', { x: 960, y: 480, size: 76, z: 6, at: 0.9 }),
@@ -223,22 +239,25 @@
   c(2, { c13_fam: { params: FP({ a3: 1 }), pdur: 0.9 }, c13_fname: { ver: 3, dur: 0.7 } });
   c(2, { c13_fam: { params: FP({ a4: 1 }), pdur: 0.9 }, c13_fname: { ver: 4, dur: 0.7 } });
   c(2, { c13_fam: { params: FP({ a5: 1 }), pdur: 0.9 }, c13_fname: { ver: 5, dur: 0.7 } });
-  // 444 (3) six small shapes in a row; A, B, F step forward
-  const RN = ['A<br><span class="c-dim">fixed workflow</span>', 'B<br><span class="c-dim">tool loop</span>', 'C<br><span class="c-dim">code as action</span>', 'D<br><span class="c-dim">structure-aware search</span>', 'E<br><span class="c-dim">test-time scaling</span>', 'F<br><span class="c-dim">multi-agent</span>'];
+  // 444 (3) the six shapes shrink side by side into a 3 × 2 overview; A, B, F step forward
+  const RN = ['fixed workflow', 'tool loop', 'code as action', 'structure-aware search', 'test-time scaling', 'multi-agent'];
   const rowLabs = {};
-  RN.forEach((h, i) => { rowLabs['c13_rl' + i] = { type: 'text', html: h, size: 34, lh: 1.2, maxw: 270, x: 960 + (i - 2.5) * 300, y: 720, in: 'rise', at: 0.5 + 0.06 * i }; });
+  RN.forEach((h, i) => {
+    const html = `${'ABCDEF'[i]} · <span class="c-dim">${h}</span>`;
+    rowLabs['c13_rl' + i] = Object.assign({ type: 'text', size: 38, x: GX[i % 3], y: GY[Math.floor(i / 3)] + 185, in: 'rise', at: 0.5 + 0.06 * i },
+      i === 4 ? { versions: [html, 'E · <span class="c-dim">only if time allows</span>'], ver: 0 } : { html });
+  });
   c(3, {
     c13_fname: 'up',
     c13_fam: { params: FP({ row: 1, f0: 1, f1: 1, f5: 1 }), pdur: 1.4, pease: 'expo.inOut' },
     ...rowLabs,
-    c13_fit: txt('<span class="c-blue">A</span>, <span class="c-blue">B</span> and <span class="c-blue">F</span> — good fit', { x: 960, y: 220, size: 60, at: 1.1 }),
+    c13_fit: txt('<span class="c-blue">A</span>, <span class="c-blue">B</span> and <span class="c-blue">F</span> — good fit', { x: 960, y: 118, size: 60, at: 1.1 }),
   });
-  // 445 (4.5) C and D recede; E dims; the corner tag stays
+  // 445 (4.5) C and D recede; E dims: "only if time allows"; the tag stays
   c(4.5, {
     c13_fam: { params: FP({ row: 1, f0: 1, f1: 1, f5: 1, f2: -1, f3: -1, f4: -0.55 }), pdur: 1.2 },
-    c13_rl2: { o: 0.3 }, c13_rl3: { o: 0.3 }, c13_rl4: { o: 0.6 },
-    c13_e: txt('<span class="c-dim">E — only if time allows</span>', { x: 960, y: 880, size: 48, at: 0.9 }),
-    c13_tagA: tag('the roadmap’s assessment, not a measured result', { x: 1840, ax: 1, align: 'right', y: 130, at: 1.6 }),
+    c13_rl2: { o: 0.3 }, c13_rl3: { o: 0.3 }, c13_rl4: { ver: 1, o: 0.75, at: 0.9, dur: 0.7 },
+    c13_tagA: tag('the roadmap’s assessment, not a measured result', { x: 960, y: 1010, at: 1.6 }),
   });
   // 446 (3.5) A and B merge into the candidate pipeline
   const PY = 420;
@@ -247,7 +266,7 @@
   const rowOut = {};
   for (let i = 0; i < 6; i++) rowOut['c13_rl' + i] = 'fade';
   c(3.5, {
-    ...rowOut, c13_fit: 'up', c13_e: 'down',
+    ...rowOut, c13_fit: 'up',
     c13_fam: { params: FP({ row: 1, f0: 1, f1: 1, f5: 1, f2: -1, f3: -1, f4: -0.55, m: 1 }), pdur: 1.0, pease: 'power3.in' },
     c13_bracket: { type: 'box', x: 1170, y: PY, w: 660, h: 200, stroke: T.DIM, fill: 'rgba(0,0,0,0)', sw: 2.5, rad: 28, html: '', in: 'draw', at: 1.3 },
     c13_loc: stage('loc', 'Localize', T.BLUE, 0.8),

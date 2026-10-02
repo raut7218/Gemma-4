@@ -86,3 +86,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - ch11/ch12 fixes for film round 1 items 2–8, 10 applied by a fixer agent (six slots open out of the scaffold onto ch13's exact pixels — 0-pixel difference across the cut; year cards fly to their ticks; ch12 loop enlarged).
 
 ## Film critic — chapters 13–17, round 1 — one more pass (15 items; honesty clean) — docs/critic/f13_17_r1.md
+- ch13/ch14 fixes for film round 1 items 2, 3, 11, 12, 13 applied by a fixer agent.

@@ -31,7 +31,9 @@
     c07_lmach: ['aBase', 150, 70], c07_loff: ['aBase', 172, 70], c07_lB: ['bTop', 0, -40], c07_ltest: ['bTest', 230, -40],
     c07_shape: ['aBase', 0, 80], c07_fixed: ['bBase', 0, 80],
   };
-  F.hook(() => {
+  let T256 = 1e9;   // the 2D chip hands over to the 3D chip at T256 + 0.42 s (one chip at a time)
+  F.hook((t) => {
+    if (FILM.EL.c07_chip && t >= T256 + 0.42 && t < T256 + 3) FILM.EL.c07_chip.proxy.o = 0;
     const AN = window.ANCHORS;
     if (!AN) return;
     for (const id in PIN) {
@@ -158,7 +160,7 @@
   c(4.5, {
     ...dimLabels(1), c07_lpll: { o: 1, dur: 0.6, color: T.RED }, c07_lmach: 'fade', c07_loff: 'fade', c07_3d: { params: P3({ ...PBACK, plaqueGlow: 1 }), pdur: 2.4, pease: 'sine.inOut' },
     // the label stays bright ink on its plate; the red is an accent bar
-    c07_lplq: { html: `<span class="plate" style="border-left:6px solid #FC6255">${m('pytest.ini')} · ${m('conftest.py')}</span>` },
+    c07_lplq: { o: 1, dur: 0.6, html: `<span class="plate" style="border-left:6px solid #FC6255">${m('pytest.ini')} · ${m('conftest.py')}</span>` },
     c07_dnm: { type: 'text', html: plate('the harness commits these as the baseline — <span class="c-red">do not modify</span>'), size: 46, x: 960, y: 1000, in: 'wipe', at: 0.8, z: 8 },
   }, { cam: { x: 960, y: 540, s: 1 } });
   // 248 (2.5) — reading beat: underline "do not modify"
@@ -206,12 +208,13 @@
   c(2.5, { c07_gx: { o: 0.33, dur: 0.6 }, c07_gxl: { o: 0.33, dur: 0.6 }, c07_chip: { o: 0.33, dur: 0.6 }, c07_ev: { s: 1.08, dur: 1.4, ease: 'expo.out' } }, { cam: { x: 960, y: 700, s: 1.12 }, drift: 0.4 });
 
   const P6 = { dist: 16.5, pitch: 42, yaw: 0.35, ty: 0.9, tx: 0 };
-  const CHIP3D = { x: 903, y: 368 };   // the 3D chip's screen point when it appears (measured)
+  const CHIP3D = { x: 903, y: 362 };   // the 3D chip's screen point when it appears (measured)
+  T256 = F.now();
   // 256 (2) — stage 6 (camera 42°): container B rises on the same plinth; the chip arcs A → B
   c(2, {
-    c07_gx: 'up', c07_gxl: 'up', c07_ev: 'down', c07_chip: { x: CHIP3D.x, y: CHIP3D.y, s: 0.2, o: 0, dur: 0.48, ease: 'power3.in' },
+    c07_gx: 'up', c07_gxl: 'up', c07_ev: 'down', c07_chip: { x: CHIP3D.x, y: CHIP3D.y, s: 0.22, o: 1, at: 0, dur: 0.42, ease: 'power3.inOut' },
     c07_stg: { ver: 3 },
-    c07_3d: { o: 1, dur: 0.45, params: P3({ two: 1, bIn: 1, chipArc: 1, ...P6 }), pdur: 1.5, pease: 'power2.inOut' },
+    c07_3d: { o: 1, at: 0, dur: 0.45, params: P3({ two: 1, bIn: 1, chipArc: 1, ...P6 }), pdur: 1.5, pease: 'power2.inOut' },
   }, { cut: false, cam: { x: 960, y: 540, s: 1 } });
   // 257 (4.5) — B step 1: apply the patch
   const PB = { tx: 2.8, dist: 13, pitch: 42, yaw: 0.4, ty: 2.4 };

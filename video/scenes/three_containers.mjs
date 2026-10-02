@@ -90,7 +90,7 @@ window.THREE_SCENES.containers = {
       b.position.set(1.0, 0.15 + i * 0.13, 0.2); B.add(b); bars.push(b);
     }
     // the gold chip that travels from A to B
-    const chip = new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.12, 0.42, 3, 0.05), new THREE.MeshStandardMaterial({ color: C(T.GOLD), roughness: 0.35, emissive: C(T.GOLD), emissiveIntensity: 0.35 }));
+    const chip = new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.12, 0.42, 3, 0.05), new THREE.MeshStandardMaterial({ color: C(T.GOLD).multiplyScalar(0.3), roughness: 0.65, emissive: C(T.GOLD), emissiveIntensity: 0.8 }));
     chip.castShadow = true; chip.material.transparent = true; chip.renderOrder = 10; scene.add(chip);
     this.s = { r, scene, cam, A, B, ws, tray, trayBase, plaques, file, wsB, testFile, bars, chip, spec };
     return Promise.resolve();
@@ -137,10 +137,10 @@ window.THREE_SCENES.containers = {
     });
     // the verdict is B's own rim lighting up (header band emissive + brighter edges), not a separate shape
     const vd = cl(p.verdict || 0);
-    ud.hm.emissiveIntensity = 0.25 + 0.75 * vd; ud.edges.material.opacity = Math.min(1, ud.edges.material.opacity + 0.15 * vd);
+    ud.hm.emissiveIntensity = 0.25 + 0.35 * vd; ud.edges.material.opacity = Math.min(1, ud.edges.material.opacity + 0.15 * vd);
     // the chip: appears on A's workspace as the arc starts (the 2D chip lands there), arcs to B's workspace
-    const arc = cl(p.chipArc || 0), ch = Math.max(cl(p.chipIn || 0), cl((arc - 0.08) / 0.12));
-    s.chip.visible = arc > 0.08 && (p.chipGone || 0) < 0.99;
+    const arc = cl(p.chipArc || 0), ch = Math.max(cl(p.chipIn || 0), cl((arc - 0.085) / 0.12));
+    s.chip.visible = arc > 0.085 && (p.chipGone || 0) < 0.99;
     const ax = s.A.position.x - 0.55, bx = s.B.position.x - 0.55;
     // rests on top of the workspace block (top at y 0.98), sinks into B's block when applied
     s.chip.position.set(lerp(ax, bx, arc), 1.04 + Math.sin(Math.PI * arc) * 1.8 - (p.chipGone || 0) * 0.12 + (1 - ch) * 0.3, lerp(-0.3, -0.35, arc));
