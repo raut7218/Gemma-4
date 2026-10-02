@@ -71,7 +71,9 @@
     ...K.rail(14),
     // the dot keeps running forward round the LOOP the whole comp; the sentences wait for the old frame to
     // clear and the camera to settle back to 1:1, then enter into the empty right half (never across the LOOP)
-    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, in: 'fade', params: LOOP({ dot: 3.4 }), paramsFrom: { dot: 1.5 }, pease: 'none' },
+    // (pdur explicit: carried in from ch13 the loop would otherwise inherit ch13's last pdur of 1.4 s and stop; 5 beats
+    // because the cut of 468 lands on a whole beat, so the engine holds this comp half a beat longer)
+    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, in: 'fade', params: LOOP({ dot: 3.4 }), paramsFrom: { dot: 1.5 }, pdur: 5 * T.BEAT + 0.05, pease: 'none' },
     c14_s1: txt('The <span class="c-teal">tool descriptions</span> are fixed.', { x: 1230, y: 460, size: 72, in: 'right', at: 0.75 }),
     c14_s2: txt('The <span class="c-blue">prompt</span> is yours.', { x: 1230, y: 610, size: 72, in: 'rise', at: 1.65 }),
   }, { clear: true, keep: ['loop'], cam: { x: 960, y: 540, s: 1 }, drift: 0 });
@@ -87,10 +89,10 @@
   c(4.5, {
     loop: 'left', c14_s1: 'up', c14_s2: 'up',
     c14_page: { type: 'box', x: 520, y: 580, w: 760, h: 820, stroke: '#3A4654', fill: 'rgba(21,26,33,0.96)', sw: 2.5, rad: 18, html: '', in: 'draw', at: 0.2 },
-    c14_pname: { type: 'text', html: '<span class="m" style="color:#F0AC5F">prompts/system.md</span>', size: 34, x: 180, ax: 0, align: 'left', y: 222, in: 'fade', at: 0.7, z: 3 },
-    c14_ptag: tag('suggested structure', { x: 860, ax: 1, align: 'right', y: 222, size: 24, at: 1.0, z: 3 }),
-    c14_prule: { type: 'rect', x: 520, y: 260, w: 700, h: 2, fill: '#3A4654', in: 'grow', at: 0.9, z: 3 },
-    c14_intro: txt('each section, shown by its effect', { x: 1420, y: 540, size: 52, color: T.DIM, at: 1.4 }),
+    c14_pname: { type: 'text', html: '<span class="m" style="color:#F0AC5F">prompts/system.md</span>', size: 34, x: 180, ax: 0, align: 'left', y: 222, in: 'wipe', at: 0.45, z: 3 },
+    c14_ptag: tag('suggested structure', { x: 860, ax: 1, align: 'right', y: 222, size: 24, at: 0.85, z: 3 }),
+    c14_prule: { type: 'rect', x: 520, y: 260, w: 700, h: 2, fill: '#3A4654', in: 'grow', at: 0.6, z: 3 },
+    c14_intro: txt('each section, shown by its effect', { x: 1420, y: 540, size: 52, color: T.DIM, at: 0.7 }),
   }, { cut: true });
   // 469 (2) the dashboard at right, reset
   const DX = 1420;
