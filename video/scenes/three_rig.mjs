@@ -36,7 +36,7 @@ const FILM_T = 0.03, FILM_GAP = 0.034;
 const PL = { w: 5.3, d: 5.0, h: 0.3, zc: -0.03 };
 const PL0 = { w: 3.4 * 1.3, d: 2.0 * 1.3, zc: 1.25 };
 // rim: Fresnel exponent (higher = a thinner, brighter edge) and overall gain
-const RIM_EXP = 4.0, RIM_GAIN = 2.4;
+const RIM_EXP = 4.0, RIM_GAIN = 3.2;
 const SLAB_K = 0.8;                                        // slab albedo scale: lit top face ≈ #58C4DD
 const RIM_DIR = new THREE.Vector3(0.25, 0.6, -0.76).normalize();
 
