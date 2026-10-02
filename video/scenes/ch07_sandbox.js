@@ -152,12 +152,12 @@
   }, { sfx: [{ at: 0.3, kind: 'tick' }, { at: 1.3, kind: 'tick' }, { at: 2.3, kind: 'tick' }] });
   // 245 (4.5) — the machine
   c(4.5, {
-    c07_3d: { params: P3({ yaw: 0.62, pitch: 42 }), pdur: 3.4, pease: 'sine.inOut' },
+    c07_3d: { params: P3({ yaw: 0.62, pitch: 40, ty: 0.65 }), pdur: 3.4, pease: 'sine.inOut' },
     c07_lmach: lab(`${m('python:3.13-slim')} · <span class="c-yellow">4</span> GiB RAM · <span class="c-yellow">2</span> vCPU ·`, { size: 40, align: 'right', ax: 1, at: 0.4 }),
     c07_loff: lab('<span class="c-red">offline</span>', { size: 40, align: 'left', ax: 0, at: 1.2 }),
   });
   // 246 (2.5) — reading beat: the camera pushes in on "offline"
-  const PUSH = { dist: 12.2, ty: 1.0, tx: 0.35 }, PBACK = { dist: P0.dist, ty: P0.ty, tx: 0 };
+  const PUSH = { dist: 13.4, ty: 0.62, tx: 0.2 }, PBACK = { dist: P0.dist, ty: 0.62, tx: 0 };   // a dolly by scale: the plinth stays in frame
   const dimLabels = (o) => Object.fromEntries(['c07_lws', 'c07_ltmp', 'c07_lplq', 'c07_lmach'].map((k) => [k, { o, dur: 0.6 }]));
   // the push is a slow continuous dolly of the 3D camera toward the base (the labels ride their anchors)
   c(2.5, { ...dimLabels(0.45), c07_lpll: { o: 0.45, dur: 0.6 }, c07_3d: { params: P3(PUSH), pdur: 1.875, pease: 'sine.inOut' }, c07_loff: { s: 1.2, dur: 1.4, ease: 'power3.out' } }, { drift: 0.4 });
@@ -172,7 +172,7 @@
   F.beat(2.5, { id: 'c07_dnm', mode: 'underline', w: 300, dx: 410, under: 34, color: T.RED });
 
   // 249 (2) — stage 4: a 2D LOOP spins above the 3D case (camera 45°)
-  const P4 = { pitch: 45, ty: 4.4, dist: 12.5, yaw: 0.5, tx: 0 };
+  const P4 = { pitch: 42, ty: 2.7, dist: 15, yaw: 0.5, tx: 0 };
   const LP = { cx: 960, cy: 560, r: 240, draw: 1, labels: 1, ring: 0, exit: 0, hi: -1, stopped: 0 };
   c(2, {
     c07_dnm: 'down', c07_lA: 'fade', c07_lws: 'fade', c07_ltmp: 'fade', c07_lplq: 'fade', c07_lpll: 'quick',

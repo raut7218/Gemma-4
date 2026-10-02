@@ -271,7 +271,7 @@
   [0, 2, 4, 5, 6].forEach((r, k) => { arrows['c16_ar' + r] = { type: 'arrow', x1: QX - 24, y1: lineY(r), x2: 880, y2: lineY(r), color: T.YELLOW, sw: 3, head: 14, in: 'draw', at: 0.9 + 0.08 * k, dur: 0.6 }; });
   c(2.5, {
     c16_icons: 'quick',
-    ...K.tree('tree', { x: 140, y: TY, size: TS, el: { in: 'fade', dur: 0.6, at: 0.45 } }),
+    ...K.tree('tree', { x: 140, y: TY, size: TS, el: { ver: 1, ay: 0.5, in: 'fade', dur: 0.6, at: 0.45 } }),
     ...dock, ...arrows,
     c16_qk: { y: 200 },
   }, { sfx: [{ at: 1.0, kind: 'tick' }] });

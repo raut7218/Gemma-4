@@ -46,7 +46,7 @@
   // ================================================================ 530 (1 + 3.5) the gold chip lifts out of the TREE
   c(1, {
     ...K.rail(17),
-    ...K.tree('tree', { x: 50, y: 540, size: 40, el: { s: 0.6, o: 0.45 } }),
+    ...K.tree('tree', { x: 50, y: 540, size: 40, el: { ver: 1, ay: 0.5, s: 0.6, o: 0.45 } }),
     ...K.chip('chip', { x: 960, y: 540, s: 1.6 }),
     c17_out: txt('your agent’s only output: <span class="c-gold">a git diff</span>', { x: 960, y: 720, size: 64, at: 0.15, dur: 1.2 }),
   }, { clear: true, cam: { x: 960, y: 540, s: 1 }, drift: 0 });
@@ -113,7 +113,7 @@
     contA: 'left', contA_hd: 'left', contA_ht: 'left', loop: 'left', c17_tA: 'down',
     contB: 'fade', contB_hd: 'fade', contB_ht: 'fade',
     ...Object.fromEntries(Object.keys(bars).map((k) => [k, 'fade'])),
-    ...K.tree('tree', { x: 140, y: 540, size: TS, el: { s: 1, o: 1, in: 'fade', at: 0.15 } }),
+    ...K.tree('tree', { x: 140, y: 540, size: TS, el: { ver: 1, ay: 0.5, s: 1, o: 1, in: 'fade', at: 0.15 } }),
     c17_bk: cap('what to build first', { x: 1440, y: 215, size: 28, color: T.YELLOW, at: 0.3 }),
     ...cards,
     ...ar('c17_a0', 0, tY(-1), 470, 0.95),

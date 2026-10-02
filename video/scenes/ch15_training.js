@@ -298,7 +298,7 @@
   const TY = 520, TS = 40, LH = TS * 1.55;
   const lineY = (i) => TY - (8 * LH) / 2 + LH * (i + 1.5);
   c(2, {
-    ...K.tree('tree', { x: 1000, y: TY, size: TS, el: { in: 'fade', dur: 0.5 } }),
+    ...K.tree('tree', { x: 1000, y: TY, size: TS, el: { ver: 1, ay: 0.5, in: 'fade', dur: 0.5 } }),
     c15_thl: { type: 'rect', ax: 0, x: 990, y: lineY(5), w: 470, h: LH - 6, fill: 'rgba(180,142,219,0.18)', rad: 8, in: 'grow', at: 0.6, z: 0 },
     c15_sheet: { x: 1640, y: lineY(5), w: 170, h: 56, size: 28, dur: 0.9, ease: 'expo.inOut', at: 0.3 },
   }, { sfx: [{ at: 1.1, kind: 'tick' }] });

@@ -97,3 +97,6 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 ## Film critic round 2 — film 450–981.75 (ch5–10) — one more pass (13 items; false 'pass' verified fixed every 0.1 s) — docs/critic/r2_b.md
 - ch01–04 round-2 fixes applied by a fixer agent (leftover ch1 gold card was the cause of the ch2 collisions; gentler pushes; cards enlarged; calendar band identical across 2→3; DATA contrast; plinth 1.3× slab). #16 (A/B side-by-side in ch1) left as is.
 - ch08–10 round-2 fixes applied by a fixer agent (panel framing with a fit helper + veil; 8→9 pills clear before the loop draws; ring behind loop; ch10 composition; verdict timing exact; rail switches ≤0.43 s before cuts; a 2.4 s ch9 closing still found and removed).
+
+## Film critic round 2 — film 981.75–1440 (ch11–17) — one more pass (8 items; most round-1 items fixed; tree still shows 3 files) — docs/critic/r2_c.md
+- Tree bug found: the shared 'tree' was created in ch11 as a two-version element (3 files / 7 files, top-anchored); ch15–17's K.tree calls only merged onto it, so it stayed on 3 files and anchored differently than in their standalone tests. ch15–17 now select ver 1 (7 files) with ay 0.5.
