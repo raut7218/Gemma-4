@@ -31,8 +31,12 @@ const BAY_FRONT = CARD.zc + CARD.D / 2;                     // open front of eac
 const DOCK_Z = BAY_FRONT - SLAB.d / 2 - 0.03;               // block centre when seated in its bay
 const CARD_TOP = CARD.H + CARD.finH;
 const FILM_T = 0.03, FILM_GAP = 0.034;
-// plinth ≈ 1.25 × the model's footprint (x −2.36…2.36, z −2.31…2.25)
-const PL = { w: 5.9, d: 5.7, h: 0.3, zc: -0.03 };
+// plinth: ≈1.3 × the slab's footprint while the slab is alone; it extends back (and a little wider) to
+// ≈1.12 × the whole model's footprint (x −2.36…2.36, z −2.31…2.25) just before the cards rise
+const PL = { w: 5.3, d: 5.0, h: 0.3, zc: -0.03 };
+const PL0 = { w: 3.4 * 1.3, d: 2.0 * 1.3, zc: 1.25 };
+// rim: Fresnel exponent (higher = a thinner, brighter edge) and overall gain
+const RIM_EXP = 4.0, RIM_GAIN = 2.4;
 const SLAB_K = 0.8;                                        // slab albedo scale: lit top face ≈ #58C4DD
 const RIM_DIR = new THREE.Vector3(0.25, 0.6, -0.76).normalize();
 
@@ -51,10 +55,10 @@ window.THREE_SCENES.rig = {
     const RIM = { dir: { value: new THREE.Vector3() }, col: { value: new THREE.Color(0xa9dcff) } };
     const withRim = (m, k) => {
       m.onBeforeCompile = (sh) => {
-        sh.uniforms.rimDir = RIM.dir; sh.uniforms.rimCol = RIM.col; sh.uniforms.rimK = { value: k };
+        sh.uniforms.rimDir = RIM.dir; sh.uniforms.rimCol = RIM.col; sh.uniforms.rimK = { value: k * RIM_GAIN };
         sh.fragmentShader = sh.fragmentShader
           .replace('#include <common>', '#include <common>\nuniform vec3 rimDir;\nuniform vec3 rimCol;\nuniform float rimK;')
-          .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.5);\n  totalEmissiveRadiance += rimCol * rimK * fr * smoothstep(0.0, 0.6, dot(normal, rimDir)); }');
+          .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), ' + RIM_EXP.toFixed(1) + ');\n  totalEmissiveRadiance += rimCol * rimK * fr * smoothstep(0.0, 0.6, dot(normal, rimDir)); }');
       };
       m.customProgramCacheKey = () => 'rim' + k;
       return m;
@@ -66,7 +70,7 @@ window.THREE_SCENES.rig = {
     key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; key.shadow.bias = -0.0004;
     key.shadow.camera.near = 2; key.shadow.camera.far = 40;
     scene.add(key); scene.add(key.target);
-    const rim = new THREE.DirectionalLight(0xa9dcff, 2.2); rim.position.copy(RIM_DIR).multiplyScalar(12); scene.add(rim);
+    const rim = new THREE.DirectionalLight(0xa9dcff, 2.6); rim.position.copy(RIM_DIR).multiplyScalar(12); scene.add(rim);
     scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x0b0e12, 0.55));
 
     // plinth: matte architectural-model base in the panel tone, on a darker chamfered skirt
@@ -136,12 +140,12 @@ window.THREE_SCENES.rig = {
     const inMat = new THREE.MeshStandardMaterial({ color: col(T.BLUE), emissive: col(T.BLUE), emissiveIntensity: 0.9, roughness: 0.4, transparent: true });
     const inBar = new THREE.Mesh(new RoundedBoxGeometry(5.4, 0.07, 0.16, 2, 0.03), inMat); scene.add(inBar);
 
-    this.s = { r, scene, cam, key, RIM, whole, blocks, seams, seamMat, cards, films, inBar, spec };
+    this.s = { r, scene, cam, key, RIM, whole, blocks, seams, seamMat, cards, films, inBar, spec, plinth, skirt };
     return Promise.resolve();
   },
 
   render(p, rec) {
-    const { r, cam, key, RIM, whole, blocks, seams, seamMat, cards, films, inBar, spec } = this.s;
+    const { r, cam, key, RIM, whole, blocks, seams, seamMat, cards, films, inBar, spec, plinth, skirt } = this.s;
     const lerp = (a, b, t) => a + (b - a) * t;
     const cl = (v) => Math.max(0, Math.min(1, v));
     const sm = (v) => { const x = cl(v); return x * x * (3 - 2 * x); };
@@ -173,8 +177,12 @@ window.THREE_SCENES.rig = {
     });
     seamMat.opacity = cl(sp * 2);
 
-    // ---- cards grow up out of their slots (scale from the base: nothing below the plinth top)
-    const ci = cl(p.cards || 0);
+    // ---- the plinth extends back under the bays first (cards 0..0.3), then the cards grow up
+    // out of their slots (scale from the base: nothing below the plinth top)
+    const cards0 = cl(p.cards || 0), pg = sm(cards0 / 0.3), ci = cl((cards0 - 0.3) / 0.7);
+    const plW = lerp(PL0.w, PL.w, pg), plD = lerp(PL0.d, PL.d, pg), plZ = lerp(PL0.zc, PL.zc, pg);
+    plinth.scale.set(plW / PL.w, 1, plD / PL.d); plinth.position.z = plZ;
+    skirt.scale.set((plW + 0.16) / (PL.w + 0.16), 1, (plD + 0.16) / (PL.d + 0.16)); skirt.position.z = plZ;
     const pass = p.pass ?? -1;
     const barY = lerp(CARD_TOP + 0.6, 0.1, cl(pass));
     const ck = (i) => sm(ci * 2.2 - i * 0.4);

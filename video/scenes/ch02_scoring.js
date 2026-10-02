@@ -154,32 +154,32 @@
       ctx.fillStyle = g; ctx.fillRect(sx - 160, y - H / 2, 320, H);
     }
     ctx.restore();
-    rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#3A4654'; ctx.lineWidth = 2.5; ctx.stroke();
+    rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#4A5664'; ctx.lineWidth = 3.5; ctx.stroke();
     // month names sit just after each month's first day (left-aligned), clear of the pins at 12 Nov / 23 Sep
     [['October', day(1, 10)], ['November', day(1, 11)]].forEach(([s, a]) => {
       const k = clamp((bx + bw - a - 80) / 160);
-      if (k > 0) DRAW.text(ctx, s, a + 22, y - 54, { size: 34, color: T.DIM, a: k, align: 'left' });
+      if (k > 0) DRAW.text(ctx, s, a + 22, y - 58, { size: 40, color: T.INK, a: 0.85 * k, align: 'left' });
     });
     ctx.restore();
   };
   // four recap stamps, two rows: press in, settle slowly, then drop into the calendar band and flash
   // (k 0..1 across the comp)
   const STAMPS = [['≈120 private tasks', T.INK, false], ['pytest exit 0', T.GREEN, true], ['≈6 min a task, if sequential', T.YELLOW, false], ['1 a day', T.YELLOW, false]];
-  const STAMP_TX = [430, 790, 1150, 1510], STAMP_R = [-2.5, 1.8, -1.2, 2.2], STAMP_ROW = [0, 0, 1, 1], STAMP_Y = [235, 380];
+  const STAMP_TX = [430, 790, 1150, 1510], STAMP_R = [-2.5, 1.8, -1.2, 2.2], STAMP_ROW = [0, 0, 1, 1], STAMP_Y = [235, 385], SGAP = 90;
   DRAW.c02_stamps = (ctx, p) => {
     const k = p.k || 0, FS = 58, SH = 116;
     const ws = STAMPS.map(([s, , m]) => { ctx.font = `400 ${FS}px ${m ? 'CMT' : 'CM'}`; return ctx.measureText(s).width + 84; });
-    const rows = [[0, 1], [2, 3]].map((ix) => ix.reduce((a, i) => a + ws[i], 0) + 50);
+    const rows = [[0, 1], [2, 3]].map((ix) => ix.reduce((a, i) => a + ws[i], 0) + SGAP);
     const cx0s = [];
-    [[0, 1], [2, 3]].forEach((ix, r) => { let sx = 960 - rows[r] / 2; ix.forEach((i) => { cx0s[i] = sx + ws[i] / 2; sx += ws[i] + 50; }); });
+    [[0, 1], [2, 3]].forEach((ix, r) => { let sx = 960 - rows[r] / 2; ix.forEach((i) => { cx0s[i] = sx + ws[i] / 2; sx += ws[i] + SGAP; }); });
     STAMPS.forEach(([s, col, m], i) => {
       const w = ws[i], cx0 = cx0s[i], cy0 = STAMP_Y[STAMP_ROW[i]];
-      const a = clamp((k - 0.02 - 0.06 * i) / 0.09); if (a <= 0) return;
-      const settle = ease(clamp((k - 0.02 - 0.06 * i) / 0.5));
-      const dRaw = clamp((k - 0.6 - 0.065 * i) / 0.15), d = dRaw * dRaw * dRaw;
-      const flash = dRaw >= 1 ? clamp(1 - (k - (0.75 + 0.065 * i)) / 0.07) : 0;
+      const a = clamp((k - 0.11 - 0.055 * i) / 0.09); if (a <= 0) return;
+      const settle = ease(clamp((k - 0.11 - 0.055 * i) / 0.4));
+      const dRaw = clamp((k - 0.55 - 0.055 * i) / 0.13), d = dRaw * dRaw * dRaw;
+      const flash = dRaw >= 1 ? clamp(1 - (k - (0.68 + 0.055 * i)) / 0.07) : 0;
       if (dRaw < 1) {
-        const x = lerp(cx0, STAMP_TX[i], d), y = lerp(cy0 + 10 * (1 - settle), 560, d), sc = lerp(lerp(1.3, 1.06, ease(a)) - 0.06 * settle, 0.1, d);
+        const x = lerp(cx0, STAMP_TX[i], d), y = lerp(cy0 + 10 * (1 - settle), 560, d), sc = lerp(lerp(1.12, 1.04, ease(a)) - 0.04 * settle, 0.1, d);
         ctx.save(); ctx.globalAlpha *= clamp(a * 2) * (1 - d);
         ctx.translate(x, y); ctx.rotate((STAMP_R[i] * (1.8 - 0.8 * settle) * (1 - d) * Math.PI) / 180); ctx.scale(sc, sc);
         rr(ctx, -w / 2, -SH / 2, w, SH, 16); ctx.fillStyle = 'rgba(21,26,33,0.96)'; ctx.fill();
@@ -213,6 +213,9 @@
   // ---------------------------------------------------------------- 64 (4.5) WIDE the hidden set
   c(4.5, {
     c02_h1: 'fade', c02_h2: 'fade', c02_h3: 'fade',
+    // chapter 1's landing card sits exactly on the grid's gold cell 55; it dissolves into it here
+    // (it used to stay in the world all chapter and sat on the equation, the ruler and "must agree")
+    c01_slot: 'quick', c01_rip: null,
     grid: { params: GP({ lock: 1 }), pdur: 3.0, pease: 'power2.inOut' },
     c02_gl: { type: 'text', html: '<span class="plate"><span class="c-yellow">≈120</span> hidden tasks</span>', size: 56, x: 960, y: 975, in: 'up', at: 0.9 },
   }, { cam: { x: 960, y: 540, s: 1 } });
@@ -310,7 +313,7 @@
   c(2, { c02_eB: { type: 'text', html: '720 min ÷ ≈120 tasks', size: 84, x: 960, y: 380, in: 'wipe', at: 0.1, dur: 0.9 } });
   c(2, {
     c02_eC: { type: 'text', html: '= ≈ <span class="c-yellow">6</span> min per task', size: 84, x: 960, y: 530, in: 'wipe', at: 0.0, dur: 0.7 },
-    c02_six: { type: 'text', html: '6', size: 84, color: T.YELLOW, x: RU.x + RU.w, y: 690, s: 0.75, in: 'fade', from: { x: 818, y: 530, s: 1, o: 1 }, at: 0.75, dur: 0.75, ease: 'power3.inOut' },
+    c02_six: { type: 'text', html: '6', size: 84, color: T.YELLOW, x: RU.x + RU.w, y: 690, s: 0.75, in: 'fade', from: { x: 818, y: 530, s: 1, o: 0 }, at: 0.75, dur: 0.75, ease: 'power3.inOut' },
   }, { sfx: [{ at: 1.45, kind: 'tick' }] });
 
   // ---------------------------------------------------------------- 77 (2.5) reading beat: underline "≈ 6 min per task"
@@ -353,7 +356,7 @@
   c(2.5, {
     c02_ruler: { params: Object.assign({}, RU, { draw: 1, ticks: 1, grey: 1, show: 1, over: 0, stretch: 0, a: 1 }), pdur: 0.8, pease: 'power2.out' },
     c02_loop: { x: xAt(f4 + 0.4), at: 0, dur: 0.8, ease: 'power2.out', params: LP({ dot: 5 }), pdur: 0.8, pease: 'power2.out' },
-    c02_ok: { type: 'text', html: '✓ fits', size: 60, color: T.GREEN, x: 1560, y: R1Y - 30, in: 'pop', at: 0.8 },
+    c02_ok: { type: 'text', html: '✓ fits', size: 60, color: T.GREEN, x: 1530, y: R1Y - 30, in: 'pop', at: 0.8 },
   }, { sfx: [{ at: 0.85, kind: 'pop' }] });
 
   // ---------------------------------------------------------------- 83 (3) a second ruler runs out
@@ -362,7 +365,7 @@
   c(3, {
     c02_loop: 'fade', c02_cv1: 'fade', c02_cv2: 'fade',
     c02_r2: { type: 'canvas', draw: 'c02_ruler', x: 960, y: 540 + (R2Y - RU.y), in: 'right', blocks: B2, si: 1, slen: 5.0, params: Object.assign({}, RU, { draw: 1, ticks: 1, grey: 1, show: 1, over: 1, stretch: 0, a: 1 }), paramsFrom: { show: 0, over: 0 }, pdur: 2.2, pease: 'power1.inOut' },
-    c02_bx: { type: 'text', html: 'budget<br>exhausted', size: 46, lh: 1.1, color: T.RED, x: 1580, y: R2Y - 20, in: 'rise', at: 1.7 },
+    c02_bx: { type: 'text', html: 'budget<br>exhausted', size: 46, lh: 1.1, color: T.RED, x: 1555, y: R2Y - 20, in: 'rise', at: 1.7 },
   }, { sfx: [{ at: 1.9, kind: 'click' }] });
 
   // ---------------------------------------------------------------- 84 (4.5) one command can eat the task [SIG2 ends]
@@ -376,27 +379,31 @@
   }, { cam: { x: 960, y: 520, s: 1.1 } });
 
   // ---------------------------------------------------------------- 85 (2.5) reading beat: push on "up to 300 s per command"
-  push(2.5, 'c02_300', dimAll(['c02_r2', 'c02_bx', 'c02_300n'], 0.45));
+  // "budget exhausted" steps out during the push (it would cross the right edge at ×1.4)
+  push(2.5, 'c02_300', Object.assign(dimAll(['c02_r2', 'c02_300n'], 0.45), { c02_bx: { o: 0, dur: 0.4 } }), { scale: 1.15 });
 
   // ---------------------------------------------------------------- 86 (4.5) WIDE eval_config.yaml
-  const CF = { x: 640, y: 555, w: 960, h: 600, size: 54, lh: 2.1 };
-  const yk = (k, v = '') => `<span class="c-ink">${k}</span><span class="c-dim">:</span>${v ? ' <span class="c-yellow">' + v + '</span>' : ''}`;
+  // the card fills the left 60 % of the frame; every field shows a value slot from the start
+  // (‹you set› placeholders, then the starter's 10 and 1 type into theirs)
+  const CF = { x: 680, y: 555, w: 1120, h: 620, size: 54, lh: 2.1 };
+  const YS = '<span class="c-dim">‹you set›</span>';
+  const yk = (k, v = '') => `<span class="c-ink">${k}</span><span class="c-dim">:</span> ${v ? '<span class="c-yellow">' + v + '</span>' : YS}`;
   const L2 = [yk('timeout_seconds'), yk('max_tool_calls')];
   const L4 = [yk('timeout_seconds'), yk('max_tool_calls'), yk('max_time_minutes'), yk('max_turns')];
   const L4v = [yk('timeout_seconds'), yk('max_tool_calls', '10'), yk('max_time_minutes', '1'), yk('max_turns')];
   const cfg = K.file('c02_cfg', 'eval_config.yaml', L2, { x: CF.x, y: CF.y, w: CF.w, h: CF.h, size: CF.size, variants: [L4, L4v], text: { lh: CF.lh, at: 0.7, dur: 1.2 } });
-  cfg.c02_cfg_frame.at = 0.2; cfg.c02_cfg_name.at = 0.5; cfg.c02_cfg_name.size = 34;
+  cfg.c02_cfg_frame.at = 0.2; cfg.c02_cfg_name.at = 0.5; cfg.c02_cfg_name.size = 36;
   c(4.5, {
     c02_r2: 'shrink', c02_bx: 'fade', c02_300: 'up', c02_300n: 'fade',
     ...cfg,
-  }, { cam: { x: 900, y: 560, s: 1.05 } });
+  }, { cam: { x: 960, y: 545, s: 1 } });
   const PITCH = CF.size * CF.lh, LINE0 = CF.y + 30 - 2 * PITCH + PITCH / 2;
 
   // ---------------------------------------------------------------- 87 (2) two more lines
   c(2, { c02_cfg: { ver: 1, at: 0.1, dur: 0.9 } });
 
   // ---------------------------------------------------------------- 88 (4.5) four dials; you set these
-  const DP = (o) => Object.assign({ x: 1310, y0: LINE0, pitch: PITCH, r: 54, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
+  const DP = (o) => Object.assign({ x: 1400, y0: LINE0, pitch: PITCH, r: 50, a: 1, v0: 0.5, v1: 0.5, v2: 0.5, v3: 0.5, d0: 0, d1: 0, d2: 0, d3: 0 }, o);
   c(4.5, {
     c02_dials: { type: 'canvas', draw: 'c02_dials', x: 960, y: 540, in: 'fade', dur: 0.2, params: DP({}), paramsFrom: { a: 0, v0: 0, v1: 0, v2: 0, v3: 0 }, pdur: 2.4, pease: 'power2.out' },
     c02_dcap: { type: 'text', html: '<span class="cap" style="font-size:1em">per-task budgets&ensp;—&ensp;<span class="c-ink">you set these</span></span>', size: 28, color: T.DIM, x: 820, y: 118, in: 'fade', at: 1.4 },
@@ -407,8 +414,8 @@
     c02_dials: { params: DP({ v1: 0.06, v2: 0.04, d0: 1, d3: 1 }), pdur: 2.6, pease: 'elastic.out(1, 0.45)' },
     c02_cfg: { ver: 2, at: 0.4, dur: 0.8 },
     c02_snap: { type: 'text', html: '<span class="c-yellow">1</span> minute&ensp;·&ensp;<span class="c-yellow">10</span> tool calls', size: 60, x: 820, y: 188, in: 'wipe', at: 0.6, dur: 1.2 },
-    c02_rd1: { type: 'text', html: '<span class="c-yellow">10</span> calls', size: 56, align: 'left', ax: 0, x: 1400, y: LINE0 + PITCH, in: 'left', at: 0.5 },
-    c02_rd2: { type: 'text', html: '<span class="c-yellow">1</span> min', size: 56, align: 'left', ax: 0, x: 1400, y: LINE0 + 2 * PITCH, in: 'left', at: 0.7 },
+    c02_rd1: { type: 'text', html: '<span class="c-yellow">10</span> calls', size: 56, align: 'left', ax: 0, x: 1480, y: LINE0 + PITCH, in: 'left', at: 0.5 },
+    c02_rd2: { type: 'text', html: '<span class="c-yellow">1</span> min', size: 56, align: 'left', ax: 0, x: 1480, y: LINE0 + 2 * PITCH, in: 'left', at: 0.7 },
   }, { sfx: [{ at: 0.05, kind: 'click' }] });
 
   // ---------------------------------------------------------------- 90 (4.5) the trap
@@ -450,7 +457,7 @@
   });
 
   // ---------------------------------------------------------------- 95 (2.5) reading beat: push on ≈70
-  push(2.5, 'c02_n', Object.assign(dimAll(['c02_spd', 'calendar', 'c02_band', 'c02_d0', 'c02_d1'], 0.45), { c02_tries: { s: 1.05, dur: 0.6 } }), { dx: 110, scale: 1.1 });
+  push(2.5, 'c02_n', Object.assign(dimAll(['c02_spd', 'calendar', 'c02_band', 'c02_d0', 'c02_d1'], 0.45), { c02_tries: { s: 1.05, dur: 0.6 } }), { dx: 110, scale: 1.06 });
 
   // ---------------------------------------------------------------- 96 (3.5) OVER the scoring pipeline
   const TOP = [['hidden task', T.DIM], ['your agent', T.BLUE], ['patch.diff', T.GOLD, true], ['container B', T.GREEN], ['score', T.YELLOW]];

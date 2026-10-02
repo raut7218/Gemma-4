@@ -262,7 +262,7 @@
   // ================================================================== 116 (4.5) — the only model
   c(4.5, {
     ...K.rail(4),
-    oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 540, color: T.INK, in: 'none', from: { o: 1, s: 1 }, o: 0, s: 7, at: 0, dur: 0.85, ease: 'power2.in' },
+    oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 540, color: T.INK, in: 'none', from: { o: 1, s: 1 }, o: 0, s: 1.18, y: 470, at: 0, dur: 0.42, ease: 'power2.in' },
     // ch3's translucent block hands over to c04_top at the same pixels, which becomes the slab's top face
     c03_blk: { type: 'rect', x: 960, y: 540, w: 1060, h: 210, rad: 18, fill: 'rgba(88,196,221,0.22)', z: 0, in: 'none', o: 0, at: 0.034, dur: 0.004, ease: 'none' },
     c04_top: { type: 'canvas', draw: 'c04_top', x: 960, y: 540, params: { k: 2 }, paramsFrom: { k: 0 }, in: 'none', at: -0.01, pdur: 1.75, pease: 'power1.inOut', z: 3 },
@@ -318,7 +318,7 @@
 
   // 126 (4.5) — wide (42°): four cards rise behind the slab, "NVIDIA L4" on each
   const L4 = {};
-  for (let i = 0; i < 4; i++) Object.assign(L4, capLabel('c04_l4_' + i, 'NVIDIA<br>L4', { at: 1.0 + 0.25 * i, size: 24, lh: 1.1 }));
+  for (let i = 0; i < 4; i++) Object.assign(L4, capLabel('c04_l4_' + i, 'NVIDIA<br>L4', { at: 1.9 + 0.2 * i, size: 24, lh: 1.1 }));
   c(4.5, {
     c04_name: 'fade', c04_pl: 'shrink', c04_bits: 'shrink', c04_w4: 'shrink', c04_qat: 'shrink',
     rig: R({ yaw: -0.42, pitch: 42, dist: 16.5, tx: 0.2, ty: 0.4, tz: -0.1, cards: 1 }, { x: 900, y: 548, s: 0.9 }),
@@ -508,50 +508,58 @@
   F.beat(2.5, { id: 'c04_way', mode: 'underline', w: 900, dx: 82, under: 40, color: T.PURPLE });
 
   // 156 (4.5) — the scene eases back and dissolves to a file card: configs/sampling.yaml
-  const CARD = { x: 960, y: 560, w: 1120, h: 520 };
+  // (the card fills the frame; fields without a documented value show a "‹you set›" slot)
+  const CARD = { x: 960, y: 560, w: 1440, h: 700 };
+  const YS = '<span class="c-dim">‹you set›</span>';
   const LN = [
-    'temperature: …',
-    'top_p: …',
-    'top_k: …',
-    'max_output_tokens: …   <span class="c-dim"># ≤ 32,768</span>',
-    'thinking_level: …      <span class="c-dim"># NONE … HIGH</span>',
-    'thinking_budget: 4096  <span class="c-dim"># default</span>',
+    `temperature: ${YS}`,
+    `top_p: ${YS}`,
+    `top_k: ${YS}`,
+    `max_output_tokens: ${YS}  <span class="c-dim"># ≤ 32,768</span>`,
+    `thinking_level: ${YS}     <span class="c-dim"># NONE … HIGH</span>`,
+    'thinking_budget: <span class="c-yellow">4096</span>     <span class="c-dim"># default</span>',
   ];
-  const lineEl = (i, at, dx = 0) => ({ ['c04_y' + i]: { type: 'mono', html: LN[i], size: 40, align: 'left', ax: 0, x: CARD.x - CARD.w / 2 + 56 + dx, y: CARD.y - CARD.h / 2 + 140 + i * 62, in: 'wipe', at, z: 6 } });
+  const LX = CARD.x - CARD.w / 2 + 64, LY0 = CARD.y - CARD.h / 2 + 168, LP = 84;
+  const lineEl = (i, at) => ({ ['c04_y' + i]: { type: 'mono', html: LN[i], size: 46, align: 'left', ax: 0, x: LX, y: LY0 + i * LP, in: 'wipe', at, z: 6 } });
   c(4.5, {
     c04_way: 'fade',
     // the card grows out of the model-name label on the slab (≈1040, 812 world px at this framing) while the 3D fades
     rig: { o: 0, at: 0.15, dur: 0.95, ease: 'power2.in' },
     c04_name: { o: 0, at: 0.45, dur: 0.4, ease: 'power2.in' },
-    c04_yf: { type: 'box', x: CARD.x, y: CARD.y, w: CARD.w, h: CARD.h, stroke: '#3A4654', fill: PANEL, sw: 2.5, rad: 18, html: '', in: 'none', from: { x: 1040, y: 812, w: 590, h: 56, o: 1 }, at: 0, dur: 1.15, ease: 'power3.inOut', z: 5 },
-    c04_yn: { type: 'text', html: '<span class="m" style="color:#F0AC5F">configs/sampling.yaml</span>', size: 34, align: 'left', ax: 0, x: CARD.x - CARD.w / 2 + 56, y: CARD.y - CARD.h / 2 + 60, in: 'fade', at: 0.7, z: 6 },
+    c04_yf: { type: 'box', x: CARD.x, y: CARD.y, w: CARD.w, h: CARD.h, stroke: '#3A4654', fill: PANEL, sw: 2.5, rad: 22, html: '', in: 'none', from: { x: 1040, y: 812, w: 590, h: 56, o: 1 }, at: 0, dur: 1.15, ease: 'power3.inOut', z: 5 },
+    c04_yn: { type: 'text', html: '<span class="m" style="color:#F0AC5F">configs/sampling.yaml</span>', size: 40, align: 'left', ax: 0, x: LX, y: CARD.y - CARD.h / 2 + 72, in: 'fade', at: 0.7, z: 6 },
     ...lineEl(0, 1.0), ...lineEl(1, 1.35), ...lineEl(2, 1.7),
   }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
 
   // 157 (3.5) — max_output_tokens ≤ 32,768
-  c(3.5, { rig: null, c04_name: null, ...lineEl(3, 0.2) }, { cam: { x: 960, y: 580, s: 1.05 } });
+  c(3.5, { rig: null, c04_name: null, ...lineEl(3, 0.2) }, { cam: { x: 960, y: 555, s: 1.03 } });
   // 158 (4.5) — thinking_level NONE … HIGH
-  c(4.5, { ...lineEl(4, 0.2) }, { cam: { x: 960, y: 600, s: 1.08 } });
+  c(4.5, { ...lineEl(4, 0.2) }, { cam: { x: 960, y: 565, s: 1.05 } });
   // 159 (3.5) — thinking_budget (default 4,096)
-  c(3.5, { ...lineEl(5, 0.2) }, { cam: { x: 960, y: 620, s: 1.1 } });
+  c(3.5, { ...lineEl(5, 0.2) }, { cam: { x: 960, y: 575, s: 1.07 } });
 
-  // 160 (4.5) — "thinking" lifts out into a thin strip beside the card
-  const SH = -300;
-  const shift = {};
-  ['c04_yf', 'c04_yn'].forEach((k) => { shift[k] = { x: (k === 'c04_yf' ? CARD.x : CARD.x - CARD.w / 2 + 56) + SH, dur: 1.0 }; });
-  for (let i = 0; i < 6; i++) shift['c04_y' + i] = { x: CARD.x - CARD.w / 2 + 56 + SH, dur: 1.0, o: i === 4 ? 0.45 : 1 };
-  const thinkY = CARD.y - CARD.h / 2 + 140 + 4 * 62;
+  // 160 (4.5) — the card steps left and shrinks a little; the thinking_level line lights up and a
+  // leader runs from it to a tall strip on the right: "thinking shares the same 32k window".
+  // (no word flies across the card any more — it used to cross the thinking_level line)
+  const CS = 0.8, CDX = -250, cx2 = CARD.x + CDX;
+  const px2 = (x) => cx2 + (x - CARD.x) * CS, py2 = (y) => CARD.y + (y - CARD.y) * CS;
+  const shift = {
+    c04_yf: { x: cx2, s: CS, dur: 1.0 },
+    c04_yn: { x: px2(LX), y: py2(CARD.y - CARD.h / 2 + 72), s: CS, dur: 1.0 },
+  };
+  for (let i = 0; i < 6; i++) shift['c04_y' + i] = { x: px2(LX), y: py2(LY0 + i * LP), s: CS, dur: 1.0, o: i === 4 ? 1 : 0.55 };
+  const thinkY = py2(LY0 + 4 * LP), cardR = px2(CARD.x + CARD.w / 2);
   c(4.5, {
     ...shift,
-    c04_tw: { type: 'mono', html: 'thinking', size: 40, color: T.THINK, x: CARD.x - CARD.w / 2 + 56 + SH + 84, y: thinkY, in: 'none', from: { x: CARD.x - CARD.w / 2 + 56 + 84, y: thinkY, o: 1 }, at: 0, dur: 0.01, z: 7 },
-    c04_strip: { type: 'rect', x: 1400, y: 600, w: 36, h: 560, rad: 8, fill: 'rgba(143,167,217,0.35)', in: 'growh', at: 1.1, dur: 1.2 },
-    c04_stript: { type: 'text', html: 'thinking shares the<br>same <span class="c-yellow">32k</span> window', size: 46, lh: 1.25, align: 'left', ax: 0, x: 1460, y: 600, in: 'wipe', at: 1.9 },
+    c04_thl: { type: 'rect', x: px2(LX) - 14, ax: 0, y: thinkY, w: 1300 * CS, h: 60, rad: 10, fill: 'rgba(143,167,217,0.16)', in: 'grow', at: 1.0, dur: 0.8, z: 5 },
+    c04_tw: { type: 'text', html: '<span class="cap" style="font-size:1em">thinking</span>', size: 30, color: T.THINK, x: 1560, y: 224, in: 'fade', at: 1.6, z: 7 },
+    c04_tl: { type: 'arrow', x1: cardR + 10, y1: thinkY, x2: 1540, y2: thinkY, color: T.THINK, sw: 3, head: 0, dashed: true, in: 'draw', at: 1.3, dur: 0.6 },
+    c04_strip: { type: 'rect', x: 1560, y: 560, w: 40, h: 600, rad: 8, fill: 'rgba(143,167,217,0.35)', in: 'growh', at: 1.1, dur: 1.2 },
+    c04_stript: { type: 'text', html: 'thinking<br>shares the<br>same <span class="c-yellow">32k</span><br>window', size: 46, lh: 1.2, align: 'left', ax: 0, x: 1610, y: 560, in: 'wipe', at: 1.9 },
   }, { cam: { x: 960, y: 560, s: 1 } });
-  // the word travels in the same composition: patch its target (lift, then drop to the strip top)
-  FILM.COMPS[FILM.COMPS.length - 1].els.c04_tw = Object.assign({}, FILM.COMPS[FILM.COMPS.length - 1].els.c04_tw, { x: 1400 - 84, y: 290, dur: 1.4, at: 0.3, ease: 'power3.inOut' });
 
   // 161 (4.5) — FULL: the summary line builds, part 1
-  const cardOut = { c04_yf: 'left', c04_yn: 'left', c04_tw: 'fade', c04_stript: 'right' };
+  const cardOut = { c04_yf: 'left', c04_yn: 'left', c04_tw: 'fade', c04_stript: 'right', c04_thl: 'left', c04_tl: 'quick' };
   for (let i = 0; i < 6; i++) cardOut['c04_y' + i] = 'left';
   c(4.5, {
     ...cardOut,
@@ -571,9 +579,10 @@
   const TAPE = { type: 'canvas', draw: 'tape', x: 960, y: 540, params: { x: 160, y: 540, w: 1600, h: 86, first: 0, n: 0, ticks: 0, sliver: 1, crack: 0 } };
   c(3.5, {
     c04_s1: 'up', c04_s2: 'left', c04_s3: 'right', c04_strip: 'fade',
-    c04_32k: { ver: 1, y: 400, s: 0.9, dur: 1.0, ease: 'power3.inOut' },
+    c04_32k: { ver: 1, y: 390, s: 1.25, dur: 1.0, ease: 'power3.inOut' },
     tape: Object.assign({}, TAPE, { in: 'fade', at: 0.9, dur: 0.4, paramsFrom: { x: 820, w: 280 }, pdur: 1.5, pease: 'expo.out' }),
-  }, { cam: { x: 960, y: 540, s: 1 } });
+    c04_tcap: { type: 'text', html: '<span class="cap" style="font-size:1em">prompt · history · thinking · output&ensp;—&ensp;<span class="c-ink">one window</span></span>', size: 32, color: T.DIM, x: 960, y: 668, in: 'rise', at: 1.5 },
+  }, { cam: { x: 960, y: 520, s: 1.1 } });
 
   // 164 (4.5) — the RAIL rewrites to "05 The 32k context window"; in the last second the tape's ticks start
   // to write on (accelerating into the cut) so the tape is already moving at 450.0 — chapter 5 carries the
@@ -582,6 +591,7 @@
     rail: { ver: 5, at: 0.3, dur: 0.9 },
     tape: { params: Object.assign({}, TAPE.params, { ticks: 0 }), at: 2.35, pdur: 1.025, pease: 'power1.in' },
     c04_32k: { y: 330, o: 0, at: 0, dur: 3.3, ease: 'power2.in' },
+    c04_tcap: { y: 700, o: 0, at: 1.2, dur: 1.6, ease: 'power2.in' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 
   // Engine workaround: a named exit ('fade', 'up', …) copies the element's previous state, including a

@@ -23,7 +23,8 @@
 
   // the calendar as a thick band: an opaque 60 px strip drawn UNDER the shared DRAW.calendar at the same
   // pixels; identical to chapter 2's DRAW.c02_calband so the 2→3 cut is invisible. `sheen` 0..1 sweeps a highlight.
-  DRAW.c03_calband = (ctx, p) => {
+  // In the film it IS chapter 2's function (pixel-identical at the cut); the copy below is for standalone tests.
+  DRAW.c03_calband = DRAW.c02_calband || ((ctx, p) => {
     const { clamp, rr } = DRAW.util, rgba = DRAW.rgba;
     const x = p.x ?? 210, y = p.y ?? 560, w = p.w ?? 1500, dr = clamp(p.draw ?? 1), H = 60;
     if (dr <= 0) return;
@@ -41,14 +42,14 @@
       ctx.fillStyle = g; ctx.fillRect(sx - 160, y - H / 2, 320, H);
     }
     ctx.restore();
-    rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#3A4654'; ctx.lineWidth = 2.5; ctx.stroke();
+    rr(ctx, bx, y - H / 2, bw, H, 12); ctx.strokeStyle = '#4A5664'; ctx.lineWidth = 3.5; ctx.stroke();
     // month names sit just after each month's first day (left-aligned), clear of the pins at 12 Nov / 23 Sep
     [['October', day(1, 10)], ['November', day(1, 11)]].forEach(([s, a]) => {
       const k = clamp((bx + bw - a - 80) / 160);
-      if (k > 0) DRAW.text(ctx, s, a + 22, y - 54, { size: 34, color: T.DIM, a: k, align: 'left' });
+      if (k > 0) DRAW.text(ctx, s, a + 22, y - 58, { size: 40, color: T.INK, a: 0.85 * k, align: 'left' });
     });
     ctx.restore();
-  };
+  });
 
   // shading of the two windows of time (chapter-local drawing over the calendar strip)
   DRAW.c03_shade = (ctx, p) => {
@@ -194,8 +195,16 @@
   });
   const data = {};
   for (let i = 0; i < 4; i++) {
-    data['c03_d' + i] = { type: 'box', x: 1120 + (i % 2) * 40, y: 520 + i * 70, w: 170, h: 54, stroke: T.DIM, fill: '#1E252E', sw: 2, rad: 8, size: 26, html: '<span class="cap c-ink" style="font-size:1em">data</span>', in: 'fade', from: { x: 180 - i * 60 }, at: 0.5 + 0.28 * i, dur: 2.4, ease: 'power2.inOut', z: 2 };
+    data['c03_d' + i] = { type: 'box', x: 1120 + (i % 2) * 40, y: 520 + i * 72, w: 196, h: 60, stroke: T.INK, fill: '#121820', sw: 2.5, rad: 9, size: 30, html: '<span class="cap" style="font-size:1em;color:#ECE9E2">data</span>', in: 'fade', from: { x: 330 - i * 50 }, at: 0.5 + 0.28 * i, dur: 2.4, ease: 'power2.inOut', z: 2 };
   }
+  const t113 = F.now();
+  F.hook((t) => {
+    for (let i = 0; i < 4; i++) {
+      const t0 = t113 + 0.55 + 0.28 * i, e = FILM.EL['c03_d' + i];
+      if (!e || t < t0 || t > t0 + 2.4) continue;
+      e.proxy.o = Math.max(e.proxy.o, Math.min(1, (t - t0) / 0.35));
+    }
+  });
   c(4.5, {
     c03_t1: 'left', c03_t2: 'left', c03_t3: 'left', c03_subs: 'left', c03_fl0: 'left', c03_fl1: 'left', c03_hl0: 'left', c03_hl1: 'left', ...rowOut,
     c03_gfl: { type: 'rect', x: 1000, y: G1.bot + 30, w: 1500, h: 4, fill: '#3A4654', rad: 2, in: 'grow', at: 0, dur: 0.9 },

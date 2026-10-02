@@ -120,14 +120,15 @@
       <span class="cap" style="font-size:30px;color:#9AA3AD;margin-left:auto">illustrative example</span></div>
     <div style="font-size:1.12em; line-height:1.25"><span class="m" style="color:#ECE9E2">summarize([]) raises ZeroDivisionError</span></div>
     <div style="margin-top:26px; font-size:0.86em; color:#9AA3AD">Expected 0 for an empty list.</div></div>`;
-  const sheet = { type: 'box', w: 540, h: 500, stroke: '#3A4654', fill: 'rgba(21,26,33,0.96)', sw: 2.5, rad: 20, html: '', in: 'right' };
+  // the sheets rise in place (fully inside the frame) instead of sliding in through the right edge
+  const sheet = { type: 'box', w: 540, h: 500, stroke: '#3A4654', fill: 'rgba(21,26,33,0.96)', sw: 2.5, rad: 20, html: '', in: 'scale', dur: 1.0, ease: 'expo.out' };
   c(3.5, {
     c01_q1: 'up', c01_q2: 'down', c01_qu: 'quick',
-    ...K.issue('c01_issue', { x: 560, y: 540, s: 0.82, in: 'left', at: 0.45, html: ISSUE_HTML }),
-    c01_rs2: Object.assign({}, sheet, { x: 1464, y: 516, at: 0.5, o: 0.6 }),
-    c01_rs1: Object.assign({}, sheet, { x: 1452, y: 528, at: 0.56, o: 0.8 }),
+    ...K.issue('c01_issue', { x: 560, y: 540, s: 0.82, in: 'scale', at: 0.45, html: ISSUE_HTML }),
+    c01_rs2: Object.assign({}, sheet, { x: 1464, y: 516, at: 0.5, o: 0.6, from: { x: 1424, o: 0 } }),
+    c01_rs1: Object.assign({}, sheet, { x: 1452, y: 528, at: 0.56, o: 0.8, from: { x: 1412, o: 0 } }),
     c01_repo: Object.assign({}, sheet, {
-      x: 1440, y: 540, at: 0.62, size: 34,
+      x: 1440, y: 540, at: 0.62, size: 34, from: { x: 1400, o: 0 },
       html: `<div style="text-align:left;padding:0 48px">
         <div style="display:flex;align-items:center;margin-bottom:22px"><span class="cap" style="font-size:24px;color:#9AA3AD">Python repository</span><span class="cap" style="font-size:24px;color:#F4D35E;margin-left:auto">illustrative</span></div>
         <div class="m" style="font-size:38px;line-height:1.55">src/<br>&nbsp;&nbsp;stats.py<br>&nbsp;&nbsp;io.py<br>tests/<br>&nbsp;&nbsp;test_stats.py<br>pyproject.toml</div></div>`,
@@ -166,25 +167,26 @@
     c01_l2: 'fade', c01_nic: 'fade',
     c01_model: { type: 'box', x: 960, y: 560, w: 520, h: 170, stroke: T.BLUE, fill: 'rgba(88,196,221,0.12)', sw: 4, rad: 26, html: '<span class="c-blue">Gemma 4 31B</span>', size: 64, in: 'pop', at: 1.0 },
     c01_mid: { type: 'mono', html: 'gemma-4-31b-it-qat-w4a16-ct', size: 38, color: T.DIM, x: 960, y: 694, in: 'wipe', at: 1.8, dur: 1.0 },
-  }, { cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 1.05, kind: 'pop' }] });
+  }, { cam: { x: 960, y: 600, s: 1.6 }, sfx: [{ at: 1.05, kind: 'pop' }] });
 
   // ---------------------------------------------------------------- 35 (4.5) the ADK harness around the model
   c(4.5, {
     c01_issue: null, c01_commits: null,
     c01_adk: { type: 'box', x: 960, y: 550, w: 880, h: 420, stroke: T.DIM, fill: 'rgba(154,163,173,0.04)', sw: 3, rad: 30, html: '', in: 'draw', dur: 1.5, at: 0.1 },
     c01_adkl: { type: 'text', html: 'Agent Development Kit <span class="c-dim">(ADK)</span>', size: 46, x: 960, y: 392, in: 'wipe', at: 1.0, dur: 1.1 },
-  });
+  }, { cam: { x: 960, y: 560, s: 1.4 } });
 
   // ---------------------------------------------------------------- 36 (4.5) container A around both
   const S = 0.8, sc = (v, o) => o + (v - o) * S;   // agent group shrinks about (960, 560)
   c(4.5, {
     ...K.container('contA', 'A', { x: 960, y: 560, w: 1640, h: 880 }),
     c01_nonet: cap('no network', 30, T.RED, { x: 960, y: 958, in: 'up', at: 1.4 }),
+    // (camera pulls back to the full frame while the container draws)
     c01_adk: { y: sc(550, 560), s: S, at: 1.7, dur: 1.2 },
     c01_adkl: { y: sc(392, 560), s: S, at: 1.7, dur: 1.2 },
     c01_model: { s: S, at: 1.7, dur: 1.2 },
     c01_mid: { y: sc(690, 560), s: S, at: 1.7, dur: 1.2 },
-  });
+  }, { cam: { x: 960, y: 540, s: 1 } });
 
   // ---------------------------------------------------------------- 37 / 38 / 39 four kinds of action
   const AR = { color: T.TEAL, sw: 5, head: 22, dur: 0.9 };
@@ -253,15 +255,19 @@
   }, { cut: true, cam: { x: 960, y: 540, s: 1 }, exitLead: 0.25 });
 
   // ---------------------------------------------------------------- 45 (2.5) reading beat: push on "You submit the agent"
-  push(2.5, 'c01_r2', { c01_r1: { o: 0.4 } }, { dx: -330 });
+  // a gentle push (×1.08, centred) so the whole sentence stays inside the title-safe area
+  push(2.5, 'c01_r2', { c01_r1: { o: 0.4 } }, { dx: 0, scale: 1.08 });
 
   // ---------------------------------------------------------------- 46 (3.5) CLOSE container A alone (B arrives in 47)
   const A2 = { x: 520, y: 540, w: 720, h: 640 }, B2 = { x: 1400, y: 540, w: 720, h: 640 };
   const bars = {};
   for (let i = 0; i < 4; i++) bars['c01_tb' + i] = { type: 'rect', x: B2.x, y: 482 + i * 60, w: 540, h: 38, fill: '#3A4452', rad: 7, in: 'grow', at: 0.35 + 0.08 * i, z: 2 };
+  // container A starts drawing only once the two sentences have left (they exit in ≈0.45 s)
+  const cA2 = K.container('contA', 'A', A2);
+  cA2.contA.at = 0.45; cA2.contA_hd.at = 0.85; cA2.contA_ht.at = 0.95;
   c(3.5, {
     c01_r1: 'left', c01_r2: 'right',
-    ...K.container('contA', 'A', A2),
+    ...cA2,
     c01_aL: { type: 'text', html: '<span class="c-blue">your agent</span> ran here', size: 48, x: A2.x, y: 400, in: 'fade', at: 0.6 },
     ...K.chip('c01_chip', { x: A2.x, y: 580, s: 1.15, w: 330, ver: 0, at: 0.9 }),
   }, { cam: { x: 560, y: 540, s: 1.3 }, sfx: [{ at: 0.95, kind: 'pop' }] });
@@ -407,12 +413,12 @@
 
   // ---------------------------------------------------------------- 60 (3) the tags fold into "your bundle"
   const fold = {};
-  TAGS.forEach((_, i) => { fold['c01_t' + i] = { x: 960, y: 580, s: 0.3, o: 0, at: 0.04 * i, dur: 0.7, ease: 'power3.in' }; });
+  TAGS.forEach((_, i) => { fold['c01_t' + i] = { x: 960, y: 560, s: 0.3, o: 0, at: 0.04 * i, dur: 0.7, ease: 'power3.in' }; });
   c(3, {
     ...fold,
     c01_you: 'up',
-    c01_bundle: { type: 'box', x: 960, y: 580, w: 720, h: 320, stroke: T.INK, fill: 'rgba(236,233,226,0.05)', sw: 3.5, rad: 26, size: 72, in: 'pop', at: 0.7,
-      html: '<div>your bundle</div><div class="cap" style="font-size:26px;color:#9AA3AD;margin-top:18px">a declarative bundle, not code</div>' },
+    c01_bundle: { type: 'box', x: 960, y: 560, w: 1180, h: 500, stroke: T.INK, fill: 'rgba(236,233,226,0.05)', sw: 4, rad: 34, size: 120, in: 'pop', at: 0.7,
+      html: '<div>your bundle</div><div class="cap" style="font-size:36px;color:#9AA3AD;margin-top:30px">a declarative bundle, not code</div>' },
   }, { sfx: [{ at: 0.75, kind: 'pop' }] });
 
   // ---------------------------------------------------------------- 61 (3) upload → one number
@@ -421,14 +427,14 @@
   c(3, {
     ...fold0,
     // an opaque card (bg-coloured) so whatever passes behind it stays hidden; its word is a separate label
-    c01_slot: { type: 'box', x: 1320, y: 580, w: 420, h: 230, stroke: T.DIM, fill: '#15191F', sw: 3, rad: 22, html: '', in: 'draw', at: 0.0, dur: 0.8, z: 5, out: 'none' },
-    c01_slotl: cap('upload', 30, T.DIM, { x: 1320, y: 580, z: 6, at: 0.2 }),
-    c01_bundle: { x: 1320, y: 580, s: 0.4, o: 0, at: 0.5, dur: 0.8, ease: 'power3.in' },
-    c01_sa: { type: 'arrow', x1: 1545, y1: 580, x2: 1640, y2: 580, color: T.DIM, sw: 4, head: 18, in: 'draw', at: 1.25, dur: 0.4 },
-    c01_qm: { type: 'text', html: '?', size: 150, color: T.YELLOW, x: 1730, y: 560, in: 'pop', at: 1.5 },
-    c01_qml: { type: 'text', html: 'your score', size: 44, x: 1730, y: 690, in: 'fade', at: 1.6 },
-    c01_qmn: cap('defined next', 24, T.DIM, { x: 1730, y: 740, at: 1.8 }),
-  }, { cam: { x: 1300, y: 580, s: 1.12 }, sfx: [{ at: 1.3, kind: 'click' }] });
+    c01_slot: { type: 'box', x: 820, y: 560, w: 640, h: 360, stroke: T.DIM, fill: '#15191F', sw: 3, rad: 26, html: '', in: 'draw', at: 0.0, dur: 0.8, z: 5, out: 'none' },
+    c01_slotl: cap('upload', 44, T.DIM, { x: 820, y: 560, z: 6, at: 0.2 }),
+    c01_bundle: { x: 820, y: 560, s: 0.45, o: 0, at: 0.4, dur: 0.8, ease: 'power3.in' },
+    c01_sa: { type: 'arrow', x1: 1170, y1: 560, x2: 1320, y2: 560, color: T.DIM, sw: 5, head: 22, in: 'draw', at: 1.15, dur: 0.4 },
+    c01_qm: { type: 'text', html: '?', size: 220, color: T.YELLOW, x: 1480, y: 530, in: 'pop', at: 1.4 },
+    c01_qml: { type: 'text', html: 'your score', size: 56, x: 1480, y: 700, in: 'fade', at: 1.55 },
+    c01_qmn: cap('defined next', 30, T.DIM, { x: 1480, y: 768, at: 1.75 }),
+  }, { cam: { x: 1060, y: 560, s: 1.15 }, sfx: [{ at: 1.2, kind: 'click' }] });
 
   // ---------------------------------------------------------------- 62 (2) the card multiplies into the grid; dive into one cell
   const GRID120 = { cols: 12, rows: 10, cw: 112, ch: 64, gap: 14 };
