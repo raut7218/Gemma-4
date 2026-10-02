@@ -18,7 +18,7 @@
       return {
         rail: Object.assign({
           type: 'text', hud: true, align: 'left', ax: 0, ay: 0.5, x: 96, y: 66, size: 27, z: 50, in: 'fade',
-          versions: CH.map((n, k) => `<span class="cap c-dim" style="font-size:0.78em">${String(k).padStart(2, '0')}</span>&ensp;<span class="c-dim">${n}</span>`),
+          versions: CH.map((n, k) => `<span class="plate" style="background:#0E1116"><span class="cap c-dim" style="font-size:0.78em">${String(k).padStart(2, '0')}</span>&ensp;<span class="c-dim">${n}</span></span>`),
           ver: i,
         }, extra),
       };
