@@ -100,7 +100,7 @@
       const a = clamp(k * 31 * 1.2 - i);
       if (a <= 0) continue;
       ctx.globalAlpha = a;
-      rr(ctx, 1340, 300 + i * 12.6, 80 + ((i * 47) % 200), 8, 3); ctx.fillStyle = i < 2 ? DRAW.rgba(T.DIM, 0.6) : DRAW.rgba(T.GOLD, 0.85); ctx.fill();
+      rr(ctx, 1300, 300 + i * 12.6, 80 + ((i * 47) % 200), 8, 3); ctx.fillStyle = i < 2 ? DRAW.rgba(T.DIM, 0.6) : DRAW.rgba(T.GOLD, 0.85); ctx.fill();
     }
     ctx.globalAlpha = 1;
   };
@@ -174,19 +174,19 @@
   });
   // 343 (3.5) — one cell opens like a folder
   const ROWY = (k) => 330 + k * 70;
-  const row = (k, html, at, col) => ({ type: 'mono', html, size: 40, x: 290, ax: 0, y: ROWY(k), color: col || T.INK, in: 'wipe', at, z: 5 });
+  const row = (k, html, at, col) => ({ type: 'mono', html, size: 40, x: 330, ax: 0, y: ROWY(k), color: col || T.INK, in: 'wipe', at, z: 5 });
   const [ocx, ocy] = blockXY(0, 24);
   c(3.5, {
     c10_n0: 'quick', c10_n1: 'quick', c10_n2: 'quick', c10_n3: 'quick', c10_c0: 'quick', c10_c1: 'quick', c10_c2: 'quick', c10_c3: 'quick',
     c10_tasks: { params: TP({ apart: 1, dim: 0.85, a: 0 }), pdur: 0.9 },
-    c10_card: { type: 'box', w: 1500, h: 720, x: 960, y: 560, stroke: T.REPO[0], fill: T.PANEL, sw: 3, rad: 22, html: '', in: 'zoom', from: { x: ocx, y: ocy, s: 0.035, o: 1 }, dur: 1.0, ease: 'expo.inOut', z: 4 },
-    c10_ct: { type: 'text', html: cap('one task · fastapi'), size: 26, color: T.DIM, x: 290, ax: 0, y: 250, in: 'fade', at: 0.8, z: 5 },
+    c10_card: { type: 'box', w: 1400, h: 720, x: 960, y: 560, stroke: T.REPO[0], fill: T.PANEL, sw: 3, rad: 22, html: '', in: 'zoom', from: { x: ocx, y: ocy, s: 0.035, o: 1 }, dur: 1.0, ease: 'expo.inOut', z: 4 },
+    c10_ct: { type: 'text', html: cap('one task · fastapi'), size: 26, color: T.DIM, x: 330, ax: 0, y: 250, in: 'fade', at: 0.8, z: 5 },
     c10_r0: row(0, 'problem_statement', 0.9), c10_r1: row(1, 'base_commit', 1.1), c10_r2: row(2, 'repository snapshot', 1.3),
   }, { cam: { x: 960, y: 560, s: 1 }, sfx: [{ at: 0.4, kind: 'click' }] });
   // 344 (4.5) — more files slide out
   c(4.5, {
-    c10_r3: row(3, 'test_patch', 0.2), c10_t3: { type: 'text', html: cap('hidden at evaluation', T.RED), size: 26, x: 590, ax: 0, y: ROWY(3), in: 'fade', at: 0.7, z: 5 },
-    c10_r4: row(4, 'gold patch', 1.0, T.GOLD), c10_t4: { type: 'text', html: cap('training only'), size: 26, color: T.DIM, x: 590, ax: 0, y: ROWY(4), in: 'fade', at: 1.5, z: 5 },
+    c10_r3: row(3, 'test_patch', 0.2), c10_t3: { type: 'text', html: cap('hidden at evaluation', T.RED), size: 26, x: 630, ax: 0, y: ROWY(3), in: 'fade', at: 0.7, z: 5 },
+    c10_r4: row(4, 'gold patch', 1.0, T.GOLD), c10_t4: { type: 'text', html: cap('training only'), size: 26, color: T.DIM, x: 630, ax: 0, y: ROWY(4), in: 'fade', at: 1.5, z: 5 },
     c10_r5: row(5, 'code-graph and embedding files', 1.8, T.DIM),
   });
   // 345 (4.5) — the graph files flicker: a known data quirk
@@ -210,15 +210,15 @@
   // 348 (2.5) — reading beat on "31 lines in 1 file" (no sideways shift: the card stays symmetric; dy keeps the card filling the frame)
   F.beat(2.5, { id: 'c10_sl', mode: 'push', dy: -150 });
   // 349 (4.5) — OVER how tasks were mined
-  const cardOut = { c10_card: 'shrink', c10_ct: 'quick', c10_r0: 'quick', c10_r1: 'quick', c10_r2: 'quick', c10_r3: 'quick', c10_t3: 'quick', c10_r4: 'quick', c10_t4: 'quick', c10_r5: 'quick', c10_strip: 'quick', c10_sl: 'quick', c10_hint: 'quick' };
+  const cardOut = { c10_ct: 'quick', c10_r0: 'quick', c10_r1: 'quick', c10_r2: 'quick', c10_r3: 'quick', c10_t3: 'quick', c10_r4: 'quick', c10_t4: 'quick', c10_r5: 'quick', c10_strip: 'quick', c10_sl: 'quick', c10_hint: 'quick', c10_card: 'quick' };   // text and card fade together, card last
   c(4.5, {
     ...cardOut,
     c10_tasks: { params: TP({ apart: 1, a: 0 }), pdur: 0.1 },
-    c10_pipe: { type: 'canvas', draw: 'c10_pipe', in: 'fade', at: 0.25, dur: 0.3, params: { hist: 1, flow: 1.6, filt: 1, gate: 0, a: 1 }, paramsFrom: { hist: 0, flow: 0, filt: 0 }, pdur: 3.4, pease: 'none', z: 1 },
-    c10_hl: { type: 'text', html: 'repository history<br>→&ensp;commits', size: 48, lh: 1.3, x: 400, y: 440, in: 'wipe', at: 0.45 },
-    c10_filt: { type: 'box', w: FXR - FXL, h: 440, x: (FXL + FXR) / 2, y: PY, stroke: T.DIM, fill: T.PANEL, sw: 3, rad: 18, html: 'changed core <span class="m">.py</span> logic<br>and matching<br>unit tests', size: 46, in: 'draw', at: 1.2, z: 3 },
-    c10_fk: { type: 'text', html: cap('filter'), size: 28, color: T.DIM, x: (FXL + FXR) / 2, y: 305, in: 'fade', at: 1.4 },
-  }, { cut: true, exitLead: 0.4, cam: { x: 960, y: 560, s: 1 } });
+    c10_pipe: { type: 'canvas', draw: 'c10_pipe', in: 'fade', at: 0, dur: 0.3, params: { hist: 1, flow: 1.6, filt: 1, gate: 0, a: 1 }, paramsFrom: { hist: 0.3, flow: 0, filt: 0 }, pdur: 3.4, pease: 'none', z: 1 },
+    c10_hl: { type: 'text', html: 'repository history<br>→&ensp;commits', size: 48, lh: 1.3, x: 400, y: 440, in: 'wipe', at: 0.2 },
+    c10_filt: { type: 'box', w: FXR - FXL, h: 440, x: (FXL + FXR) / 2, y: PY, stroke: T.DIM, fill: T.PANEL, sw: 3, rad: 18, html: 'changed core <span class="m">.py</span> logic<br>and matching<br>unit tests', size: 46, in: 'draw', at: 0.6, z: 3 },
+    c10_fk: { type: 'text', html: cap('filter'), size: 28, color: T.DIM, x: (FXL + FXR) / 2, y: 305, in: 'fade', at: 0.8 },
+  }, { cut: true, exitLead: 0.45, cam: { x: 960, y: 560, s: 1 } });
   // 350 (4.5) — the two-phase gate
   c(4.5, {
     c10_pipe: { params: { hist: 1, flow: 3.6, filt: 1, gate: 1, a: 1 }, pease: 'none' },
@@ -307,20 +307,20 @@
     c10_vd: { type: 'text', html: '<span class="c-green">pass</span>', size: 60, x: TBX, y: 780, in: 'pop', at: 1.95, dur: 0.4, z: 6 },
   }, { sfx: [{ at: 1.3, kind: 'click' }, { at: 2.0, kind: 'tick' }] });
   // 361 (2) — the null (empty) patch applies; the stale "pass" leaves at once, the tests turn red, then "fail"
-  // Honesty rule: the verdict is a hard switch at the instant the bars turn red (RED_AT) — never a stale
-  // "pass" over red bars, never both words at once. A hook enforces the windows whatever the seek order.
+  // Honesty rule: "pass" goes the instant the null patch replaces the gold one (no verdict while the tests
+  // re-run), "fail" appears exactly when the bars turn red (RED_AT) — never a stale "pass", never both words. A hook enforces the windows whatever the seek order.
   const RED_AT = 0.35;
   const tr = {}; for (let k = 0; k < 5; k++) tr['c10_tg' + k] = { fill: T.RED, at: RED_AT, dur: 0.12, ease: 'power2.out' };
   const T361 = F.now();
   c(2, {
     c10_op: { ver: 1, stroke: T.DIM, fill: 'rgba(154,163,173,0.06)', at: 0.0, dur: 0.3 }, ...tr,
-    c10_vd: { o: 0, at: RED_AT, dur: 0.01, ease: 'none' },
+    c10_vd: { o: 0, at: 0, dur: 0.01, ease: 'none' },
     c10_vf: { type: 'text', html: '<span class="c-red">fail</span>', size: 60, x: TBX, y: 780, in: 'pop', at: RED_AT - 0.05, dur: 0.35, z: 6 },
   }, { sfx: [{ at: 0.05, kind: 'click' }, { at: RED_AT, kind: 'tick' }] });
   const T362 = F.now();
   F.hook((t) => {
     const vd = FILM.EL.c10_vd, vf = FILM.EL.c10_vf;
-    if (vd && (t < T360 + 2.0 || t >= T361 + RED_AT)) vd.proxy.o = 0;
+    if (vd && (t < T360 + 2.0 || t >= T361)) vd.proxy.o = 0;   // the old verdict goes the instant the patch changes
     if (vf && (t < T361 + RED_AT || t >= T362 + 0.35)) vf.proxy.o = 0;
   });
   // 362 (2) — gold sweep: the reference patch drops onto every cell
@@ -382,51 +382,63 @@
     ...bars,
     c10_yn: { type: 'text', html: cap('example&ensp;·&ensp;your numbers', T.YELLOW), size: 28, x: BX(1), y: 280, in: 'fade', at: 0.9 },
   }, { sfx: [{ at: 0.85, kind: 'tick' }] });
-  // 370 (2) — grid and bars fold into the bundle; one daily probe to the public leaderboard
-  const BUN = [480, 470];
-  const fold = { x: BUN[0], y: BUN[1], s: 0.2, o: 0, dur: 0.55, ease: 'power3.in', at: 0 };
+  // 370 (2) — the carried objects: the grid and the three bars fly INTO the bundle (they stay inside it as
+  // its contents) while the bundle's outline draws around them; one daily probe to the public leaderboard
+  const BUN = [500, 460], BW = 580, BHH = 470;
+  const mb = (k) => [BUN[0] + 100 + k * 76, 495];   // mini bar centres inside the bundle (right half)
+  const MBH = 250, MBB = 495 + MBH / 2;
+  const fold = (k) => ({ x: mb(k)[0], y: mb(k)[1], w: 56, h: MBH, dur: 0.9, ease: 'power3.inOut', at: 0 });
+  const foldF = (k) => ({ x: mb(k)[0], y: MBB - 6, w: 44, h: MBH * BV[k] - 10, dur: 0.9, ease: 'power3.inOut', at: 0.03 });
+  const GIN = GP({ grey: 1, drop: 1, gx: BUN[0] - 120, gy: 495, gs: 0.18, outline: 0 });
   c(2, {
-    c10_tasks: { params: GP({ grey: 1, drop: 1, gx: BUN[0], gy: BUN[1], gs: 0.15, outline: 0, a: 0 }), pdur: 0.6, pease: 'power3.in' },
-    ...Object.fromEntries([0, 1, 2].flatMap((k) => [['c10_k' + k, fold], ['c10_f' + k, fold]])),
+    c10_tasks: { params: GIN, pdur: 0.9, pease: 'power3.inOut' },
+    c10_k0: fold(0), c10_k1: fold(1), c10_k2: fold(2), c10_f0: foldF(0), c10_f1: foldF(1), c10_f2: foldF(2),
     c10_kl0: 'quick', c10_kl1: 'quick', c10_kl2: 'quick', c10_yn: 'quick',
-    c10_bun: { type: 'box', w: 300, h: 200, x: BUN[0], y: BUN[1], stroke: T.INK, fill: T.PANEL, sw: 3, rad: 20, html: '<span class="m">bundle</span>', size: 40, in: 'scale', from: { s: 0.3, o: 0 }, dur: 0.8, ease: 'expo.out', at: 0.45 },
-    c10_lb: { type: 'box', w: 420, h: 200, x: 1440, y: 470, stroke: T.DIM, fill: T.PANEL, sw: 3, rad: 20, html: 'public<br>leaderboard', size: 44, in: 'scale', at: 0.55 },
-    c10_ar: { type: 'arrow', x1: 650, y1: 470, x2: 1210, y2: 470, bend: -60, color: T.INK, sw: 4, head: 20, in: 'draw', at: 0.7, dur: 0.7, flow: 1, pulseColor: T.YELLOW },
-    c10_pd: { type: 'text', html: '<span class="c-yellow">1</span> per day', size: 44, x: 930, y: 360, in: 'rise', at: 0.95 },
-  }, { sfx: [{ at: 0.5, kind: 'pop' }, { at: 0.75, kind: 'click' }] });
+    c10_bun: { type: 'box', w: BW, h: BHH, x: BUN[0], y: BUN[1], stroke: T.INK, fill: 'rgba(21,26,33,0.55)', sw: 3.5, rad: 24, html: '', in: 'draw', at: 0.5, dur: 0.8, z: 2 },
+    c10_bl: { type: 'text', html: '<span class="m">bundle</span>', size: 46, x: BUN[0], y: BUN[1] - BHH / 2 + 52, in: 'fade', at: 0.8 },
+    c10_lb: { type: 'box', w: 560, h: BHH, x: 1420, y: BUN[1], stroke: T.DIM, fill: T.PANEL, sw: 3, rad: 24, html: 'public<br>leaderboard', size: 64, in: 'scale', at: 0.55 },
+    c10_ar: { type: 'arrow', x1: BUN[0] + BW / 2 + 20, y1: BUN[1], x2: 1120, y2: BUN[1], bend: -60, color: T.INK, sw: 5, head: 24, in: 'draw', at: 0.8, dur: 0.6, flow: 1, pulseColor: T.YELLOW },
+    c10_pd: { type: 'text', html: '<span class="c-yellow">1</span> per day', size: 56, x: 955, y: 330, in: 'rise', at: 0.95 },
+  }, { sfx: [{ at: 0.55, kind: 'pop' }, { at: 0.85, kind: 'click' }] });
   // 371 (4.5) — spend it on your best held-out configuration
   c(4.5, {
-    ...Object.fromEntries([0, 1, 2].flatMap((k) => [['c10_k' + k, null], ['c10_f' + k, null]])),
     c10_ar: { flow: 3, dur: 3.2, ease: 'none' },
-    c10_sp: { type: 'text', html: cap('spend it on your best held-out configuration'), size: 32, color: T.INK, x: 960, y: 650, in: 'fade', at: 0.4 },
+    c10_sp: { type: 'text', html: cap('spend it on your best held-out configuration'), size: 36, color: T.INK, x: 960, y: 770, in: 'fade', at: 0.4 },
+    c10_tasks: { params: Object.assign({}, GIN, { dim: 0.45 }), pdur: 3 },
   });
   // 372 (4.5) — a log line types: write everything down
+  const CFX = 400, LOGY = 890;
   c(4.5, {
     c10_ar: { flow: 5, dur: 3.2, ease: 'none' },
-    c10_log: { type: 'mono', html: '<span style="color:#F0AC5F">config</span> <span class="c-dim">│</span> local score per repo <span class="c-dim">│</span> leaderboard score <span class="c-dim">│</span> one observation', size: 34, x: 960, y: 860, in: 'wipe', dur: 2.0, at: 0.3 },
-    c10_lk: { type: 'text', html: cap('one line per experiment'), size: 26, color: T.DIM, x: 960, y: 800, in: 'fade', at: 1.6 },
+    c10_log: { type: 'mono', html: '<span style="color:#F0AC5F">config</span> <span class="c-dim">│</span> local score per repo <span class="c-dim">│</span> leaderboard score <span class="c-dim">│</span> one observation', size: 34, x: 960, y: LOGY, in: 'wipe', dur: 2.0, at: 0.3 },
+    c10_lk: { type: 'text', html: cap('one line per experiment'), size: 26, color: T.DIM, x: 960, y: LOGY - 58, in: 'fade', at: 1.6 },
   }, { cam: { x: 960, y: 600, s: 1.04 } });
-  // 373 (4.5) — the log's "config" column grows a fanned stack of bundle versions; the top one zips shut
+  // 373 (4.5) — the log's "config" column grows a large fanned stack of bundle versions; the top one zips shut
   const ZIP = { type: 'box', w: 360, h: 270, x: 960, y: 540, stroke: T.GOLD, fill: 'rgba(240,172,95,0.08)', rad: 26, html: '<span class="m" style="color:#F0AC5F">.zip</span>', size: 60 };
-  const CFX = 400, LOGY = 860;
   const vlab = (n, col) => `<span class="m" style="position:relative;left:-108px;top:-78px;font-size:0.8em;color:${col}">v${n}</span>`;
-  const VP = [[640, 440, -12], [822, 414, -5], [1005, 420, 0]];
-  const ver = (k, at) => ({ type: 'box', w: 360, h: 270, x: VP[k][0], y: VP[k][1], r: VP[k][2], stroke: k === 2 ? T.INK : '#5B6672', fill: T.PANEL, sw: 2.5, rad: 26, html: vlab(k + 1, k === 2 ? T.INK : T.DIM), size: 60, in: 'fade', from: { x: CFX, y: LOGY, s: 0.15, r: 0, o: 0 }, dur: 1.0, ease: 'expo.out', at, z: 2 + k });
+  const VP = [[600, 470, -10], [780, 452, -4], [960, 462, 0]];
+  const ver = (k, at) => ({ type: 'box', w: 360, h: 270, x: VP[k][0], y: VP[k][1], r: VP[k][2], stroke: k === 2 ? T.INK : '#5B6672', fill: T.PANEL, sw: 2.5, rad: 26, versions: [vlab(k + 1, k === 2 ? T.INK : T.DIM), ''], ver: 0, size: 60, in: 'fade', from: { x: CFX, y: LOGY, s: 0.15, r: 0, o: 0 }, dur: 1.0, ease: 'expo.out', at, z: 2 + k });
+  const bunOut = { c10_bun: 'left', c10_bl: 'left', c10_tasks: { params: Object.assign({}, GIN, { a: 0 }), pdur: 0.3, pease: 'power2.in' } };
+  for (const k of [0, 1, 2]) { bunOut['c10_k' + k] = 'left'; bunOut['c10_f' + k] = 'left'; }
   c(4.5, {
-    c10_bun: 'left', c10_lb: 'right', c10_ar: 'fade', c10_pd: 'up', c10_sp: 'quick', c10_lk: 'quick',
+    ...bunOut, c10_lb: 'right', c10_ar: 'fade', c10_pd: 'up', c10_sp: 'quick', c10_lk: 'quick',
     c10_log: { o: 1 },
     c10_cfg: { type: 'box', w: 140, h: 56, x: CFX, y: LOGY, stroke: T.GOLD, fill: 'rgba(240,172,95,0.10)', sw: 2.5, rad: 10, html: '', in: 'draw', at: 0.15, z: 2 },
-    c10_la: { type: 'arrow', x1: CFX, y1: LOGY - 38, x2: 560, y2: 600, bend: -30, color: T.DIM, sw: 3, head: 16, in: 'draw', at: 0.3, dur: 0.6 },
+    c10_la: { type: 'arrow', x1: CFX, y1: LOGY - 38, x2: 540, y2: 640, bend: -30, color: T.DIM, sw: 3, head: 16, in: 'draw', at: 0.3, dur: 0.6, flow: -1, pulseColor: T.GOLD },
     c10_v1: ver(0, 0.5), c10_v2: ver(1, 0.75), c10_v3: ver(2, 1.0),
     c10_zz: { type: 'rect', x: VP[2][0] - 156, ax: 0, y: VP[2][1] - 108, w: 312, h: 6, rad: 3, fill: T.GOLD, in: 'grow', at: 1.8, dur: 0.8, ease: 'power3.inOut', z: 7 },
     zip: Object.assign({}, ZIP, { x: VP[2][0], y: VP[2][1], in: 'fade', at: 2.3, dur: 0.5, z: 6 }),
   }, { cut: true, cam: { x: 960, y: 540, s: 1 }, sfx: [{ at: 2.35, kind: 'click' }] });
-  // 374 (4.5) — the versions fold into the zip as it comes to the centre (hand-off 10 → 11); the RAIL rewrites to "11"
-  // v1 and v2 fold into the top card; the top card travels under the zip and fades, so the cut leaves the bare zip
-  const vin = { x: VP[2][0], y: VP[2][1], r: 0, s: 0.9, o: 0, dur: 0.9, ease: 'power3.in', at: 0.05 };
+  // 374 (4.5) — the zip settles at the centre (hand-off 10 → 11) with v1 and v2 fanned behind it and the log
+  // line still feeding it: a gold pulse travels up from "config" into the zip until the cut; the RAIL rewrites to "11".
+  // v3 stays under the zip as its opaque backing (label and stroke fade into the zip's).
   c(4.5, {
-    c10_v1: vin, c10_v2: vin, c10_v3: { x: 960, y: 540, o: 0, dur: 3.1, ease: 'power2.inOut', at: 0.2 }, c10_zz: 'quick', c10_cfg: 'quick', c10_la: 'fade', c10_log: 'down',
-    zip: Object.assign({}, ZIP, { s: 1, dur: 3.1, ease: 'power2.inOut', at: 0.2 }),
+    c10_v1: { x: 620, y: 575, r: -11, dur: 3.3, ease: 'power2.out', at: 0.1 },
+    c10_v2: { x: 790, y: 556, r: -5, dur: 3.3, ease: 'power2.out', at: 0.15 },
+    c10_v3: { x: 960, y: 540, ver: 1, stroke: T.GOLD, dur: 1.4, ease: 'power3.out', at: 0.1 },
+    c10_zz: 'quick',
+    c10_la: { x2: 760, y2: 660, bend: -40, flow: 3.6, dur: 3.3, ease: 'none', at: 0.05 },
+    zip: Object.assign({}, ZIP, { dur: 1.4, ease: 'power3.out', at: 0.1 }),
     rail: { ver: 11, at: 0.8, dur: 1.0 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();

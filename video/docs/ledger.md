@@ -82,3 +82,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 ## Film critic — chapters 10–12, round 1 — one more pass (10 items; ch10_r1: 5 fixed, 4 partly, 1 not) — docs/critic/f10_12_r1.md
 - Engine: push reading beats made gentler (×1.12, 50% travel) — three critics found pushes cropping content at frame edges.
 - ch08/ch09 fixes for film round 1 items 1, 4, 5, 10, 11, 15 applied by a fixer agent. Engine: fill 'none' was parsed as hex and drawn black (the ch9 'black crack'); now transparent.
+- ch10 round-2 fixes applied (false 'pass' eliminated — verified by probes every 0.1 s in forward and reverse seek order; subjects scaled to fill the frame; carried bars→bundle; zip close no longer alone).

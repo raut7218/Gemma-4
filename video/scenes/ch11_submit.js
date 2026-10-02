@@ -70,26 +70,26 @@
   // 375 (4.5) — FULL "No Python entry points." enters from the left over the dimmed zip
   c(4.5, {
     ...K.rail(11),
-    zip: Object.assign({}, ZIP, { o: 0.18, s: 0.9, dur: 1.4 }),
-    c11_w1: { type: 'text', html: 'No <span class="c-red">Python</span> entry points.', size: 118, x: 960, y: 400, in: 'left', at: 0.3 },
+    zip: Object.assign({}, ZIP, { o: 0.4, s: 0.9, dur: 1.4 }),
+    c11_w1: { type: 'text', html: 'No <span class="c-red">Python</span> entry points.', size: 118, x: 960, y: 290, in: 'left', at: 0.3 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.6, clear: true, keep: ['rail', 'zip'] });
   // 376 (4.5) — FULL "You submit configuration." enters from the right
   c(4.5, {
-    c11_w2: { type: 'text', html: 'You submit <span class="c-gold">configuration</span>.', size: 118, x: 960, y: 690, in: 'right', at: 0.2 },
-    zip: { o: 0.3, s: 0.95, dur: 3 },
+    c11_w2: { type: 'text', html: 'You submit <span class="c-gold">configuration</span>.', size: 118, x: 960, y: 800, in: 'right', at: 0.2 },
+    zip: { o: 0.55, s: 0.95, dur: 3 },
   });
   // 377 (4) — the words part; the zip opens; the TREE unfolds its first lines
   c(4, {
     c11_w1: 'left', c11_w2: 'right',
     zip: { x: 300, y: 300, s: 0.35, o: 0, dur: 1.0, ease: 'power3.in', at: 0.2 },
     tree: { type: 'mono', versions: [TREE3, TREE7], ver: 0, size: 38, lh: 1.55, align: 'left', ax: 0, ay: 0, x: 120, y: 304, in: 'wipe', at: 0.8, dur: 1.4 },
-  }, { cut: true, cam: { x: 800, y: 540, s: 1.08 } });
+  }, { cut: true, cam: { x: 600, y: 450, s: 1.22 } });
   // 378 (4.5) — the rest of the tree; corner tag
   c(4.5, {
     zip: null,
     tree: { ver: 1, dur: 1.4, at: 0.1 },
     c11_dec: { type: 'text', html: cap('declarative&ensp;·&ensp;under <span style="color:#F4D35E">3 GiB</span>'), size: 30, color: T.DIM, x: 1300, y: 300, in: 'fade', at: 1.6 },
-  }, { cam: { x: 820, y: 540, s: 1.06 } });
+  }, { cam: { x: 760, y: 540, s: 1.12 } });
   // 379 (3) — the size meter fills a sliver of a bar marked "3 GiB"
   c(3, {
     c11_bar: { type: 'box', w: 700, h: 56, x: 1300, y: 420, stroke: '#5B6672', sw: 2.5, rad: 10, html: '', in: 'draw', dur: 0.7 },
@@ -113,29 +113,29 @@
   c(2, {
     c11_fly: null,
     loop: { params: LOOP({ cy: 410, r: 190, hi: -1 }), pdur: 1.0, pease: 'power3.inOut' },
-    c11_model: { y: 410, s: 0.9 },
+    c11_model: { y: 362, s: 0.9 },
     c11_met: { o: 0 },
     c11_shapes: { type: 'canvas', draw: 'c11_shapes', in: 'fade', dur: 0.2, params: { show: 1, seq: 0, par: 0, lp: 0, xs: 860, y: 830, gap: 300, a: 1 }, paramsFrom: { show: 0 }, pdur: 1.4, pease: 'power2.out' },
   });
   // 383 (4.5) — CLOSE an example agent.yaml types
   const Y5 = ['name: <span class="c-dim">root</span>', 'model: <span class="c-blue">gemma-4-31b-it-qat-w4a16-ct</span>', 'instruction: <span style="color:#F0AC5F">!include</span> prompts/system.md'];
   const Y5b = Y5.concat(['generate_content_config: <span style="color:#F0AC5F">!include</span> configs/sampling.yaml', 'tools: [<span class="c-teal">run_command, read_file, edit_file, …</span>]']);
-  const yf = K.file('c11_y', 'agent.yaml', Y5.concat(['', '']), { x: 760, y: 560, w: 1000, size: 30, variants: [Y5b] });
+  const yf = K.file('c11_y', 'agent.yaml', Y5.concat(['', '']), { x: 700, y: 560, w: 1000, size: 30, variants: [Y5b] });
   yf.c11_y_name.html = '<span class="m" style="color:#F0AC5F">agent.yaml</span>&ensp;' + tag('example');
   c(4.5, {
     c11_shapes: { params: { show: 1, seq: 0, par: 0, lp: 0, xs: 860, y: 830, gap: 300, a: 0 }, pdur: 0.5 },
-    tree: { o: 0.12 },
-    loop: { params: LOOP({ cx: 1560, cy: 540, r: 170, ring: 1 }), pdur: 1.2, pease: 'power3.inOut' },
-    c11_model: { x: 1560, y: 540, s: 0.8 },
+    tree: { o: 0, dur: 0.5 },
+    loop: { params: LOOP({ cx: 1480, cy: 560, r: 190, ring: 1 }), pdur: 1.2, pease: 'power3.inOut' },
+    c11_model: { x: 1480, y: 512, s: 0.8 },
     ...yf,
-  }, { cam: { x: 960, y: 550, s: 1.04 } });
+  }, { cam: { x: 980, y: 560, s: 1.05 } });
   // 384 (2) — two more lines
   c(2, { c11_y: { ver: 1, dur: 0.8 } });
   // 385 (2) — each YAML line draws a thin link to the part of the loop it sets
   const LY = (k) => 478 + 45 * k + 22; // y of yaml line k
   const lnk = (id, x1, k, x2, y2, at) => ({ [id]: { type: 'arrow', x1, y1: LY(k), x2, y2, bend: -40, sw: 2.5, head: 12, color: T.DIM, in: 'draw', at, dur: 0.7 } });
   c(2, {
-    ...lnk('c11_k1', 1140, 1, 1465, 540, 0.0), ...lnk('c11_k2', 960, 2, 1480, 380, 0.15), ...lnk('c11_k3', 1200, 3, 1490, 395, 0.3), ...lnk('c11_k4', 1140, 4, 1640, 640, 0.45),
+    ...lnk('c11_k1', 1080, 1, 1395, 512, 0.0), ...lnk('c11_k2', 900, 2, 1380, 370, 0.15), ...lnk('c11_k3', 1140, 3, 1470, 485, 0.3), ...lnk('c11_k4', 1080, 4, 1560, 745, 0.45),
   }, { sfx: [{ at: 0.1, kind: 'tick' }] });
   // 386 (3.5) — OVER the LlmAgent enlarges; handles attach: model · adapter · instruction
   const L0 = LOOP({ cx: 960, cy: 520, r: 230, ring: 1 });
@@ -145,6 +145,7 @@
   c(3.5, {
     ...yOut,
     tree: { o: 0 },
+    c11_shapes: { s: 1.45, params: { show: 1, seq: 0, par: 0, lp: 0, xs: 510, y: 500, gap: 300, a: 0 }, pdur: 0.3 },
     loop: { params: L0, pdur: 1.2, pease: 'power3.inOut' },
     c11_model: { x: 960, y: 520, s: 1 },
     c11_h1: H('model', 380, 300, 0.8, T.BLUE), c11_e1: HL(550, 300, 870, 505, 0.9),
@@ -172,25 +173,25 @@
   });
   // 390 (2) — SequentialAgent: its chain lights left to right
   const hOut = Object.fromEntries(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'st', 'stl', 'drop', 'sw', 'hist'].map((k) => ['c11_' + k, 'quick']));
-  const SH = (o) => Object.assign({ show: 1, seq: 0, par: 0, lp: 0, xs: 510, y: 560, gap: 300, a: 1 }, o);
+  const SH = (o) => Object.assign({ show: 1, seq: 0, par: 0, lp: 0, xs: 510, y: 500, gap: 300, a: 1 }, o);
   c(2, {
     ...hOut,
     loop: { o: 0, dur: 0.35, params: LOOP({ cx: 960, cy: 520, r: 230, ring: 1 }) },
     c11_model: { o: 0, dur: 0.35 },
     c11_shapes: { params: SH({ seq: 1 }), pdur: 1.5, pease: 'none' },
-    c11_wf: { type: 'text', html: cap('workflow agents'), size: 28, color: T.DIM, x: 960, y: 400, in: 'fade', at: 0.4 },
-  }, { cut: true, cam: { x: 960, y: 600, s: 1.15 } });
+    c11_wf: { type: 'text', html: cap('workflow agents'), size: 32, color: T.DIM, x: 960, y: 250, in: 'fade', at: 0.4 },
+  }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
   // 391 (2) — ParallelAgent: all branches light at once
-  c(2, { c11_shapes: { params: SH({ seq: 1, par: 1 }), pdur: 0.6, pease: 'power2.out' } }, { cam: { x: 1060, y: 600, s: 1.15 }, sfx: [{ at: 0.1, kind: 'tick' }] });
+  c(2, { c11_shapes: { params: SH({ seq: 1, par: 1 }), pdur: 0.6, pease: 'power2.out' } }, { cam: { x: 990, y: 545, s: 1.03 }, sfx: [{ at: 0.1, kind: 'tick' }] });
   // 392 (2.5) — LoopAgent: its counter ticks 1 → 2 → 3 and the cycle exits at max_iterations
   c(2.5, {
     c11_shapes: { params: SH({ seq: 1, par: 1, lp: 1 }), pdur: 1.7, pease: 'none' },
-    c11_mx: { type: 'mono', html: 'max_iterations', size: 30, color: T.INK, x: 1530, y: 500, in: 'fade', at: 1.6 },
-  }, { cam: { x: 1180, y: 600, s: 1.15 }, sfx: [{ at: 0.6, kind: 'tick' }, { at: 1.15, kind: 'tick' }, { at: 1.6, kind: 'click' }] });
+    c11_mx: { type: 'mono', html: 'max_iterations', size: 32, color: T.INK, x: 1612, y: 355, in: 'fade', at: 1.2, dur: 0.4 },
+  }, { cam: { x: 1030, y: 545, s: 1.05 }, sfx: [{ at: 0.6, kind: 'tick' }, { at: 1.15, kind: 'tick' }, { at: 1.6, kind: 'click' }] });
   // 393 (4.5) — prompts/*.md docks onto "think"
   const LD = LOOP({ cx: 1250, cy: 620, r: 260, ring: 1 });
   c(4.5, {
-    c11_shapes: 'fade', c11_wf: 'quick', c11_mx: 'quick',
+    c11_shapes: 'fade', c11_wf: 'quick', c11_mx: null,
     tree: { o: 1, ver: 1 },
     loop: { o: 1, params: LD, pdur: 1.0 },
     c11_model: { x: 1250, y: 620, s: 1, o: 1 },
@@ -206,7 +207,7 @@
   // 395 (2) — configs/sampling.yaml docks onto the model block
   c(2, {
     c11_nh: 'quick',
-    c11_smp: { type: 'text', html: '<span class="m c-dim">sampling.yaml:</span> temperature · thinking', size: 28, x: 1250, y: 562, in: 'fade', from: { x: 420, y: TL(2), s: 0.5, o: 0 }, dur: 1.1, ease: 'expo.inOut' },
+    c11_smp: { type: 'text', html: '<span class="plate"><span class="m c-dim">sampling.yaml:</span> temperature · thinking</span>', size: 28, x: 1250, y: 562, in: 'fade', from: { x: 420, y: TL(2), s: 0.5, o: 0 }, dur: 1.1, ease: 'expo.inOut' },
   }, { sfx: [{ at: 1.0, kind: 'pop' }] });
   // 396 (4.5) — sub_agents/*.yaml docks as a second, smaller loop
   c(4.5, {
@@ -238,10 +239,13 @@
     c11_ad2: { type: 'text', html: '<span class="plate">rank ≤ <span class="c-yellow">128</span> · up to <span class="c-yellow">8</span></span>', size: 40, x: 1250, y: 497, in: 'wipe', at: 1.8 },
   }, { sfx: [{ at: 1.1, kind: 'pop' }] });
   // 401 (2.5) — reading beat on "rank ≤ 128 · up to 8"
-  F.beat(2.5, { id: 'c11_ad2', mode: 'push' });
+  // (a hand-made push: same camera move as F.beat — x1.12, half way — but the tree fades so the push never crops it)
+  c(2.5, {
+    c11_ad2: { s: 1.05 }, tree: { o: 0, dur: 0.4 }, rail: { o: 0, dur: 0.35 },
+  }, { cam: { x: 1105, y: 518, s: 1.12 }, drift: 0.4, beatCam: { x: 960, y: 540, s: 1 }, railHidden: true });
   // 402 (2) — eval_config.yaml docks onto the meters as the four dials
   c(2, {
-    c11_met: 'fade',
+    c11_met: 'fade', tree: { o: 1, dur: 0.6 }, c11_ad2: { s: 1 },
     c11_dials: { type: 'canvas', draw: 'meters', names: ['timeout', 'calls', 'minutes', 'turns'], colors: [T.YELLOW, T.TEAL, T.YELLOW, T.BLUE], in: 'fade', dur: 0.4, at: 0.4, params: { x: 1580, y: 900, w: 48, h: 130, gap: 40, v0: 0.6, v1: 0.55, v2: 0.6, v3: 0.5, labels: 1 }, paramsFrom: { v0: 0, v1: 0, v2: 0, v3: 0 }, pdur: 1.1, pease: 'power3.out' },
     c11_ev: { type: 'mono', html: 'eval_config.yaml', size: 30, color: T.DIM, x: 1730, y: 730, in: 'fade', from: { x: 420, y: TL(6), o: 0 }, dur: 1.0, ease: 'expo.inOut' },
   }, { sfx: [{ at: 1.0, kind: 'pop' }] });

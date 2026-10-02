@@ -312,7 +312,8 @@
   const HR = KW.flatMap((ws, i) => ws.map((_, j) => 'c07_hr' + i + j));
   const fall = Object.fromEntries([0, 1, 2].map((i) => ['c07_h' + i, { x: 960, y: 620, s: 0.25, o: 0, dur: 1.0, ease: 'power3.in', at: i * 0.08 }]).concat(HR.map((k) => [k, { x: 960, y: 620, w: 0, o: 0, dur: 0.6, ease: 'power3.in' }])));
   const side = (x, at) => ({ type: 'box', w: 610, h: 760, x, y: 560, stroke: '#56616D', fill: 'rgba(21,26,33,0.5)', rad: 22, sw: 2.5, html: '', in: 'draw', dur: 3.9, ease: 'power1.inOut', at });
-  c(2, { ...fall, ...K.container('contA', 'A', { x: 960, y: 560, w: 620, h: 760 }), c07_pl: side(325, 0.9), c07_pr: side(1595, 1.0) }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+  const A8 = K.container('contA', 'A', { x: 960, y: 560, w: 620, h: 760 });
+  c(2, { ...fall, contA: { ...A8.contA, at: 0, dur: 1.1 }, contA_hd: { ...A8.contA_hd, at: 0, dur: 1.1 }, contA_ht: { ...A8.contA_ht, at: 0.05, dur: 1.1 }, c07_pl: side(325, 0.9), c07_pr: side(1595, 1.0) }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
   // 270 (4.5) — the RAIL rewrites to 08; the side panels finish drawing, their headers write in
   c(4.5, {
     ...Object.fromEntries([0, 1, 2].map((i) => ['c07_h' + i, null]).concat(HR.map((k) => [k, null]))),
