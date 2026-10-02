@@ -88,7 +88,7 @@
   c(4.5, {
     zip: null,
     tree: { ver: 1, dur: 1.4, at: 0.1 },
-    c11_dec: { type: 'text', html: cap('declarative&ensp;·&ensp;under <span style="color:#F4D35E">3 GiB</span>'), size: 30, color: T.DIM, x: 1300, y: 300, in: 'fade', at: 1.6 },
+    c11_dec: { type: 'text', html: cap('declarative&ensp;·&ensp;under <span style="color:#F4D35E">3 GiB</span>'), size: 30, color: T.DIM, x: 1180, y: 320, in: 'fade', at: 1.6 },
   }, { cam: { x: 760, y: 540, s: 1.12 } });
   // 379 (3) — the size meter fills a sliver of a bar marked "3 GiB"
   c(3, {
