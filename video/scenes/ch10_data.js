@@ -15,10 +15,11 @@
 
   // ---------------------------------------------------------------- the 129 public tasks (chapter-local)
   const grp = (i) => { let g = 0, acc = 0; while (g < 3 && i >= acc + REPOS[g]) { acc += REPOS[g]; g++; } return [g, i - acc]; };
-  // block layout: each repository as its own block, large enough that blocks + names + descriptions fill
-  // ~70% of the frame height (centres 384 / 900 / 1322 / 1620: inside the safe area)
-  const BL = [{ x0: 150, cols: 7 }, { x0: 700, cols: 6 }, { x0: 1190, cols: 4 }, { x0: 1590, cols: 1 }];
-  const BY0 = 220, BCW = 60, BCH = 36, BPX = 68, BPY = 46;
+  // block layout: each repository as its own block; the blocks alone fill ~56% of the frame height (y 160–768),
+  // with names and descriptions below them ~78% (to y ≈ 1000), all inside title-safe including the drift
+  // (x 110 … 1768)
+  const BL = [{ x0: 110, cols: 7 }, { x0: 748, cols: 6 }, { x0: 1306, cols: 4 }, { x0: 1700, cols: 1 }];
+  const BY0 = 160, BCW = 68, BCH = 50, BPX = 80, BPY = 62;
   const blockXY = (g, j) => [BL[g].x0 + (j % BL[g].cols) * BPX + BCW / 2, BY0 + Math.floor(j / BL[g].cols) * BPY + BCH / 2];
   const BLX = BL.map((L) => L.x0 + (L.cols * BPX - (BPX - BCW)) / 2);
   // split layout (example hold-out): fastapi · requests · httpx as three blocks at left, rich lifted to the right
@@ -142,12 +143,14 @@
   c(4, {
     ...K.rail(10),
     grid: { type: 'canvas', draw: 'grid', x: 960, y: 540, repos: REPOS, params: { ...GRID129, reveal: 1, gold: -1, dim: 0.5, sweep: 0, split: 0 } },
-    c10_tasks: { type: 'canvas', draw: 'c10_tasks', in: 'none', params: TP({ rowrev: 0 }), z: 2 },
+    // ramps in over 0.4 s over the carried grid (no one-frame brightness step at the cut)
+    c10_tasks: { type: 'canvas', draw: 'c10_tasks', in: 'fade', dur: 0.4, ease: 'sine.inOut', params: TP({ rowrev: 0 }), z: 2 },
     c10_l1: { type: 'text', html: `${sw(T.REPO[0])} fastapi <span class="c-yellow">67</span>&emsp;${sw('rgba(154,163,173,0.22)', T.REPO[1])} rich <span class="c-yellow">48</span>`, size: 48, x: 960, y: 960, in: 'wipe', at: 1.2 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.6 });
   // 339 (2) — the small two; httpx is a single lonely cell
   c(2, {
     c10_l1: { x: 640 },
+    c09_scan: null,   // ch9's grid scan has already left the grid (invisible); drop the element
     c10_l2: { type: 'text', html: `${sw(T.REPO[2])} requests <span class="c-yellow">13</span>&emsp;${sw(T.REPO[3])} httpx <span class="c-yellow">1</span>`, size: 48, x: 1340, y: 960, in: 'right', at: 0.2 },
     c10_lone: { type: 'ring', x: 1520, y: 855, rad: 56, sw: 4, color: T.INK, in: 'fade', from: { rad: 140, o: 0 }, dur: 1.0, ease: 'expo.out', at: 0.4 },
   }, { sfx: [{ at: 0.5, kind: 'tick' }] });
@@ -155,21 +158,21 @@
   c(4.5, {
     grid: 'none', c10_lone: 'quick', c10_l1: 'down', c10_l2: 'down',
     c10_tasks: { params: TP({ apart: 1 }), pdur: 1.8, pease: 'power3.inOut' },
-    c10_h: { type: 'text', html: '<span class="c-yellow">129</span> public training tasks&ensp;·&ensp;<span class="c-yellow">4</span> repositories', size: 60, x: 960, y: 140, in: 'wipe', at: 1.4 },
-    ...Object.fromEntries(NAMES.map((n, g) => ['c10_n' + g, { type: 'text', html: `${n} <span class="c-yellow">${REPOS[g]}</span>`, size: 44, x: BLX[g], y: 725, in: 'rise', at: 1.6 + g * 0.12 }])),
+    c10_h: { type: 'text', html: '<span class="c-yellow">129</span> public training tasks&ensp;·&ensp;<span class="c-yellow">4</span> repositories', size: 60, x: 960, y: 940, in: 'wipe', at: 1.4 },
+    ...Object.fromEntries(NAMES.map((n, g) => ['c10_n' + g, { type: 'text', html: `${n} <span class="c-yellow">${REPOS[g]}</span>`, size: 44, x: BLX[g], y: 812, in: 'rise', at: 1.6 + g * 0.12 }])),
   }, { exitLead: 0 });
   // 341 (4.5) — the character of fastapi and rich (one centred framing for 341–342: no pan)
-  const chr = (id, html, x, at, mw) => ({ [id]: { type: 'text', html, size: 37, lh: 1.3, maxw: mw, x, ay: 0, y: 772, color: T.DIM, in: 'wipe', at } });
+  const chr = (id, html, x, at, mw) => ({ [id]: { type: 'text', html, size: 37, lh: 1.3, maxw: mw, x, ay: 0, y: 852, color: T.DIM, in: 'wipe', at } });
   c(4.5, {
-    c10_h: 'up',
+    c10_h: 'quick',
     c10_tasks: { params: TP({ apart: 1, dim: 0.3 }), pdur: 1.2 },
-    ...chr('c10_c0', 'web framework · routing, dependency injection, pydantic validation', BLX[0], 0.5, 440),
-    ...chr('c10_c1', 'terminal rendering · string and ANSI output assertions', BLX[1], 1.4, 400),
-  }, { cam: { x: 960, y: 560, s: 1 } });
+    ...chr('c10_c0', 'web framework · routing, dependency injection, pydantic validation', BLX[0], 0.5, 540),
+    ...chr('c10_c1', 'terminal rendering · string and ANSI output assertions', BLX[1], 1.4, 460),
+  }, { cam: { x: 960, y: 540, s: 1 } });
   // 342 (4.5) — requests and httpx
   c(4.5, {
-    ...chr('c10_c2', 'HTTP client · several tests need a network that <span class="c-red">doesn’t exist offline</span>', BLX[2], 0.5, 340),
-    ...chr('c10_c3', 'HTTP client', BLX[3], 1.5, 200),
+    ...chr('c10_c2', 'HTTP client · several tests need a network that <span class="c-red">doesn’t exist offline</span>', BLX[2], 0.5, 400),
+    ...chr('c10_c3', 'HTTP client', BLX[3], 1.5, 150),
     c10_tasks: { params: TP({ apart: 1, dim: 0.15 }), pdur: 3.0 },
   });
   // 343 (3.5) — one cell opens like a folder
@@ -306,21 +309,21 @@
     // "pass" only once every test bar is green; its entry finishes well inside this comp
     c10_vd: { type: 'text', html: '<span class="c-green">pass</span>', size: 60, x: TBX, y: 780, in: 'pop', at: 1.95, dur: 0.4, z: 6 },
   }, { sfx: [{ at: 1.3, kind: 'click' }, { at: 2.0, kind: 'tick' }] });
-  // 361 (2) — the null (empty) patch applies; the stale "pass" leaves at once, the tests turn red, then "fail"
-  // Honesty rule: "pass" goes the instant the null patch replaces the gold one (no verdict while the tests
-  // re-run), "fail" appears exactly when the bars turn red (RED_AT) — never a stale "pass", never both words. A hook enforces the windows whatever the seek order.
-  const RED_AT = 0.35;
+  // 361 (2) — the null (empty) patch replaces the gold one at RED_AT, and in that same instant the bars turn red,
+  // "pass" leaves and "fail" pops: the chip, the bars and the verdict always agree (never a null chip over green
+  // bars, never a stale "pass", never both words). A hook enforces the windows whatever the seek order.
+  const RED_AT = 0.3;
   const tr = {}; for (let k = 0; k < 5; k++) tr['c10_tg' + k] = { fill: T.RED, at: RED_AT, dur: 0.12, ease: 'power2.out' };
   const T361 = F.now();
   c(2, {
-    c10_op: { ver: 1, stroke: T.DIM, fill: 'rgba(154,163,173,0.06)', at: 0.0, dur: 0.3 }, ...tr,
-    c10_vd: { o: 0, at: 0, dur: 0.01, ease: 'none' },
-    c10_vf: { type: 'text', html: '<span class="c-red">fail</span>', size: 60, x: TBX, y: 780, in: 'pop', at: RED_AT - 0.05, dur: 0.35, z: 6 },
-  }, { sfx: [{ at: 0.05, kind: 'click' }, { at: RED_AT, kind: 'tick' }] });
+    c10_op: { ver: 1, stroke: T.DIM, fill: 'rgba(154,163,173,0.06)', at: RED_AT, dur: 0.12, ease: 'power2.out' }, ...tr,
+    c10_vd: { o: 0, at: RED_AT, dur: 0.01, ease: 'none' },
+    c10_vf: { type: 'text', html: '<span class="c-red">fail</span>', size: 60, x: TBX, y: 780, in: 'pop', at: RED_AT, dur: 0.35, z: 6 },
+  }, { sfx: [{ at: RED_AT, kind: 'click' }, { at: RED_AT + 0.05, kind: 'tick' }] });
   const T362 = F.now();
   F.hook((t) => {
     const vd = FILM.EL.c10_vd, vf = FILM.EL.c10_vf;
-    if (vd && (t < T360 + 2.0 || t >= T361)) vd.proxy.o = 0;   // the old verdict goes the instant the patch changes
+    if (vd && (t < T360 + 2.0 || t >= T361 + RED_AT)) vd.proxy.o = 0;   // the old verdict goes the instant the patch changes
     if (vf && (t < T361 + RED_AT || t >= T362 + 0.35)) vf.proxy.o = 0;
   });
   // 362 (2) — gold sweep: the reference patch drops onto every cell
@@ -348,7 +351,7 @@
   c(4.5, {
     c10_ns: 'right',
     c10_tasks: { params: GP({ gdrop: 1, pass: 1, ndrop: 1, fail: 1 }), pdur: 2.2, pease: 'power2.inOut' },
-    c10_sw: { ver: 1, o: 1, at: 0.6 },
+    c10_sw: { ver: 1, o: 1, at: 0.0, dur: 0.35, ease: 'power2.out' },   // the caption swaps as the red sweep starts
   }, { sfx: [{ at: 0.3, kind: 'tick' }] });
   // 366 (4.5) — about 20 cells disagree and turn grey; the verdict sits on a plate at the grid's centre,
   // so the reading beat that follows pushes straight in and the whole grid stays in frame
@@ -456,6 +459,6 @@
     c10_zz: 'quick',
     c10_la: { x2: 760, y2: 660, bend: -40, flow: 3.6, dur: 3.3, ease: 'none', at: 0.05 },
     zip: Object.assign({}, ZIP, { dur: 1.4, ease: 'power3.out', at: 0.1 }),
-    rail: { ver: 11, at: 0.8, dur: 1.0 },
+    rail: { ver: 11, at: 2.95, dur: 0.4 },   // switches in the last 0.43 s before the cut
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();

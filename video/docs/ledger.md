@@ -96,3 +96,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 
 ## Film critic round 2 — film 450–981.75 (ch5–10) — one more pass (13 items; false 'pass' verified fixed every 0.1 s) — docs/critic/r2_b.md
 - ch01–04 round-2 fixes applied by a fixer agent (leftover ch1 gold card was the cause of the ch2 collisions; gentler pushes; cards enlarged; calendar band identical across 2→3; DATA contrast; plinth 1.3× slab). #16 (A/B side-by-side in ch1) left as is.
+- ch08–10 round-2 fixes applied by a fixer agent (panel framing with a fit helper + veil; 8→9 pills clear before the loop draws; ring behind loop; ch10 composition; verdict timing exact; rail switches ≤0.43 s before cuts; a 2.4 s ch9 closing still found and removed).

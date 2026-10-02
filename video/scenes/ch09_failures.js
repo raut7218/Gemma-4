@@ -11,6 +11,19 @@
   const LP = (o) => Object.assign({}, LOOP0, { cx: 600, cy: 590, r: 230 }, o);
 
   // ---------------------------------------------------------------- chapter-local drawings
+  // the red ring that opens out of the crack: drawn BEHIND the loop's three pills (each pill is cut out of the
+  // stroke with a margin), so it never overprints a node or its label; rad, a
+  DRAW.c09_ring = (ctx, p) => {
+    const a = DRAW.util.clamp(p.a ?? 0); if (a <= 0.003) return;
+    const g = DRAW.loopGeom(LOOP0);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, 1920, 1080);
+    g.pos.forEach(([x, y], i) => { const w = (i === 0 ? 190 : 250) + 36, h = 84 + 36; ctx.rect(x - w / 2, y - h / 2, w, h); });
+    ctx.clip('evenodd');
+    ctx.beginPath(); ctx.arc(g.cx, g.cy, p.rad || 300, 0, Math.PI * 2);
+    ctx.lineWidth = 3; ctx.strokeStyle = DRAW.rgba(T.RED, a); ctx.stroke();
+    ctx.restore();
+  };
   // a small code graph: five file nodes; `edit` draws the agent's edit edge onto the wrong node,
   // `tests` aims the hidden tests at the right node and turns it red
   const GN = [['core.py', 1560, 400], ['utils.py', 1250, 560], ['api.py', 1720, 620], ['models.py', 1440, 740], ['cli.py', 1180, 360]];
@@ -138,6 +151,21 @@
     }
   };
 
+  // a soft light that scans the new grid row by row (the way ch10 then colours it), so the closing comp keeps
+  // moving into the cut; pos in rows (−2 … 12: off the grid at both ends, so the cut frame shows no glow)
+  DRAW.c09_scan = (ctx, p) => {
+    const g = GRID129, W = g.cols * g.cw + (g.cols - 1) * g.gap, H = g.rows * g.ch + (g.rows - 1) * g.gap;
+    const ox = 960 - W / 2, oy = 540 - H / 2, pos = p.pos ?? -2;
+    for (let i = 0; i < 129; i++) {
+      const c = i % g.cols, r = Math.floor(i / g.cols);
+      const k = Math.exp(-((r + c * 0.08 - pos) ** 2) / 1.1);
+      if (k < 0.01) continue;
+      DRAW.util.rr(ctx, ox + c * (g.cw + g.gap), oy + r * (g.ch + g.gap), g.cw, g.ch, 9);
+      ctx.fillStyle = DRAW.rgba(T.BLUE, 0.16 * k); ctx.fill();
+      ctx.lineWidth = 1.6; ctx.strokeStyle = DRAW.rgba(T.BLUE, 0.45 * k); ctx.stroke();
+    }
+  };
+
   // ---------------------------------------------------------------- the chip that bounces off B's slot
   const B = { x: 1450, y: 640, w: 560, h: 520 };
   const SLOT_Y = B.y - B.h / 2;
@@ -161,8 +189,9 @@
   c(4, {
     ...K.rail(9),
     loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { ...LOOP0 } },
-    c09_crack: { type: 'path', d: 'M960,56 L932,112 L982,152 L944,200', sw: 4, color: T.RED, fill: 'rgba(12,15,22,0)', in: 'draw', dur: 0.6, at: 0 },
-    c09_ring: { type: 'ring', rad: 380, frac: 1, sw: 3, color: T.RED, o: 0.0, in: 'fade', from: { rad: 300, o: 0.9 }, dur: 2.2, ease: 'expo.out', at: 0.3 },
+    // the crack sits just above "think", inside title-safe (y ≥ 120)
+    c09_crack: { type: 'path', d: 'M962,122 L938,148 L978,170 L950,194', sw: 4, color: T.RED, fill: 'rgba(12,15,22,0)', in: 'draw', dur: 0.6, at: 0 },
+    c09_ring: { type: 'canvas', draw: 'c09_ring', z: 0, in: 'none', at: 0.02, params: { rad: 380, a: 0 }, paramsFrom: { rad: 300, a: 0.9 }, pdur: 2.4, pease: 'power3.out' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.5, clear: true, keep: ['rail', 'loop'] });
   // 316 (4.5) — the taxonomy names itself
   c(4.5, {
@@ -323,7 +352,8 @@
   // 337 (4.5) — the cells become the GRID (hand-off 9 → 10); the RAIL rewrites to "10"
   c(4.5, {
     c09_chart: 'quick', c09_row: 'none', c09_129: 'fade',
-    grid: { type: 'canvas', draw: 'grid', x: 960, y: 540, repos: REPOS, in: 'none', at: -0.04, params: { ...GRID129, reveal: 1, gold: -1, dim: 0.5, sweep: 0, split: 0 }, paramsFrom: { dim: 0 }, pdur: 3.3, pease: 'power1.inOut' },
-    rail: { ver: 10, at: 0.6, dur: 1.0 },
+    grid: { type: 'canvas', draw: 'grid', x: 960, y: 540, repos: REPOS, in: 'none', at: -0.04, params: { ...GRID129, reveal: 1, gold: -1, dim: 0.5, sweep: 0, split: 0 }, paramsFrom: { dim: 0 }, pdur: 3.375, pease: 'sine.in' },   // still settling at the cut (no still before it)
+    c09_scan: { type: 'canvas', draw: 'c09_scan', z: 2, in: 'none', at: 0.45, params: { pos: 12 }, paramsFrom: { pos: -2 }, pdur: 2.925, pease: 'none' },
+    rail: { ver: 10, at: 2.95, dur: 0.4 },   // the label switches in the last 0.43 s before the cut
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, exitLead: 0 });
 })();

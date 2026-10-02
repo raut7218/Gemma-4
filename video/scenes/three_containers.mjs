@@ -29,7 +29,15 @@ function makeCase(colorHex) {
   const fm = new THREE.MeshStandardMaterial({ color: 0x3a434e, roughness: 0.8, transparent: true, opacity: 1 });
   const floor = new THREE.Mesh(new RoundedBoxGeometry(3.5, 0.08, 2.5, 2, 0.03), fm);
   floor.position.y = 0.04; floor.receiveShadow = true; g.add(floor);
-  g.userData = { glass, edges, header, hm, fm };
+  // cool rim light caught on the case: bright thin strips along the back top edge and the two back
+  // uprights (where a light from behind grazes the glass), so each case separates from the dark ground
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0xcfeaff, emissive: C('#9fd4ff'), emissiveIntensity: 1.1, roughness: 0.3, transparent: true, opacity: 0.95 });
+  const rimG = new THREE.Group();
+  for (const [x, y, z, w, h, d] of [[0, 2.33, -1.33, 3.66, 0.035, 0.035], [-1.83, 1.12, -1.33, 0.035, 2.2, 0.035], [1.83, 1.12, -1.33, 0.035, 2.2, 0.035], [1.83, 2.33, 0, 0.035, 0.035, 2.66]]) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), rimMat); m.position.set(x, y, z); rimG.add(m);
+  }
+  g.add(rimG);
+  g.userData = { glass, edges, header, hm, fm, rimMat };
   return g;
 }
 
@@ -49,13 +57,17 @@ window.THREE_SCENES.containers = {
     const rim2 = new THREE.DirectionalLight(0x9fd4ff, 1.4); rim2.position.set(9, 2.5, -6); scene.add(rim2);
     scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x0b0e12, 0.55));
     // the plinth: a lighter stone than the slate blocks, with a darker skirt and a cool lit back edge
-    const plinth = new THREE.Mesh(new RoundedBoxGeometry(12, 0.36, 5.4, 4, 0.08), new THREE.MeshStandardMaterial({ color: 0x4a525c, roughness: 0.78 }));
+    // sized ≈1.3× the footprint of the cases on it: A alone (3.6 → 4.7 wide), widening to A + B side by
+    // side (8.8 → 11.4) as B arrives (render() scales it); 3.4 deep (2.6 × 1.3). A model's base, not a tabletop
+    const PW = 11.4, PD = 3.4;
+    const plinth = new THREE.Mesh(new RoundedBoxGeometry(PW, 0.36, PD, 4, 0.08), new THREE.MeshStandardMaterial({ color: 0x4a525c, roughness: 0.78 }));
     plinth.position.y = -0.18; plinth.receiveShadow = true; scene.add(plinth);
-    const skirt = new THREE.Mesh(new RoundedBoxGeometry(12.3, 0.12, 5.7, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x262c33, roughness: 0.9 }));
+    const skirt = new THREE.Mesh(new RoundedBoxGeometry(PW + 0.24, 0.12, PD + 0.24, 3, 0.05), new THREE.MeshStandardMaterial({ color: 0x262c33, roughness: 0.9 }));
     skirt.position.y = -0.41; scene.add(skirt);
     // the rim catching the plinth's back edge (a thin cool highlight, part of the plinth bevel)
-    const backEdge = new THREE.Mesh(new RoundedBoxGeometry(11.84, 0.05, 0.06, 2, 0.02), new THREE.MeshStandardMaterial({ color: 0x9fd4ff, emissive: C('#9fd4ff'), emissiveIntensity: 0.55, roughness: 0.4 }));
-    backEdge.position.set(0, -0.01, -2.66); scene.add(backEdge);
+    const backEdge = new THREE.Mesh(new RoundedBoxGeometry(PW - 0.16, 0.05, 0.06, 2, 0.02), new THREE.MeshStandardMaterial({ color: 0x9fd4ff, emissive: C('#9fd4ff'), emissiveIntensity: 0.55, roughness: 0.4 }));
+    backEdge.position.set(0, -0.01, -PD / 2 + 0.04); scene.add(backEdge);
+    const base = [plinth, skirt, backEdge];
 
     const A = makeCase(T.BLUE); scene.add(A);
     const B = makeCase(T.GREEN); scene.add(B);
@@ -92,7 +104,7 @@ window.THREE_SCENES.containers = {
     // the gold chip that travels from A to B
     const chip = new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.12, 0.42, 3, 0.05), new THREE.MeshStandardMaterial({ color: C(T.GOLD).multiplyScalar(0.3), roughness: 0.65, emissive: C(T.GOLD), emissiveIntensity: 0.8 }));
     chip.castShadow = true; chip.material.transparent = true; chip.renderOrder = 10; scene.add(chip);
-    this.s = { r, scene, cam, A, B, ws, tray, trayBase, plaques, file, wsB, testFile, bars, chip, spec };
+    this.s = { PW, PD, base, r, scene, cam, A, B, ws, tray, trayBase, plaques, file, wsB, testFile, bars, chip, spec };
     return Promise.resolve();
   },
   render(p, rec) {
@@ -100,12 +112,15 @@ window.THREE_SCENES.containers = {
     // placement: A alone at centre, or A left and B right
     const two = cl(p.two || 0);
     s.A.position.set(lerp(0, -2.6, two), 0, 0);
+    // the plinth widens with the layout (always ≈1.3× the cases' footprint)
+    const pw = lerp(4.7, s.PW, two); s.pw = pw;
+    s.base.forEach((m) => { m.scale.x = pw / s.PW; });
     // B is lowered onto the plinth from above only once A has moved clear (never through A or the plinth)
     const bk = Math.min(cl(p.bIn || 0), cl((two - 0.55) / 0.45)), be = 1 - Math.pow(1 - bk, 3);
     s.B.position.set(2.6, (1 - be) * 1.4, 0);
     s.B.visible = bk > 0.01;
     const ud = s.B.userData;
-    ud.glass.opacity = ud.glass.userData.o * bk; ud.edges.material.opacity = 0.85 * bk; ud.hm.opacity = bk; ud.fm.opacity = bk;
+    ud.glass.opacity = ud.glass.userData.o * bk; ud.rimMat.opacity = 0.95 * bk; ud.edges.material.opacity = 0.85 * bk; ud.hm.opacity = bk; ud.fm.opacity = bk;
     ud.hm.transparent = ud.fm.transparent = bk < 0.999; ud.hm.depthWrite = ud.fm.depthWrite = bk > 0.5;
     s.wsB.material.transparent = bk < 0.999; s.wsB.material.opacity = bk; s.wsB.material.depthWrite = bk > 0.5;
     s.A.visible = true;
@@ -139,7 +154,8 @@ window.THREE_SCENES.containers = {
     const vd = cl(p.verdict || 0);
     ud.hm.emissiveIntensity = 0.25 + 0.35 * vd; ud.edges.material.opacity = Math.min(1, ud.edges.material.opacity + 0.15 * vd);
     // the chip: appears on A's workspace as the arc starts (the 2D chip lands there), arcs to B's workspace
-    const arc = cl(p.chipArc || 0), ch = Math.max(cl(p.chipIn || 0), cl((arc - 0.085) / 0.12));
+    // chipLag delays the arc inside the same tween (the 2D chip lands first, then the 3D one takes over)
+    const lag = p.chipLag || 0, arc = cl(((p.chipArc || 0) - lag) / (1 - lag)), ch = Math.max(cl(p.chipIn || 0), cl((arc - 0.085) / 0.12));
     s.chip.visible = arc > 0.085 && (p.chipGone || 0) < 0.99;
     const ax = s.A.position.x - 0.55, bx = s.B.position.x - 0.55;
     // rests on top of the workspace block (top at y 0.98), sinks into B's block when applied
@@ -160,6 +176,10 @@ window.THREE_SCENES.containers = {
     // screen bounding boxes of the two rims (top edges), for the 2D outlines that take over
     const box = (o) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const sx of [-1.81, 1.81]) for (const sz of [-1.31, 1.31]) { const q = P(o.x + sx, o.y + 2.32, o.z + sz); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); } return [x0, y0, x1, y1]; };
     AN.aRim = box(a); AN.bRim = box(b);
+    // the plinth's screen box (all eight skirt corners), for framing checks
+    { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const sy of [0, -0.47]) { const q = P(sx * (s.pw / 2 + 0.12), sy, sz * (s.PD / 2 + 0.12)); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); } AN.plinth = [x0, y0, x1, y1]; }
+    // the cases' screen box (A, and B when it is in), header included
+    { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const o of s.B.visible ? [a, b] : [a]) for (const sx of [-1.81, 1.81]) for (const sz of [-1.31, 1.31]) for (const sy of [0, 2.32]) { const q = P(o.x + sx, o.y + sy, o.z + sz); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); } AN.cases = [x0, y0, x1, y1]; }
     AN.aBase = P(a.x, a.y - 0.1, a.z + 1.4); AN.bBase = P(b.x, b.y - 0.1, b.z + 1.4);
     AN.bWs = P(b.x - 0.55, b.y + 1.05, b.z + 0.1); AN.bTest = P(b.x, b.y + 1.1, b.z + 0.35);
     AN.chip = P(s.chip.position.x, s.chip.position.y + 0.2, s.chip.position.z);

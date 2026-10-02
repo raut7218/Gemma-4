@@ -31,11 +31,13 @@
   // its "call a tool" node, readable, top to bottom in group order
   const LOFF = [-400, -140];
   const CALL1 = [CALL[0] + LOFF[0], CALL[1] + LOFF[1]];
-  const FAN = (i) => { const a = (-70 + i * 17.5) * Math.PI / 180; return [CALL1[0] + 720 * Math.cos(a), CALL1[1] + 450 * Math.sin(a)]; };
+  const FAN = (i) => { const a = (-70 + i * 17.5) * Math.PI / 180; return [CALL1[0] + 720 * Math.cos(a), CALL1[1] + 400 * Math.sin(a)]; };   // 400: the top and bottom tiles stay inside title-safe
   // the return: the nine tiles as a true ring around a centred loop
-  const RC = [770, 540];
+  // centred further right (the ring was left-heavy) and a touch smaller, so the ring, the two dashed
+  // extension rings and the right-hand text column all sit inside title-safe
+  const RC = [860, 545];
   const RANG = [-90, -50, -10, 30, 62, 118, 150, 190, 230];
-  const RING2 = (i) => { const a = RANG[i] * Math.PI / 180; return [RC[0] + 425 * Math.cos(a), RC[1] + 315 * Math.sin(a)]; };
+  const RING2 = (i) => { const a = RANG[i] * Math.PI / 180; return [RC[0] + 400 * Math.cos(a), RC[1] + 290 * Math.sin(a)]; };
   const RL_ = () => ({ cx: 960, cy: 560, r: 170, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 });
   // close-ups keep the toolbar pinned: almost no camera drift
   const cc = (b, d, o = {}) => c(b, d, Object.assign({ drift: 0.15 }, o));
@@ -194,7 +196,7 @@
 
   // extension rings (dashed arcs outside the tool arc)
   DRAW.c06_ext = (ctx, p) => {
-    [[600, 410, p.a1 ?? 0, T.TEAL], [652, 455, p.a2 ?? 0, T.BLUE]].forEach(([rx, ry, k, col]) => {
+    [[560, 370, p.a1 ?? 0, T.TEAL], [600, 405, p.a2 ?? 0, T.BLUE]].forEach(([rx, ry, k, col]) => {
       if (k <= 0) return;
       const pts = [];
       for (let j = 0; j <= 120; j++) { const a = -Math.PI / 2 + (j / 60 - 1) * Math.PI; pts.push([RC[0] + rx * Math.cos(a), RC[1] + ry * Math.sin(a)]); }
@@ -213,7 +215,12 @@
   // c06 tiles take over at exactly those pixels on the first frame (exitLead 0, enterDelay 0, exit 'none').
   // Everything eases IN from rest (power2.inOut) and keeps moving through the whole composition.
   const ARC5 = (i) => { const y = 160 + i * 95 - 10; return [1150 + 470 * Math.sqrt(1 - ((y - 540) / 560) ** 2) - 14, y]; };
+  // the chapter-5 tiles (c05_tt*) must vanish on the very frame the c06 tiles appear (the engine's own
+  // exit is staggered by up to 0.15 s, so both sets drew on top of each other: a one-frame brightness pop)
+  const lastEls = FILM.COMPS.length ? FILM.COMPS[FILM.COMPS.length - 1].els : {};
+  const handOver = Object.fromEntries(NAMES.map((_, i) => 'c05_tt' + i).filter((id) => lastEls[id]).map((id) => [id, { o: 0, at: -0.003, dur: 0.001, ease: 'none' }]));
   c(4.5, {
+    ...handOver,
     ...K.rail(6),
     loop: { type: 'canvas', draw: 'loop', x: 960 + LOFF[0], y: 540 + LOFF[1], params: { ...L0, ring: 0 }, pdur: 0.9, pease: 'power2.inOut', from: { x: 960, y: 540, o: 1, s: 1 }, at: 0, dur: 3.0, ease: 'power2.inOut' },
     ...tilesAt((i) => ({ type: 'box', x: FAN(i)[0], y: FAN(i)[1], w: 390, h: 60, rad: 12, sw: 2.5, stroke: T.TEAL, fill: FILL0, versions: tileHtml(i), ver: 0, size: 30, z: 5, in: 'fade',
@@ -231,6 +238,7 @@
     };
   };
   c(4, {
+    ...Object.fromEntries(Object.keys(handOver).map((id) => [id, null])),
     loop: { x: 340, y: 540, s: 0.75, params: { ...L0, ring: 0 }, pdur: 0.5, dur: 1.3, ease: 'expo.inOut' },
     c06_cap: 'left',
     ...arcTiles((i) => ({ fill: FILL0, ver: 0, o: GROUP[i] === 0 ? 1 : 0.4, rad: 14, sw: 2, at: 0.05 + i * 0.05, dur: 1.2, ease: 'expo.inOut' })),

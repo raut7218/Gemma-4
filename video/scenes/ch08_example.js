@@ -70,6 +70,15 @@
       ctx.restore();
     });
   };
+  // the inactive side panel during a push: an opaque veil in world space (moves with the camera) that covers
+  // the strip of the third panel peeking in at the frame edge, so no cropped panel or text shows; l/r 0..1
+  DRAW.c08_hide = (ctx, p) => {
+    const l = clamp(p.l || 0), r = clamp(p.r || 0);
+    ctx.save(); ctx.fillStyle = T.BG;
+    if (r > 0.001) { ctx.globalAlpha = r; const g = ctx.createLinearGradient(1272, 0, 1286, 0); g.addColorStop(0, rgba(T.BG, 0)); g.addColorStop(1, T.BG); ctx.fillStyle = g; ctx.fillRect(1272, -600, 1400, 2300); }
+    if (l > 0.001) { ctx.globalAlpha = l; const g = ctx.createLinearGradient(648, 0, 634, 0); g.addColorStop(0, rgba(T.BG, 0)); g.addColorStop(1, T.BG); ctx.fillStyle = g; ctx.fillRect(-800, -600, 1448, 2300); }
+    ctx.restore();
+  };
   const MET = (o) => Object.assign({ rev: 1, b: 0, k: 0, t: 0, time: 0 }, o);
   const meterEl = (params, o = {}) => Object.assign({ type: 'canvas', draw: 'c08_met', mx: 1370, z: 3, in: 'fade', dur: 0.3, params: MET(params) }, o);
   const callsEl = (val, o = {}) => Object.assign({ type: 'num', val, size: 120, color: T.YELLOW, x: 1720, y: 430, in: 'fade', z: 3 }, o);
@@ -103,14 +112,18 @@
   };
   const logClear = () => { const d = {}; LOG.forEach((r) => { if (!r.gone) d[r.id] = 'fade'; }); LOG = []; scroll = 0; return d; };
   const lastY = () => { const r = LOG[LOG.length - 1]; return LTOP + r.y0 - scroll + r.h / 2; };
-  // camera clamp: the panel tops (world y 180) stay >= 120 px below the frame top, including the drift
-  // (drift scales by up to 2.8 % and lifts the centre 8 px), so the HUD rail never sits over a panel header
-  const PTOP = 180;
-  const cl = (x, y, s) => ({ x, y: Math.min(y, PTOP + 8 + 420 / (s * 1.028)), s });
-  const camLog = () => cl(480, 522, 1.22);          // the whole call-log panel + the whole centre panel
-  const METCAM = cl(1395, 540, 1.24);               // the whole centre panel + the whole meters panel
+  // camera fit: frame a world box [x0..x1]×[y0..y1] inside title-safe (≥60 px from the sides and bottom, ≥120 px
+  // from the top where the rail sits) INCLUDING the drift at its end (scale ×(1+0.028d), x ±22d, y −8d), so a
+  // push is a change of scale onto whole panels, never a pan that crops one
+  const fit = (x0, x1, y0, y1, d = 1) => {
+    const s = Math.min(1800 / (x1 - x0 + 44 * d + 8), 900 / (y1 - y0 + 16 * d + 8)) / (1 + 0.028 * d);
+    return { x: (x0 + x1) / 2, y: (y0 + y1) / 2 - 30 / s, s: +s.toFixed(4) };
+  };
+  const PY0 = 180, PY1 = 940;                         // panel tops / bottoms (world)
+  const camLog = () => fit(20, 1270, PY0, PY1);       // the whole call-log panel + the whole centre panel
+  const METCAM = fit(650, 1900, PY0, PY1);            // the whole centre panel + the whole meters panel
   const CAMCODE = METCAM;                           // code close-ups: the centre panel whole, meters beside it
-  const WIDE = { x: 960, y: 545, s: 1 };            // all three panels (use drift 0.4: edges never cropped)
+  const WIDE = fit(20, 1900, PY0, PY1, 0.4);         // all three panels (drift 0.4)
   const call = (n, tool, rest = '') => `<span class="c-dim">${n}&ensp;</span>${m(tool, T.TEAL)}${rest ? '&ensp;' + rest : ''}`;
   const cmd = (s) => m(esc(s), T.INK);
   const strip = (s) => `<div style="background:rgba(88,196,221,0.13);border-left:5px solid #58C4DD;padding:0 12px;width:510px;box-sizing:border-box">${s}</div>`;
@@ -127,6 +140,7 @@
   const CODE_IDS = ['c08_code', 'c08_code_frame', 'c08_code_title', 'c08_scroll'];
 
   // ================================================================ compositions
+  const I0 = FILM.COMPS.length;
   // 271 (3.5) — WIDE container A opens into three panels
   c(3.5, {
     ...K.rail(8),
@@ -137,9 +151,9 @@
     c08_wash: { type: 'canvas', draw: 'c08_wash', z: 1, in: 'none', at: 0.0, params: { k: 1 }, paramsFrom: { k: 0 }, pdur: 2.0, pease: 'power1.out' },
     c08_calls: callsEl(0, { in: 'pop', at: 0.85, dur: 0.8 }),
     c08_callsL: { type: 'text', html: cap('tool calls'), size: 24, color: T.DIM, x: 1720, y: 510, in: 'wipe', at: 1.05, dur: 1.0 },
-    // the cut frame is exact (camera at 960/540/1); the slow drift only starts once the comp is under way
-    // (it stays inside the frame: panel edges >= 16 px from the sides), and comp 272 eases back to WIDE
-  }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht', ...(HAS7 ? [PL, PR, PLH, PRH] : [])], cam: { x: 960, y: 540, s: 1 }, drift: 1 });
+    // the cut frame is exact (the camera eases from ch7's 960/540/1 over the first second); it settles back to
+    // WIDE so all three panels sit whole inside title-safe
+  }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht', ...(HAS7 ? [PL, PR, PLH, PRH] : [])], cam: WIDE, drift: 0.4 });
   // 272 (4.5) — the honesty tag, kept for the whole chapter
   // (a slow pull-back keeps all three panels whole; the workspace label is the layered second action)
   c(4.5, {
@@ -297,7 +311,7 @@
   }, { drift: 0.4, sfx: [0, 1, 2, 3, 4].map((i) => ({ at: 0.25 + i * 0.1, kind: 'tick' })) });
   // 300 (2.5) — reading beat: "this is where it's decided" stays bright; the rest sinks
   const DIMS = ['contA', 'contA_hd', 'contA_ht', PL, PR, PLH, 'c08_chip', 'c08_B', 'c08_B_hd', 'c08_B_ht', 'c08_q', ...Object.keys(cells), ...LOG.filter((r) => !r.gone).map((r) => r.id)];
-  c(2.5, { ...Object.fromEntries(DIMS.map((k) => [k, { o: 0.33, dur: 0.6 }])), c08_dec: { s: 1.08, dur: 1.4, ease: 'expo.out' } }, { cam: cl(960, 760, 1.06), drift: 0.4 });
+  c(2.5, { ...Object.fromEntries(DIMS.map((k) => [k, { o: 0.33, dur: 0.6 }])), c08_dec: { s: 1.08, dur: 1.4, ease: 'expo.out' } }, { cam: fit(20, 1900, PY0, 1030, 0.4), drift: 0.4 });
 
   // 301 (4.5) — FULL "Same task. Careless agent."
   logClear();
@@ -343,6 +357,13 @@
     ...K.chip('c08_chip', { x: 960, y: 800, s: 1.2, at: 0.5 }),
     c08_chipL2: { type: 'text', html: `${m('src/stats.py')} + ${m('notes.txt', T.RED)}`, size: 26, x: 960, y: 880, in: 'fade', at: 0.8 },
   }, { drift: 0.4, sfx: [{ at: 0.55, kind: 'pop' }] });
+  // every dashboard comp gets the side veil matching its framing: pushed on log+centre → veil the meters strip,
+  // pushed on centre+meters → veil the call-log strip, WIDE → none (eased with the camera move)
+  for (let k = I0; k < FILM.COMPS.length; k++) {
+    const cp = FILM.COMPS[k]; if (!cp.els.contA) continue;
+    const cx = (cp.cam && cp.cam.x) ?? 960;
+    cp.els = Object.assign({}, cp.els, { c08_hide: { type: 'canvas', draw: 'c08_hide', z: 9, in: 'none', params: { l: cx > 1020 ? 1 : 0, r: cx < 900 ? 1 : 0 }, pdur: Math.min(1.1, cp.d * 0.45), pease: 'power3.inOut' } });
+  }
   // 308 (2) — split: careful (left) vs careless (right), meters side by side
   const keepTag = ['rail', 'c08_tag', 'c08_tp'];
   const dl = logClear();
@@ -355,7 +376,7 @@
     c08_hA: { type: 'text', html: 'careful', size: 52, color: T.GREEN, x: 590, y: 220, in: 'left', at: 0.1 },
     c08_hB: { type: 'text', html: 'careless', size: 52, color: T.RED, x: 1420, y: 220, in: 'right', at: 0.1 },
     c08_div: { type: 'rect', x: 1010, y: 560, w: 3, h: 640, fill: '#3A4654', in: 'growh', at: 0.1 },
-  }, { clear: true, keep: keepTag, cut: true });
+  }, { clear: true, keep: keepTag, cut: true, cam: { x: 960, y: 575, s: 0.96 } });
   void dl;
   // 309 (4.5) — the lesson
   c(4.5, {
@@ -368,33 +389,33 @@
   // 311 (2) — the careful run compresses into icons: find → read → write repro → run repro → fix
   const ICON = ['find', 'read', 'write repro', 'run repro', 'fix', 're-run', 'test', 'check', 'submit'];
   const TOOLS = ['run_command', 'read_file', 'run_command', 'run_command', 'edit_file', 'run_command', 'run_command', 'run_command', 'submit_patch'];
-  const IX = (i) => 128 + i * 208, IY = 520;
-  const icon = (i, at) => ({ type: 'box', w: 198, h: 96, x: IX(i), y: IY, stroke: i === 8 ? T.GOLD : i === 4 ? T.GOLD : T.BLUE, fill: 'rgba(21,26,33,0.96)', rad: 48, html: ICON[i], size: 34, in: 'scale', from: { x: 960, y: 560, s: 0.3, o: 0 }, at, dur: 0.8, ease: 'expo.out', z: 4 });
+  const IX = (i) => 960 + (i - 4) * 200, IY = 520, IW = 184;   // nine pills inside title-safe (68 … 1852)
+  const icon = (i, at) => ({ type: 'box', w: IW, h: 96, x: IX(i), y: IY, stroke: i === 8 ? T.GOLD : i === 4 ? T.GOLD : T.BLUE, fill: 'rgba(21,26,33,0.96)', rad: 48, html: ICON[i], size: 31, in: 'scale', from: { x: 960, y: 560, s: 0.3, o: 0 }, at, dur: 0.8, ease: 'expo.out', z: 4 });
   const splitOut = Object.fromEntries(['c08_mA', 'c08_mB', 'c08_nA', 'c08_nB', 'c08_nAL', 'c08_nBL', 'c08_hA', 'c08_hB', 'c08_div', 'c08_les1', 'c08_les2'].map((k) => [k, 'fade']));
   c(2, {
     ...splitOut,
     ...Object.fromEntries([0, 1, 2, 3, 4].map((i) => ['c08_i' + i, icon(i, 0.2 + i * 0.1)])),
-    ...Object.fromEntries([1, 2, 3, 4].map((i) => ['c08_ia' + i, { type: 'text', html: '→', size: 30, color: T.DIM, x: IX(i) - 104, y: IY, in: 'fade', at: 0.5 + i * 0.1, z: 5 }])),
+    ...Object.fromEntries([1, 2, 3, 4].map((i) => ['c08_ia' + i, { type: 'text', html: '→', size: 30, color: T.DIM, x: IX(i) - 100, y: IY, in: 'fade', at: 0.5 + i * 0.1, z: 5 }])),
     c08_ih: { type: 'text', html: 'the careful run, <span class="c-dim">as a recipe</span>', size: 56, x: 960, y: 360, in: 'fade', at: 0.3 },
   }, { cut: true, sfx: [0, 1, 2, 3, 4].map((i) => ({ at: 0.25 + i * 0.1, kind: 'tick' })) });
   // 312 (2) — → re-run → test → check → submit
   c(2, {
     ...Object.fromEntries([5, 6, 7, 8].map((i) => ['c08_i' + i, icon(i, 0.1 + (i - 5) * 0.12)])),
-    ...Object.fromEntries([5, 6, 7, 8].map((i) => ['c08_ia' + i, { type: 'text', html: '→', size: 30, color: T.DIM, x: IX(i) - 104, y: IY, in: 'fade', at: 0.3 + (i - 5) * 0.12, z: 5 }])),
+    ...Object.fromEntries([5, 6, 7, 8].map((i) => ['c08_ia' + i, { type: 'text', html: '→', size: 30, color: T.DIM, x: IX(i) - 100, y: IY, in: 'fade', at: 0.3 + (i - 5) * 0.12, z: 5 }])),
   }, { sfx: [0, 1, 2, 3].map((i) => ({ at: 0.15 + i * 0.12, kind: 'tick' })) });
   // 313 (2) — the first five icons name their tools
   const tname = (i, at) => ({ type: 'text', html: m(TOOLS[i], T.TEAL), size: 25, x: IX(i), y: IY + 86, in: 'rise', at, z: 4 });
   // (the last four names start entering in the closing half-second, so they are fully up as 314 begins)
   c(2, Object.fromEntries([0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => ['c08_tn' + i, tname(i, i < 5 ? 0.1 + i * 0.15 : 1.05 + (i - 5) * 0.1)])));
-  // 314 (2) — the last four; the line cracks red at "submit"; the LOOP returns; RAIL → 09
-  const fadeAll = Object.fromEntries([...[0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => ['c08_i' + i, 'c08_tn' + i]), ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => 'c08_ia' + i), 'c08_ih'].map((k) => [k, { o: 0, dur: 0.45, at: 0.95, ease: 'power2.in' }]));
+  // 314 (2) — the line cracks red at "submit"; the recipe row and its title CLEAR FIRST (gone by +0.75 s), and only
+  // then does the LOOP draw on (+0.8 → +1.5 s, still drawing into the cut), so no arc ever crosses a pill or the title; RAIL → 09
+  const fadeAll = Object.fromEntries([...[0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => ['c08_i' + i, 'c08_tn' + i]), ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => 'c08_ia' + i), 'c08_ih'].map((k) => [k, { o: 0, dur: 0.4, at: 0.35, ease: 'power2.in' }]));
   c(2, {
     ...fadeAll, c08_tag: 'fade', c08_tp: 'fade',
-    // the "submit" pill cracks red: a red overlay + crack appear at once, hold, then swell a touch and fade
-    // with the rest (expo.in: ~full until +0.95 s, gone by +1.4 s), so nothing is left beside the LOOP
-    c08_i8r: { type: 'box', w: 198, h: 96, x: IX(8), y: IY, stroke: T.RED, fill: 'rgba(252,98,85,0.22)', rad: 48, html: ICON[8], size: 34, z: 5, in: 'fade', o: 0, s: 1.1, from: { o: 1, s: 1 }, at: 0.45, dur: 0.95, ease: 'expo.in' },
-    c08_crack: { type: 'path', d: `M${IX(8) - 10},${IY - 70} L${IX(8) + 14},${IY - 20} L${IX(8) - 12},${IY + 16} L${IX(8) + 10},${IY + 70}`, sw: 4, color: T.RED, fill: 'rgba(12,15,22,0)', z: 6, in: 'fade', o: 0, from: { o: 1 }, at: 0.45, dur: 0.95, ease: 'expo.in' },
-    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { cx: 960, cy: 540, r: 300, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 }, paramsFrom: { draw: 0, labels: 0 }, in: 'fade', dur: 0.3, at: 0.95, pdur: 0.55, pease: 'power2.out' },
-    rail: { ver: 9 },
-  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [{ at: 0.5, kind: 'tick' }] });
+    // the "submit" pill cracks red at once, swells a touch and fades with the row (expo.in: gone by +0.75 s)
+    c08_i8r: { type: 'box', w: IW, h: 96, x: IX(8), y: IY, stroke: T.RED, fill: 'rgba(252,98,85,0.22)', rad: 48, html: ICON[8], size: 31, z: 5, in: 'fade', o: 0, s: 1.1, from: { o: 1, s: 1 }, at: 0.05, dur: 0.7, ease: 'expo.in' },
+    c08_crack: { type: 'path', d: `M${IX(8) - 10},${IY - 70} L${IX(8) + 14},${IY - 20} L${IX(8) - 12},${IY + 16} L${IX(8) + 10},${IY + 70}`, sw: 4, color: T.RED, fill: 'rgba(12,15,22,0)', z: 6, in: 'fade', o: 0, from: { o: 1 }, at: 0.05, dur: 0.7, ease: 'expo.in' },
+    loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { cx: 960, cy: 540, r: 300, draw: 1, labels: 1, ring: 0, dot: -1, exit: 0, hi: -1 }, paramsFrom: { draw: 0, labels: 0 }, in: 'fade', dur: 0.3, at: 0.8, pdur: 0.7, pease: 'sine.out' },
+    rail: { ver: 9, at: 1.1, dur: 0.35 },   // the label switches in the last 0.4 s before the cut
+  }, { cam: { x: 960, y: 540, s: 1 }, drift: 0, sfx: [{ at: 0.1, kind: 'tick' }] });
 })();
