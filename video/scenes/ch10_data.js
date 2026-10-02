@@ -432,9 +432,26 @@
   // 374 (4.5) — the zip settles at the centre (hand-off 10 → 11) with v1 and v2 fanned behind it and the log
   // line still feeding it: a gold pulse travels up from "config" into the zip until the cut; the RAIL rewrites to "11".
   // v3 stays under the zip as its opaque backing (label and stroke fade into the zip's).
+  // gold dots stream from the log's "config" cell over the fanned versions into the zip (a continuous flow; f grows
+  // linearly, three dots a third of a cycle apart, each fading in and out along its path)
+  DRAW.c10_feed = (ctx, p) => {
+    const { clamp } = DRAW.util;
+    const P0 = [CFX, LOGY - 40], P1 = [520, 690], P2 = [880, 640], f = p.f || 0, a = clamp(p.a ?? 1);
+    for (let j = 0; j < 3; j++) {
+      const g = f - j / 3; if (g < 0) continue;
+      const u = g - Math.floor(g), k = Math.sin(Math.PI * u) * a; if (k <= 0.01) continue;
+      const x = (1 - u) * (1 - u) * P0[0] + 2 * u * (1 - u) * P1[0] + u * u * P2[0];
+      const y = (1 - u) * (1 - u) * P0[1] + 2 * u * (1 - u) * P1[1] + u * u * P2[1];
+      ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fillStyle = DRAW.rgba(T.GOLD, 0.22 * k); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fillStyle = DRAW.rgba(T.GOLD, 0.95 * k); ctx.fill();
+    }
+  };
   c(4.5, {
-    c10_v1: { x: 620, y: 575, r: -11, dur: 3.3, ease: 'power2.out', at: 0.1 },
-    c10_v2: { x: 790, y: 556, r: -5, dur: 3.3, ease: 'power2.out', at: 0.15 },
+    // v1 and v2 keep fanning out slowly into the cut (a long sine tween that is still under way at the cut; ch11
+    // clears them), so the last second before the hand-off is not frozen; the zip itself lands exactly
+    c10_v1: { x: 585, y: 600, r: -14, dur: 4.6, ease: 'sine.inOut', at: 0.1 },
+    c10_v2: { x: 772, y: 572, r: -7, dur: 4.6, ease: 'sine.inOut', at: 0.15 },
+    c10_feed: { type: 'canvas', draw: 'c10_feed', z: 8, in: 'fade', at: 0.3, dur: 0.6, params: { f: 3.2, a: 1 }, paramsFrom: { f: 0 }, pdur: 3.1, pease: 'none' },
     c10_v3: { x: 960, y: 540, ver: 1, stroke: T.GOLD, dur: 1.4, ease: 'power3.out', at: 0.1 },
     c10_zz: 'quick',
     c10_la: { x2: 760, y2: 660, bend: -40, flow: 3.6, dur: 3.3, ease: 'none', at: 0.05 },
