@@ -31,7 +31,7 @@
     hl: { type: 'rect', x: CODE_X, y: lineY(6), w: 900, h: LINE_H + 8, fill: 'rgba(252,98,85,0.16)', rad: 8, in: 'grow', z: 2 },
     tick: { type: 'rect', x: CODE_X - 474, y: lineY(6), w: 9, h: LINE_H, fill: T.RED, rad: 3, in: 'growh', z: 3, at: 0.25 },
     bug: { type: 'text', html: '<span class="cap" style="font-size:1em">the bug</span>', size: 26, color: T.RED, x: CODE_X + 375, y: lineY(6), in: 'right', at: 0.45 },
-  }, { cam: { x: 1270, y: 612, s: 1.5 }, sfx: [{ at: 0.3, kind: 'tick' }] });
+  }, { cam: { x: 1270, y: 598, s: 1.5 }, sfx: [{ at: 0.3, kind: 'tick' }] });
   // 4 (4) — the line splits: the removed line rises in red
   c(4, {
     bug: 'fade',
@@ -39,11 +39,11 @@
     hl: { y: lineY(6.5), h: LINE_H * 2 + 16, w: 920, fill: 'rgba(240,172,95,0.07)' },
     tick: { y: lineY(6.5), h: LINE_H * 2 + 8, fill: T.GOLD },
     del: { type: 'mono', html: '<span class="del">-   return total / len(xs)</span>', size: SZ, align: 'left', ax: 0, x: CODE_X - 420, y: lineY(6), z: 4, in: 'fade', from: { y: lineY(6) + 12, o: 1 }, dur: 1.2, ease: 'power3.inOut', at: 0.3 },
-  }, { cam: { x: 1290, y: 615, s: 1.5 } });
+  }, { cam: { x: 1290, y: 601, s: 1.5 } });
   // 5 (3.5) — the added line drops in, in gold
   c(3.5, {
     add: { type: 'mono', html: '<span style="color:#F0AC5F">+   return total / len(xs) if xs else 0</span>', size: SZ, align: 'left', ax: 0, x: CODE_X - 420, y: lineY(7), z: 4, in: 'fade', from: { y: lineY(7) - 14, o: 0 }, dur: 1.2, ease: 'power3.out', at: 0.15 },
-  }, { cam: { x: 1310, y: 620, s: 1.52 } });
+  }, { cam: { x: 1310, y: 606, s: 1.52 } });
   // 6 (3) — [SIG1] the two diff lines collapse into the gold chip, which grows out of them on the same pixels
   const FX = CODE_X - 60, FY = lineY(6.5);
   c(3, {
@@ -69,9 +69,9 @@
     tLabel: { type: 'text', html: 'hidden tests', size: 40, color: T.DIM, x: BOX.x, y: BOX.y - 92, in: 'rise', at: 0.5 },
   });
   // 9 (3) — the left type rolls to its next line
-  c(3, { lead: { ver: 1 }, tLabel: { color: T.INK, at: 0.3 } });
+  c(3, { lead: { ver: 1 }, tLabel: { color: T.INK, at: 0.3 } }, { cam: { x: 1120, y: 560, s: 1.16 } });
   // 10 (3) — "Never shown to the agent."
-  c(4, { lead: { ver: 2 }, tLabel: { color: T.DIM, at: 0.3 } });
+  c(4, { lead: { ver: 2 }, tLabel: { color: T.DIM, at: 0.3 } }, { cam: { x: 880, y: 535, s: 1.12 } });
   // 11 (3) — CLOSE on B: pytest types, the bars turn green one by one
   const green = {};
   for (let i = 0; i < 6; i++) green['tb' + i] = { fill: T.GREEN, at: 0.75 + 0.2 * i, dur: 0.3, ease: 'power2.out' };
@@ -121,8 +121,8 @@
     title: { type: 'text', html: 'The <span class="c-blue">Gemma 4</span> Developer Agent<br>Competition', size: 112, lh: 1.12, x: 960, y: 500, in: 'wipe', dur: 1.3, at: 0.6 },
   }, { cut: true });
   // 22–24 — three constraints, entering from alternating sides (the title leaves toward the camera first)
-  c(4, { kicker: 'quick', title: 'zoom', oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 330, in: 'left', at: 0.8 } });
-  c(4, { k2: { type: 'text', html: 'Real <span class="c-red">bugs</span>.', size: 120, x: 960, y: 520, in: 'right' } });
+  c(4, { kicker: 'quick', title: { s: 1.45, o: 0, dur: 1.2, ease: 'power2.in' }, oneopen: { type: 'text', html: 'One open model.', size: 120, x: 960, y: 330, in: 'left', at: 0.8 } });
+  c(4, { title: null, k2: { type: 'text', html: 'Real <span class="c-red">bugs</span>.', size: 120, x: 960, y: 520, in: 'right' } });
   c(4, { k3: { type: 'text', html: 'No <span class="c-red">internet</span>.', size: 120, x: 960, y: 710, in: 'left' } });
   // 25 (3.5) — the organizers' goal, line 1 (the grid leaves: no type over the lock pattern)
   const Q1 = '“Post-train an open model into a reliable agent that navigates complex codebases';
@@ -153,7 +153,7 @@
   }, { cut: true, cam: { x: 960, y: 540, s: 1 } });
   // 30 (4.5) — "17 chapters · 24 minutes"; tick 01 carries its name — this name IS the rail tag
   c(4.5, {
-    count: { type: 'text', html: '<span class="c-yellow">17</span> chapters&ensp;·&ensp;<span class="c-yellow">24</span> minutes', size: 76, align: 'left', ax: 0, x: 560, y: 520, in: 'wipe' },
+    count: { type: 'text', html: '<span class="c-yellow">17</span> chapters&ensp;·&ensp;<span class="c-yellow">24</span> minutes', size: 92, align: 'left', ax: 0, x: 560, y: 520, in: 'wipe' },
     ...K.rail(1, { x: 380, y: 170, size: 40, in: 'right' }),
   });
   // 31 (2.5) — tick 01's name glides to the top-left and settles at the rail's exact pixels

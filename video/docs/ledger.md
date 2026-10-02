@@ -92,3 +92,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 
 ## Film critic round 2 — film 0–450 (ch0–4) — one more pass (11 items; re-check: 14 fixed, 11 partly, 5 not) — docs/critic/r2_a.md
 - Seam stills fixed by a fixer agent (measured longest still ≤ 0.25 s at each of the six seams). Engine: pdur/pease no longer carry over from an element's previous update (a carried loop had inherited a 1.4 s tween and stopped early).
+- ch00 round-2 fixes: varied camera through the container section (#4), code panel lowered further (#12), title exit eased over 1.2 s instead of a 0.4 s whip (#8), '17 chapters · 24 minutes' larger.
