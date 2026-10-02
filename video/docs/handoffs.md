@@ -25,3 +25,5 @@ Shared constants: `GRID120 = { cols: 12, rows: 10, cw: 112, ch: 64, gap: 14 }` c
 | 16 → 17 | `chip` | `K.chip('chip', {x:960, y:540, s:1.6})`. |
 
 Note 12 → 13: ch12's last comp also creates the six slots with ch13's ids (`c13_sb0–5`, `c13_sl0–5`) and ch13's exact spec, so ch13's first comp carries them on. If ch13's slot spec changes, change ch12's copy identically.
+
+Note 15 → 16: ch15's last comp creates ch16's nine lever bars with ch16's ids (`c16_b0..8`) so they start growing before the cut; keep their specs identical in both files.

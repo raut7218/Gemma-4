@@ -196,7 +196,7 @@
     ...lift([6, 7, 8]), ...head(6), c16_fail: 'fade', c16_funnel: 'fade',
     c16_rest: { type: 'canvas', draw: 'c16_rest', x: 960, y: 540, in: 'fade', at: 0.35, params: { k: 1, a: 1 }, paramsFrom: { k: 0 }, pdur: 1.8, pease: 'power2.out' },
     c16_rl: { type: 'rect', x: 1800, y: 520, ay: 1, w: 60, h: 330, fill: 'rgba(154,163,173,0.28)', rad: 6, in: 'growh', at: 0.6, dur: 1.4 },
-    c16_rlL: cap('RL · only after SFT', { x: 1780, y: 575, size: 24, at: 1.0 }),
+    c16_rlL: cap('RL · only after SFT', { x: 1860, ax: 1, align: 'right', y: 625, size: 24, at: 1.0 }),
   });
   // 524 (4.5) all reading cards gather into one pile
   const barsOut = {};
