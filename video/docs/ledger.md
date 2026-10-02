@@ -89,3 +89,5 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - ch13/ch14 fixes for film round 1 items 2, 3, 11, 12, 13 applied by a fixer agent.
 - ch15/16/17 fixes for film round 1 items 1, 4–10, 14, 15 applied by a fixer agent (full seven-file tree; end frame holds ~3.8 s; rail-tick beat folded into the deadline comp; Q2→eval_config.yaml and Q6→adapters/ are our reading of F70 — the questions stay tagged 'hypotheses').
 - ch07 fixes for film round 1 items 2–9, 12–14 applied by a fixer agent (B same case as A, chip ΔE 7.9–8.2 inside B, single chip, 2D↔3D transitions, rim light).
+
+## Film critic round 2 — film 0–450 (ch0–4) — one more pass (11 items; re-check: 14 fixed, 11 partly, 5 not) — docs/critic/r2_a.md
