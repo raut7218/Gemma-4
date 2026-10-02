@@ -160,7 +160,10 @@
   const fade = {};
   for (let k = 2; k <= 17; k++) fade['tk' + k] = 'fade';
   c(2.5, {
-    ...fade, tline: 'fade', count: 'left',
+    // the count line recedes across the whole comp (slides left, shrinks, fades out exactly at the cut), so the
+    // second after the rail tag lands is not frozen
+    ...fade, tline: 'fade',
+    count: { x: 470, y: 512, s: 0.9, o: 0, dur: 1.85, ease: 'power2.in' },
     tk1: { x: 66, y: 66, w: 0, o: 0, dur: 0.9, ease: 'expo.inOut' },
     rail: { x: 96, y: 66, size: 27, dur: 0.9, ease: 'expo.inOut' },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
