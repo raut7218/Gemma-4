@@ -12,7 +12,7 @@
 
   // ---------------------------------------------------------------- the six-stage track
   const STAGES = ['compile', 'serve', 'prepare A', 'run the loop', 'extract the patch', 'verify in B'];
-  const SX = (i) => 960 + (i - 2.5) * 305, SY = 150;
+  const SX = (i) => 960 + (i - 2.5) * 305, SY = 170;   // pills' top edge ≥ 120 px (title-safe under the rail)
   const stageEl = (i) => ({ type: 'box', w: 292, h: 72, x: SX(i), y: SY, stroke: i === 2 ? T.BLUE : i === 5 ? T.GREEN : '#56616D', fill: 'rgba(21,26,33,0.96)', rad: 36, sw: 3, html: `<span class="c-dim">${i + 1}</span>&ensp;${STAGES[i]}`, size: 29, z: 3, in: 'scale', at: 0.35 + i * 0.28 });
   const track = Object.fromEntries(STAGES.map((_, i) => ['c07_s' + i, stageEl(i)]));
   const LIT = 'rgba(236,233,226,0.14)';
@@ -20,14 +20,14 @@
   const trackOut = Object.fromEntries(STAGES.map((_, i) => ['c07_s' + i, 'up']).concat([['c07_line', 'up']]));
 
   // ---------------------------------------------------------------- 3D
-  const P0 = { yaw: 0.45, pitch: 40, dist: 13.5, tx: 0, ty: 0.9, tz: 0, two: 0, aIn: 1, bIn: 0, lit: 0, plaqueGlow: 0, fileIn: 0, fileGold: 0, fileMove: 0, bars: 0, pass: 0, verdict: 0, chipIn: 0, chipArc: 0, chipGone: 0, testIn: 0, testFlip: 0 };
+  const P0 = { yaw: 0.45, pitch: 40, dist: 14, tx: 0, ty: 0.75, tz: 0, chipLag: 0, two: 0, aIn: 1, bIn: 0, lit: 0, plaqueGlow: 0, fileIn: 0, fileGold: 0, fileMove: 0, bars: 0, pass: 0, verdict: 0, chipIn: 0, chipArc: 0, chipGone: 0, testIn: 0, testFlip: 0 };
   let P3cur = { ...P0 };
   // screen rectangle of the 3D case A's rim at the P0 framing (measured from stills)
   const SIL = { x: 948, y: 368, w: 790, h: 400 };
   const P3 = (o) => (P3cur = Object.assign({}, P3cur, o));
   // HTML labels pinned to anchors: id -> [anchor, dx, dy]
   const PIN = {
-    c07_lA: ['aTop', 0, -40], c07_lws: ['ws', -300, -10], c07_ltmp: ['tray', 250, 40], c07_lplq: ['plaques', 390, -70],
+    c07_lA: ['aTop', 0, -62], c07_lws: ['ws', -300, -10], c07_ltmp: ['tray', 250, 40], c07_lplq: ['plaques', 390, -70],
     c07_lmach: ['aBase', 150, 70], c07_loff: ['aBase', 172, 70], c07_lB: ['bTop', 0, -40], c07_ltest: ['bTest', 230, -40],
     c07_shape: ['aBase', 0, 80], c07_fixed: ['bBase', 0, 80],
   };
@@ -45,6 +45,8 @@
     if (L && a && lb) { Object.assign(L.proxy, { x: 960, y: 540, x1: lb.proxy.x - 225, y1: lb.proxy.y + 16, x2: a[0] + 6, y2: a[1] - 6 }); }
   });
   const lab = (html, o = {}) => Object.assign({ type: 'text', html: plate(html), size: 38, x: 960, y: 540, in: 'fade', z: 6 }, o);
+  // an opaque plate: the header label sits clear above the case's rim and never shows the rim through it
+  const oplate = (s) => `<span class="plate" style="background:#0E1116">${s}</span>`;
 
   // ================================================================ compositions
   // 238 (4) — OVER six stages draw as a track; container A waits below
@@ -65,8 +67,10 @@
   }, { clear: true, keep: ['rail', 'contA', 'contA_hd', 'contA_ht'], cam: { x: 960, y: 540, s: 1 }, drift: 0.7, sfx: STAGES.map((_, i) => ({ at: 0.4 + i * 0.28, kind: 'tick' })) });
 
   // 239 (2.5) — stage 1 compile: the bundle's YAML becomes an agent tree
+  // container A keeps its identity: it folds INTO the stage-3 pill and stays there as its blue outline
+  // (never fades away), until stage 3 unfolds it again (242)
   const toChip = (i) => ({
-    contA: { x: SX(i), y: SY, w: 292, h: 72, o: 0, at: 0, dur: 0.95, ease: 'power3.inOut' },
+    contA: { x: SX(i), y: SY, w: 292, h: 72, rad: 36, o: 1, at: 0, dur: 1.05, ease: 'power3.inOut' },
     contA_hd: { x: SX(i), y: SY, w: 280, h: 56, o: 0, at: 0, dur: 0.8, ease: 'power3.inOut' }, contA_ht: { x: SX(i), y: SY, s: 0.4, o: 0, at: 0, dur: 0.6, ease: 'power3.in' },
     c07_tm: { x: SX(i), y: SY, w: 240, h: 50, o: 0, at: 0, dur: 0.85, ease: 'power3.inOut' },
     c07_tmh: { x: SX(i) - 100, y: SY, s: 0.3, o: 0, at: 0, dur: 0.6, ease: 'power3.in' },
@@ -128,13 +132,14 @@
   const fold = (id, k) => ({ [id]: { x: 960 - 120, y: HDY, s: 0.3, o: 0, at: k * 0.06, dur: 0.5, ease: 'power3.in' } });
   c(3.5, {
     ...trackOut, ...fold('c07_p1', 0), ...fold('c07_p2', 1), ...fold('c07_p3', 2),
-    // the 2D outline shrinks onto the 3D case's rim as the model fades in under it
-    contA: { ...SIL, o: 0, at: 0.3, dur: 1.0, ease: 'power2.inOut' },
-    contA_hd: { x: SIL.x, y: SIL.y - SIL.h / 2 + 18, w: SIL.w - 7, h: 30, o: 0, at: 0.3, dur: 0.8, ease: 'power2.inOut' },
-    contA_ht: { x: SIL.x, y: SIL.y - SIL.h / 2 + 18, s: 0.6, o: 0, at: 0.2, dur: 0.6, ease: 'power2.in' },
-    c07_3d: { type: 'three', scene: 'containers', x: 960, y: 540, w: 1920, h: 1080, z: 1, in: 'fade', dur: 0.9, at: 0.45, params: P3({}), paramsFrom: { dist: P0.dist * 0.9, yaw: 0.38 }, pdur: 2.8, pease: 'power3.out' },
+    // the 2D outline shrinks onto the 3D case's rim and is gone (its header first) before the model
+    // fades in: the rim takes over the outline, nothing 2D is drawn over the 3D case
+    contA: { ...SIL, o: 0, at: 0.1, dur: 0.75, ease: 'power2.inOut' },
+    contA_hd: { x: SIL.x, y: SIL.y - SIL.h / 2 + 18, w: SIL.w - 7, h: 30, o: 0, at: 0.05, dur: 0.4, ease: 'power2.in' },
+    contA_ht: { x: SIL.x, y: SIL.y - SIL.h / 2 + 18, s: 0.6, o: 0, at: 0.0, dur: 0.3, ease: 'power2.in' },
+    c07_3d: { type: 'three', scene: 'containers', x: 960, y: 540, w: 1920, h: 1080, z: 1, in: 'fade', dur: 0.9, at: 0.7, params: P3({}), paramsFrom: { dist: P0.dist * 0.9, yaw: 0.38 }, pdur: 2.8, pease: 'power3.out' },
     c07_stg: { type: 'text', hud: true, versions: [3, 4, 5, 6].map((n) => cap(`stage ${n}&ensp;·&ensp;${STAGES[n - 1]}`)), ver: 0, size: 26, color: T.DIM, align: 'right', ax: 1, x: 1840, y: 66, in: 'fade', at: 0.6 },
-    c07_lA: lab(cap('container A · offline sandbox', T.BLUE), { size: 30, at: 1.6 }),
+    c07_lA: lab(cap('container A · offline sandbox', T.BLUE), { html: oplate(cap('container A · offline sandbox', T.BLUE)), size: 30, at: 1.6 }),
   }, { cut: true });
   // 244 (4.5) — the real parts light, with HTML labels
   c(4.5, {
@@ -153,7 +158,7 @@
   });
   // 246 (2.5) — reading beat: the camera pushes in on "offline"
   const PUSH = { dist: 12.2, ty: 1.0, tx: 0.35 }, PBACK = { dist: P0.dist, ty: P0.ty, tx: 0 };
-  const dimLabels = (o) => Object.fromEntries(['c07_lA', 'c07_lws', 'c07_ltmp', 'c07_lplq', 'c07_lmach'].map((k) => [k, { o, dur: 0.6 }]));
+  const dimLabels = (o) => Object.fromEntries(['c07_lws', 'c07_ltmp', 'c07_lplq', 'c07_lmach'].map((k) => [k, { o, dur: 0.6 }]));
   // the push is a slow continuous dolly of the 3D camera toward the base (the labels ride their anchors)
   c(2.5, { ...dimLabels(0.45), c07_lpll: { o: 0.45, dur: 0.6 }, c07_3d: { params: P3(PUSH), pdur: 1.875, pease: 'sine.inOut' }, c07_loff: { s: 1.2, dur: 1.4, ease: 'power3.out' } }, { drift: 0.4 });
   // 247 (4.5) — the plaques glow red: do not modify
