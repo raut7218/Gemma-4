@@ -23,3 +23,5 @@ Shared constants: `GRID120 = { cols: 12, rows: 10, cw: 112, ch: 64, gap: 14 }` c
 | 14 → 15 | `chip` | `K.chip('chip', {x:960, y:220, s:1.2})`. |
 | 15 → 16 | `spool` | `{type:'box', w:220, h:220, x:1640, y:850, stroke:T.GREEN, rad:110, fill:'rgba(131,193,103,0.10)', html:'<span class="cap" style="font-size:0.5em;color:#83C167">SFT data</span>', size:40}`. |
 | 16 → 17 | `chip` | `K.chip('chip', {x:960, y:540, s:1.6})`. |
+
+Note 12 → 13: ch12's last comp also creates the six slots with ch13's ids (`c13_sb0–5`, `c13_sl0–5`) and ch13's exact spec, so ch13's first comp carries them on. If ch13's slot spec changes, change ch12's copy identically.

@@ -83,3 +83,4 @@ Decision: targeted v5 pass fixing every concrete item above, then build. Remaini
 - Engine: push reading beats made gentler (×1.12, 50% travel) — three critics found pushes cropping content at frame edges.
 - ch08/ch09 fixes for film round 1 items 1, 4, 5, 10, 11, 15 applied by a fixer agent. Engine: fill 'none' was parsed as hex and drawn black (the ch9 'black crack'); now transparent.
 - ch10 round-2 fixes applied (false 'pass' eliminated — verified by probes every 0.1 s in forward and reverse seek order; subjects scaled to fill the frame; carried bars→bundle; zip close no longer alone).
+- ch11/ch12 fixes for film round 1 items 2–8, 10 applied by a fixer agent (six slots open out of the scaffold onto ch13's exact pixels — 0-pixel difference across the cut; year cards fly to their ticks; ch12 loop enlarged).
