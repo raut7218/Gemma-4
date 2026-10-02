@@ -161,7 +161,7 @@
   c(4, {
     ...K.rail(9),
     loop: { type: 'canvas', draw: 'loop', x: 960, y: 540, params: { ...LOOP0 } },
-    c09_crack: { type: 'path', d: 'M960,60 L930,120 L985,165 L940,220', sw: 4, color: T.RED, fill: 'none', in: 'draw', dur: 0.6, at: 0 },
+    c09_crack: { type: 'path', d: 'M960,56 L932,112 L982,152 L944,200', sw: 4, color: T.RED, fill: 'rgba(12,15,22,0)', in: 'draw', dur: 0.6, at: 0 },
     c09_ring: { type: 'ring', rad: 380, frac: 1, sw: 3, color: T.RED, o: 0.0, in: 'fade', from: { rad: 300, o: 0.9 }, dur: 2.2, ease: 'expo.out', at: 0.3 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0.5, clear: true, keep: ['rail', 'loop'] });
   // 316 (4.5) — the taxonomy names itself
@@ -305,7 +305,7 @@
   const tagsOut = Object.fromEntries(['0', '1', '2', '3b', '4b', '5b', '6', '7', '8'].map((i, k) => ['c09_t' + i, k % 2 ? 'down' : 'fade']));
   c(4.5, {
     ...tagsOut, c09_p1: 'up', c09_p2: 'up', c09_sug: 'quick', c09_div: 'quick',
-    c09_chart: { type: 'canvas', draw: 'c09_chart', in: 'fade', dur: 0.2, params: { axis: 1, slots: 1, la: 1, pulse: 0 }, paramsFrom: { axis: 0, slots: 0 }, pdur: 2.4, pease: 'power2.out' },
+    c09_chart: { type: 'canvas', draw: 'c09_chart', in: 'fade', dur: 0.2, at: 0.3, params: { axis: 1, slots: 1, la: 1, pulse: 0 }, paramsFrom: { axis: 0, slots: 0 }, pdur: 2.4, pease: 'power2.out' },
     c09_ct: { type: 'text', html: 'your failure counts&ensp;—&ensp;<span class="c-dim">label 50 failed runs by hand</span>', size: 52, x: 960, y: 180, in: 'wipe', at: 1.0 },
   }, { cut: true });
   // 335 (4.5) — "empty on purpose: you fill this in"

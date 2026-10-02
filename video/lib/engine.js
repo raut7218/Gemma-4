@@ -26,6 +26,7 @@
   // ---------------------------------------------------------------- helpers
   const hexToRgb = (c) => {
     if (!c || c.startsWith('rgb')) return c;
+    if (c === 'none' || c === 'transparent') return 'rgba(0, 0, 0, 0)';  // never parse 'none' as a hex colour (it became black)
     const h = c.replace('#', '');
     const n = parseInt(h.length === 3 ? h.split('').map((x) => x + x).join('') : h, 16);
     return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;

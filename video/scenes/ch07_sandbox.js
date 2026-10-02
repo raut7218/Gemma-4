@@ -20,14 +20,14 @@
   const trackOut = Object.fromEntries(STAGES.map((_, i) => ['c07_s' + i, 'up']).concat([['c07_line', 'up']]));
 
   // ---------------------------------------------------------------- 3D
-  const P0 = { yaw: 0.45, pitch: 40, dist: 9.5, tx: 0, ty: 1.0, tz: 0, two: 0, aIn: 1, bIn: 0, lit: 0, plaqueGlow: 0, fileIn: 0, fileGold: 0, fileMove: 0, bars: 0, pass: 0, verdict: 0, chipIn: 0, chipArc: 0, chipGone: 0, testIn: 0, testFlip: 0 };
+  const P0 = { yaw: 0.45, pitch: 40, dist: 13.5, tx: 0, ty: 0.9, tz: 0, two: 0, aIn: 1, bIn: 0, lit: 0, plaqueGlow: 0, fileIn: 0, fileGold: 0, fileMove: 0, bars: 0, pass: 0, verdict: 0, chipIn: 0, chipArc: 0, chipGone: 0, testIn: 0, testFlip: 0 };
   let P3cur = { ...P0 };
   // screen rectangle of the 3D case A's rim at the P0 framing (measured from stills)
-  const SIL = { x: 960, y: 560, w: 640, h: 420 };
+  const SIL = { x: 948, y: 368, w: 790, h: 400 };
   const P3 = (o) => (P3cur = Object.assign({}, P3cur, o));
   // HTML labels pinned to anchors: id -> [anchor, dx, dy]
   const PIN = {
-    c07_lA: ['aTop', 0, -40], c07_lws: ['ws', -300, -10], c07_ltmp: ['tray', 250, 40], c07_lplq: ['plaques', 300, -115],
+    c07_lA: ['aTop', 0, -40], c07_lws: ['ws', -300, -10], c07_ltmp: ['tray', 250, 40], c07_lplq: ['plaques', 390, -70],
     c07_lmach: ['aBase', 150, 70], c07_loff: ['aBase', 172, 70], c07_lB: ['bTop', 0, -40], c07_ltest: ['bTest', 230, -40],
     c07_shape: ['aBase', 0, 80], c07_fixed: ['bBase', 0, 80],
   };
@@ -150,7 +150,7 @@
     c07_loff: lab('<span class="c-red">offline</span>', { size: 40, align: 'left', ax: 0, at: 1.2 }),
   });
   // 246 (2.5) — reading beat: the camera pushes in on "offline"
-  const PUSH = { dist: 8.6, ty: 0.55, tx: 0.5 }, PBACK = { dist: P0.dist, ty: P0.ty, tx: 0 };
+  const PUSH = { dist: 12.2, ty: 1.0, tx: 0.35 }, PBACK = { dist: P0.dist, ty: P0.ty, tx: 0 };
   const dimLabels = (o) => Object.fromEntries(['c07_lA', 'c07_lws', 'c07_ltmp', 'c07_lplq', 'c07_lmach'].map((k) => [k, { o, dur: 0.6 }]));
   // the push is a slow continuous dolly of the 3D camera toward the base (the labels ride their anchors)
   c(2.5, { ...dimLabels(0.45), c07_lpll: { o: 0.45, dur: 0.6 }, c07_3d: { params: P3(PUSH), pdur: 1.875, pease: 'sine.inOut' }, c07_loff: { s: 1.2, dur: 1.4, ease: 'power3.out' } }, { drift: 0.4 });
@@ -165,7 +165,7 @@
   F.beat(2.5, { id: 'c07_dnm', mode: 'underline', w: 300, dx: 410, under: 34, color: T.RED });
 
   // 249 (2) — stage 4: a 2D LOOP spins above the 3D case (camera 45°)
-  const P4 = { pitch: 45, ty: 3.6, dist: 12.5, yaw: 0.5, tx: 0 };
+  const P4 = { pitch: 45, ty: 4.4, dist: 12.5, yaw: 0.5, tx: 0 };
   const LP = { cx: 960, cy: 560, r: 240, draw: 1, labels: 1, ring: 0, exit: 0, hi: -1, stopped: 0 };
   c(2, {
     c07_dnm: 'down', c07_lA: 'fade', c07_lws: 'fade', c07_ltmp: 'fade', c07_lplq: 'fade', c07_lpll: 'quick',
@@ -176,7 +176,7 @@
   // 250 (2.5) — end conditions stack beside the case: submit_patch()
   const END = (n) => ({ type: 'text', size: 50, align: 'left', ax: 0, x: 1180, y: 470 + n * 130, in: 'left', at: 0.3 });
   c(2.5, {
-    c07_3d: { params: P3({ tx: P4.tx + 1.9 }), pdur: 1.4, pease: 'power2.inOut' },
+    c07_3d: { params: P3({ tx: P4.tx + 2.3 }), pdur: 1.4, pease: 'power2.inOut' },
     c07_loop: { x: 660, params: { ...LP, dot: 2.5 }, pdur: 1.875, pease: 'none', dur: 1.2 },
     c07_endh: { type: 'text', html: cap('the loop ends on'), size: 28, color: T.DIM, align: 'left', ax: 0, x: 1180, y: 370, in: 'fade', at: 0.2 },
     c07_end0: { ...END(0), html: m('submit_patch()', T.GOLD), at: 0.5 },
@@ -206,7 +206,7 @@
   c(2.5, { c07_gx: { o: 0.33, dur: 0.6 }, c07_gxl: { o: 0.33, dur: 0.6 }, c07_chip: { o: 0.33, dur: 0.6 }, c07_ev: { s: 1.08, dur: 1.4, ease: 'expo.out' } }, { cam: { x: 960, y: 700, s: 1.12 }, drift: 0.4 });
 
   const P6 = { dist: 16.5, pitch: 42, yaw: 0.35, ty: 0.9, tx: 0 };
-  const CHIP3D = { x: 760, y: 470 };   // the 3D chip's screen point when it appears (measured)
+  const CHIP3D = { x: 903, y: 368 };   // the 3D chip's screen point when it appears (measured)
   // 256 (2) — stage 6 (camera 42°): container B rises on the same plinth; the chip arcs A → B
   c(2, {
     c07_gx: 'up', c07_gxl: 'up', c07_ev: 'down', c07_chip: { x: CHIP3D.x, y: CHIP3D.y, s: 0.2, o: 0, dur: 0.48, ease: 'power3.in' },
@@ -214,7 +214,7 @@
     c07_3d: { o: 1, dur: 0.45, params: P3({ two: 1, bIn: 1, chipArc: 1, ...P6 }), pdur: 1.5, pease: 'power2.inOut' },
   }, { cut: false, cam: { x: 960, y: 540, s: 1 } });
   // 257 (4.5) — B step 1: apply the patch
-  const PB = { tx: 2.6, dist: 12.6, pitch: 42, yaw: 0.4, ty: 1.15 };
+  const PB = { tx: 2.8, dist: 13, pitch: 42, yaw: 0.4, ty: 2.4 };
   const STEP = ['<span class="c-dim">step 1 ·</span> apply the patch', '<span class="c-dim">step 2 ·</span> reset any test files the hidden tests touch', '<span class="c-dim">step 3 ·</span> apply the hidden tests', '<span class="c-dim">step 4 ·</span> run pytest'];
   c(4.5, {
     c07_chip: null,
@@ -254,7 +254,7 @@
   c(4.5, {
     ...outT,
     c07_step: { ver: 3, dur: 0.6 },
-    c07_3d: { o: 1, dur: 0.6, params: P3({ pass: 1, verdict: 1, tx: 3.9, yaw: 0.42, dist: 13.2 }), pdur: 2.4, pease: 'power2.inOut' },
+    c07_3d: { o: 1, dur: 0.6, params: P3({ pass: 1, verdict: 1, tx: 3.9, yaw: 0.42, dist: 13.4 }), pdur: 2.4, pease: 'power2.inOut' },
     c07_ok: { type: 'text', html: '<span class="m c-green">exit 0</span> → <span class="c-green">resolved</span>', size: 64, align: 'left', ax: 0, x: 1250, y: 380, in: 'wipe', at: 1.6 },
   }, { cut: true, sfx: [0, 1, 2, 3, 4].map((i) => ({ at: 0.6 + i * 0.3, kind: 'click' })) });
   const GH = { x: 1520, y: 660 };
@@ -262,52 +262,62 @@
   c(4.5, {
     c07_ghost: { type: 'box', w: 460, h: 330, x: GH.x, y: GH.y, stroke: T.RED, fill: 'rgba(252,98,85,0.06)', rad: 26, sw: 3, html: '', in: 'draw', at: 0.3 },
     c07_ghd: { type: 'rect', x: GH.x, y: GH.y - 165 + 30, w: 453, h: 56, fill: 'rgba(252,98,85,0.16)', rad: 22, in: 'fade', at: 0.8 },
-    c07_ght: { type: 'text', html: cap('a ghost run', T.RED), size: 24, x: GH.x, y: GH.y - 165 + 30, in: 'fade', at: 0.9 },
     c07_gh1: { type: 'text', html: '<span class="c-red">anything else</span>', size: 46, x: GH.x, y: GH.y - 10, in: 'wipe', at: 0.9 },
     c07_no: { type: 'text', html: '→ <span class="c-red">not resolved</span>', size: 46, x: GH.x, y: GH.y + 80, in: 'wipe', at: 1.4 },
   });
   const PW = { tx: 0, dist: 17, pitch: 38, yaw: 0.3, ty: 0.9 };
+  const FLAT = { tx: 0, dist: 20, pitch: 89.5, yaw: 0, ty: 0.5 };
+  const FA = { x: 650, y: 538, w: 416, h: 296 }, FB = { x: 1270, y: 538, w: 416, h: 296 };   // top-view rims (measured)
   // 264 (3.5) — 3D wide (camera 38°): A and B on one plinth
   c(3.5, {
-    c07_ok: 'fade', c07_ghost: 'fade', c07_ghd: 'fade', c07_ght: 'fade', c07_gh1: 'fade', c07_no: 'fade', c07_step: 'down',
+    c07_ok: 'fade', c07_ghost: 'fade', c07_ghd: 'fade', c07_gh1: 'fade', c07_no: 'fade', c07_step: 'down',
     c07_3d: { params: P3(PW), pdur: 2.4, pease: 'power3.inOut' },
   }, { cut: true });
-  // 265 (4.5) — you shape A; the organizers fix B
+  // 265 (4.5) — you shape A; the organizers fix B. Then the scene flattens: the camera rises to a
+  // top-down view, and 2D outlines take over the two rims
+  const BIG = { x: 960, y: 580, w: 1820, h: 860 };
   c(4.5, {
-    c07_3d: { params: P3({ yaw: 0.22 }), pdur: 3.4, pease: 'sine.inOut' },
+    c07_3d: { params: P3(FLAT), at: 0.5, pdur: 2.85, pease: 'sine.inOut' },
     c07_shape: lab('you shape <span class="c-blue">what happens here</span>', { size: 46, at: 0.4 }),
     c07_fixed: lab('<span class="c-green">fixed</span> by the organizers', { size: 46, at: 1.3 }),
+    contA: { ...K.container('contA', 'A', FA).contA, html: '', in: 'fade', at: 2.75, dur: 0.6, ease: 'power2.out' },
+    c07_fb: { ...K.container('c07_fb', 'B', FB).c07_fb, html: '', in: 'fade', at: 2.75, dur: 0.6, ease: 'power2.out' },
   });
 
-  // 266–268 — FULL habits, entering from alternating sides
+  // 266–268 — FULL habits, entering from alternating sides; A's flat outline opens into a frame around them
   const HAB = [
-    ['scratch to <span class="m c-blue">/tmp</span>', 'left', 330],
-    ['never touch <span class="m">pytest.ini</span> or <span class="m">conftest.py</span>', 'right', 540],
-    ["don't edit <span class=\"c-green\">tests</span>", 'left', 750],
+    ['scratch to <span id="c07k0" class="m c-blue">/tmp</span>', 'left', 340],
+    ['never touch <span id="c07k1" class="m">pytest.ini</span> or <span id="c07k2" class="m">conftest.py</span>', 'right', 560],
+    ["don't edit <span id=\"c07k3\" class=\"c-green\">tests</span>", 'left', 780],
   ];
+  // underline spans (x centre, width) of the key words, measured in the browser
+  const KW = [[[1150, 176]], [[883, 440], [1462, 484]], [[1147, 169]]];
+  const KC = [T.BLUE, T.DIM, T.GREEN];
+  const bigA = K.container('contA', 'A', BIG);
   HAB.forEach(([html, side, y], i) => {
-    const d = {
-      ['c07_h' + i]: { type: 'text', html, size: 84, x: 960, y, in: side, z: 4 },
-      ['c07_hr' + i]: { type: 'rect', x: 960, y: y + 62, w: 160, h: 5, rad: 3, fill: T.DIM, in: 'grow', at: 1.4, dur: 1.4 },
-    };
-    if (i === 0) Object.assign(d, { c07_3d: 'fade', c07_shape: 'fade', c07_fixed: 'fade', c07_stg: 'fade' });
-    if (i > 0) Object.assign(d, { ['c07_h' + (i - 1)]: { o: 0.55, dur: 1.0, at: 0.3 } });
-    if (i === 2) {
-      const BIG = K.container('contA', 'A', { x: 960, y: 555, w: 1820, h: 920 });
-      Object.assign(d, BIG, { c07_h0: { o: 0.55 }, c07_h1: { o: 0.55, dur: 1.0, at: 0.3 }, contA: { ...BIG.contA, at: 2.0, dur: 1.3 }, contA_hd: { ...BIG.contA_hd, at: 2.6 }, contA_ht: { ...BIG.contA_ht, at: 2.7 } });
+    const d = { ['c07_h' + i]: { type: 'text', html, size: 84, x: 960, y, in: side, z: 4 } };
+    KW[i].forEach(([x, w], j) => { d['c07_hr' + i + j] = { type: 'rect', x, y: y + 52, w, h: 5, rad: 3, fill: KC[i], in: 'grow', at: 1.3 + j * 0.25, dur: 1.2 }; });
+    if (i === 0) {
+      Object.assign(d, {
+        c07_3d: 'quick', c07_shape: 'fade', c07_fixed: 'fade', c07_stg: 'fade', c07_fb: 'right',
+        contA: { ...bigA.contA, o: 0.45, at: 0.15, dur: 1.2, ease: 'power3.inOut' },
+        contA_hd: { ...bigA.contA_hd, o: 0.45, at: 0.9, dur: 0.8 }, contA_ht: { ...bigA.contA_ht, o: 0.6, at: 1.1, dur: 0.8 },
+      });
     }
+    if (i > 0) Object.assign(d, { ['c07_h' + (i - 1)]: { o: 0.55, dur: 1.0, at: 0.3 } });
+    if (i === 2) Object.assign(d, { c07_h0: { o: 0.55 }, contA: { o: 1, at: 2.0, dur: 1.2 }, contA_hd: { o: 1, at: 2.2, dur: 1.0 }, contA_ht: { o: 1, at: 2.3, dur: 1.0 } });
     c(4.5, d, i === 0 ? { cut: true } : {});
   });
-  // 269 (2) — the words fall into container A, which shrinks into the centre panel
-  const fall = Object.fromEntries([0, 1, 2].flatMap((i) => [['c07_h' + i, { x: 960, y: 620, s: 0.25, o: 0, dur: 1.0, ease: 'power3.in', at: i * 0.08 }], ['c07_hr' + i, { x: 960, y: 620, w: 0, o: 0, dur: 0.6, ease: 'power3.in' }]]));
-  c(2, { ...fall, ...K.container('contA', 'A', { x: 960, y: 560, w: 620, h: 760 }) }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
-  // 270 (4.5) — the RAIL rewrites to 08; the side panels draw
-  const side = (x) => ({ type: 'box', w: 610, h: 760, x, y: 560, stroke: '#56616D', fill: 'rgba(21,26,33,0.5)', rad: 22, sw: 2.5, html: '', in: 'draw', dur: 2.4, at: 0.3 });
+  // 269 (2) — the words fall into container A, which shrinks into the centre panel; the side panels start
+  const HR = KW.flatMap((ws, i) => ws.map((_, j) => 'c07_hr' + i + j));
+  const fall = Object.fromEntries([0, 1, 2].map((i) => ['c07_h' + i, { x: 960, y: 620, s: 0.25, o: 0, dur: 1.0, ease: 'power3.in', at: i * 0.08 }]).concat(HR.map((k) => [k, { x: 960, y: 620, w: 0, o: 0, dur: 0.6, ease: 'power3.in' }])));
+  const side = (x, at) => ({ type: 'box', w: 610, h: 760, x, y: 560, stroke: '#56616D', fill: 'rgba(21,26,33,0.5)', rad: 22, sw: 2.5, html: '', in: 'draw', dur: 3.9, ease: 'power1.inOut', at });
+  c(2, { ...fall, ...K.container('contA', 'A', { x: 960, y: 560, w: 620, h: 760 }), c07_pl: side(325, 0.9), c07_pr: side(1595, 1.0) }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
+  // 270 (4.5) — the RAIL rewrites to 08; the side panels finish drawing, their headers write in
   c(4.5, {
-    ...Object.fromEntries([0, 1, 2].flatMap((i) => [['c07_h' + i, null], ['c07_hr' + i, null]])),
-    c07_pl: side(325), c07_pr: side(1595),
-    c07_plh: { type: 'text', html: cap('call log'), size: 26, color: T.DIM, x: 325, y: 220, in: 'fade', at: 1.6 },
-    c07_prh: { type: 'text', html: cap('meters'), size: 26, color: T.DIM, x: 1595, y: 220, in: 'fade', at: 2.0 },
+    ...Object.fromEntries([0, 1, 2].map((i) => ['c07_h' + i, null]).concat(HR.map((k) => [k, null]))),
+    c07_plh: { type: 'text', html: cap('call log'), size: 26, color: T.DIM, x: 325, y: 208, in: 'wipe', at: 0.6, dur: 1.4 },
+    c07_prh: { type: 'text', html: cap('meters'), size: 26, color: T.DIM, x: 1595, y: 208, in: 'wipe', at: 1.0, dur: 1.4 },
     rail: { ver: 8 },
   }, { cam: { x: 960, y: 540, s: 1 }, drift: 0 });
 })();

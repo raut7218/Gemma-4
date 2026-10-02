@@ -15,11 +15,12 @@
 
   // ---------------------------------------------------------------- the 129 public tasks (chapter-local)
   const grp = (i) => { let g = 0, acc = 0; while (g < 3 && i >= acc + REPOS[g]) { acc += REPOS[g]; g++; } return [g, i - acc]; };
-  // block layout: each repository as its own compact block (centres 376 / 810 / 1240 / 1590: inside the safe area)
-  const BL = [{ x0: 188, cols: 7 }, { x0: 646, cols: 6 }, { x0: 1132, cols: 4 }, { x0: 1566, cols: 1 }];
-  const BY0 = 330, BCW = 48, BCH = 30, BPX = 56, BPY = 38;
+  // block layout: each repository as its own block, large enough that blocks + names + descriptions fill
+  // ~70% of the frame height (centres 384 / 900 / 1322 / 1620: inside the safe area)
+  const BL = [{ x0: 150, cols: 7 }, { x0: 700, cols: 6 }, { x0: 1190, cols: 4 }, { x0: 1590, cols: 1 }];
+  const BY0 = 220, BCW = 60, BCH = 36, BPX = 68, BPY = 46;
   const blockXY = (g, j) => [BL[g].x0 + (j % BL[g].cols) * BPX + BCW / 2, BY0 + Math.floor(j / BL[g].cols) * BPY + BCH / 2];
-  const BLX = [BL[0].x0 + (7 * BPX - 8) / 2, BL[1].x0 + (6 * BPX - 8) / 2, BL[2].x0 + (4 * BPX - 8) / 2, BL[3].x0 + BCW / 2];
+  const BLX = BL.map((L) => L.x0 + (L.cols * BPX - (BPX - BCW)) / 2);
   // split layout (example hold-out): fastapi · requests · httpx as three blocks at left, rich lifted to the right
   const SPL = [
     { x0: 150, cols: 8, cw: 44, ch: 28, px: 52, py: 36 }, { x0: 1250, cols: 8, cw: 60, ch: 38, px: 68, py: 46 },
@@ -126,7 +127,7 @@
       if (x > 1740) a *= Math.max(0, 1 - (x - 1740) / 80);
       if (a <= 0.01) continue;
       ctx.globalAlpha = a * (p.a ?? 1);
-      ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2);
       ctx.fillStyle = col; ctx.fill();
     }
     ctx.restore();
@@ -154,21 +155,21 @@
   c(4.5, {
     grid: 'none', c10_lone: 'quick', c10_l1: 'down', c10_l2: 'down',
     c10_tasks: { params: TP({ apart: 1 }), pdur: 1.8, pease: 'power3.inOut' },
-    c10_h: { type: 'text', html: '<span class="c-yellow">129</span> public training tasks&ensp;·&ensp;<span class="c-yellow">4</span> repositories', size: 60, x: 960, y: 175, in: 'wipe', at: 1.4 },
-    ...Object.fromEntries(NAMES.map((n, g) => ['c10_n' + g, { type: 'text', html: `${n} <span class="c-yellow">${REPOS[g]}</span>`, size: 44, x: BLX[g], y: 770, in: 'rise', at: 1.6 + g * 0.12 }])),
+    c10_h: { type: 'text', html: '<span class="c-yellow">129</span> public training tasks&ensp;·&ensp;<span class="c-yellow">4</span> repositories', size: 60, x: 960, y: 140, in: 'wipe', at: 1.4 },
+    ...Object.fromEntries(NAMES.map((n, g) => ['c10_n' + g, { type: 'text', html: `${n} <span class="c-yellow">${REPOS[g]}</span>`, size: 44, x: BLX[g], y: 725, in: 'rise', at: 1.6 + g * 0.12 }])),
   }, { exitLead: 0 });
   // 341 (4.5) — the character of fastapi and rich (one centred framing for 341–342: no pan)
-  const chr = (id, html, x, at, mw) => ({ [id]: { type: 'text', html, size: 37, lh: 1.3, maxw: mw, x, ay: 0, y: 812, color: T.DIM, in: 'wipe', at } });
+  const chr = (id, html, x, at, mw) => ({ [id]: { type: 'text', html, size: 37, lh: 1.3, maxw: mw, x, ay: 0, y: 772, color: T.DIM, in: 'wipe', at } });
   c(4.5, {
     c10_h: 'up',
     c10_tasks: { params: TP({ apart: 1, dim: 0.3 }), pdur: 1.2 },
-    ...chr('c10_c0', 'web framework · routing, dependency injection, pydantic validation', BLX[0], 0.5, 390),
-    ...chr('c10_c1', 'terminal rendering · string and ANSI output assertions', BLX[1], 1.4, 390),
-  }, { cam: { x: 960, y: 610, s: 1.1 } });
+    ...chr('c10_c0', 'web framework · routing, dependency injection, pydantic validation', BLX[0], 0.5, 440),
+    ...chr('c10_c1', 'terminal rendering · string and ANSI output assertions', BLX[1], 1.4, 400),
+  }, { cam: { x: 960, y: 560, s: 1 } });
   // 342 (4.5) — requests and httpx
   c(4.5, {
-    ...chr('c10_c2', 'HTTP client · several tests need a network that <span class="c-red">doesn’t exist offline</span>', BLX[2], 0.5, 380),
-    ...chr('c10_c3', 'HTTP client', BLX[3], 1.5, 220),
+    ...chr('c10_c2', 'HTTP client · several tests need a network that <span class="c-red">doesn’t exist offline</span>', BLX[2], 0.5, 340),
+    ...chr('c10_c3', 'HTTP client', BLX[3], 1.5, 200),
     c10_tasks: { params: TP({ apart: 1, dim: 0.15 }), pdur: 3.0 },
   });
   // 343 (3.5) — one cell opens like a folder
@@ -177,7 +178,7 @@
   const [ocx, ocy] = blockXY(0, 24);
   c(3.5, {
     c10_n0: 'quick', c10_n1: 'quick', c10_n2: 'quick', c10_n3: 'quick', c10_c0: 'quick', c10_c1: 'quick', c10_c2: 'quick', c10_c3: 'quick',
-    c10_tasks: { params: TP({ apart: 1, dim: 0.85 }), pdur: 0.9 },
+    c10_tasks: { params: TP({ apart: 1, dim: 0.85, a: 0 }), pdur: 0.9 },
     c10_card: { type: 'box', w: 1500, h: 720, x: 960, y: 560, stroke: T.REPO[0], fill: T.PANEL, sw: 3, rad: 22, html: '', in: 'zoom', from: { x: ocx, y: ocy, s: 0.035, o: 1 }, dur: 1.0, ease: 'expo.inOut', z: 4 },
     c10_ct: { type: 'text', html: cap('one task · fastapi'), size: 26, color: T.DIM, x: 290, ax: 0, y: 250, in: 'fade', at: 0.8, z: 5 },
     c10_r0: row(0, 'problem_statement', 0.9), c10_r1: row(1, 'base_commit', 1.1), c10_r2: row(2, 'repository snapshot', 1.3),
@@ -212,24 +213,24 @@
   const cardOut = { c10_card: 'shrink', c10_ct: 'quick', c10_r0: 'quick', c10_r1: 'quick', c10_r2: 'quick', c10_r3: 'quick', c10_t3: 'quick', c10_r4: 'quick', c10_t4: 'quick', c10_r5: 'quick', c10_strip: 'quick', c10_sl: 'quick', c10_hint: 'quick' };
   c(4.5, {
     ...cardOut,
-    c10_tasks: { params: TP({ apart: 1, a: 0 }), pdur: 0.6 },
-    c10_pipe: { type: 'canvas', draw: 'c10_pipe', in: 'fade', dur: 0.3, params: { hist: 1, flow: 1.6, filt: 1, gate: 0, a: 1 }, paramsFrom: { hist: 0, flow: 0, filt: 0 }, pdur: 3.4, pease: 'none', z: 1 },
-    c10_hl: { type: 'text', html: 'repository history&ensp;→&ensp;commits', size: 44, x: 390, y: 410, in: 'wipe', at: 0.3 },
-    c10_filt: { type: 'box', w: FXR - FXL, h: 300, x: (FXL + FXR) / 2, y: PY, stroke: T.DIM, fill: T.PANEL, sw: 3, rad: 18, html: 'changed core <span class="m">.py</span> logic<br>and matching unit tests', size: 40, in: 'draw', at: 1.2, z: 3 },
-    c10_fk: { type: 'text', html: cap('filter'), size: 28, color: T.DIM, x: (FXL + FXR) / 2, y: 375, in: 'fade', at: 1.4 },
-  }, { cut: true, cam: { x: 960, y: 560, s: 1 } });
+    c10_tasks: { params: TP({ apart: 1, a: 0 }), pdur: 0.1 },
+    c10_pipe: { type: 'canvas', draw: 'c10_pipe', in: 'fade', at: 0.25, dur: 0.3, params: { hist: 1, flow: 1.6, filt: 1, gate: 0, a: 1 }, paramsFrom: { hist: 0, flow: 0, filt: 0 }, pdur: 3.4, pease: 'none', z: 1 },
+    c10_hl: { type: 'text', html: 'repository history<br>→&ensp;commits', size: 48, lh: 1.3, x: 400, y: 440, in: 'wipe', at: 0.45 },
+    c10_filt: { type: 'box', w: FXR - FXL, h: 440, x: (FXL + FXR) / 2, y: PY, stroke: T.DIM, fill: T.PANEL, sw: 3, rad: 18, html: 'changed core <span class="m">.py</span> logic<br>and matching<br>unit tests', size: 46, in: 'draw', at: 1.2, z: 3 },
+    c10_fk: { type: 'text', html: cap('filter'), size: 28, color: T.DIM, x: (FXL + FXR) / 2, y: 305, in: 'fade', at: 1.4 },
+  }, { cut: true, exitLead: 0.4, cam: { x: 960, y: 560, s: 1 } });
   // 350 (4.5) — the two-phase gate
   c(4.5, {
     c10_pipe: { params: { hist: 1, flow: 3.6, filt: 1, gate: 1, a: 1 }, pease: 'none' },
-    c10_gate: { type: 'box', w: 340, h: 300, x: GXR - 170, y: PY, stroke: T.GREEN, fill: T.PANEL, sw: 3.5, rad: 18, html: 'two-phase<br>verification', size: 42, in: 'draw', at: 0.2, z: 3 },
-    c10_gl: { type: 'text', html: 'tests <span class="c-red">fail before</span> the fix, <span class="c-green">pass after</span>', size: 46, x: 1240, y: 850, in: 'wipe', at: 1.0 },
+    c10_gate: { type: 'box', w: 340, h: 440, x: GXR - 170, y: PY, stroke: T.GREEN, fill: T.PANEL, sw: 3.5, rad: 18, html: 'two-phase<br>verification', size: 46, in: 'draw', at: 0.2, z: 3 },
+    c10_gl: { type: 'text', html: 'tests <span class="c-red">fail before</span> the fix, <span class="c-green">pass after</span>', size: 50, x: 1100, y: 880, in: 'wipe', at: 1.0 },
   });
   // 351 (2) — one task runs through the gate
   c(2, {
     c10_pipe: { params: { hist: 1, flow: 4.4, filt: 1, gate: 1, a: 0.6 }, pease: 'none' },
-    c10_p1: { type: 'mono', html: 'base_commit&ensp;→ <span class="c-red">tests fail</span>', size: 34, x: GXR - 170, y: 290, in: 'wipe', dur: 0.5, at: 0.05 },
-    c10_p2: { type: 'mono', html: '+ gold patch → <span class="c-green">tests pass</span>', size: 34, x: GXR - 170, y: 345, in: 'wipe', dur: 0.5, at: 0.5 },
-    c10_p3: { type: 'text', html: '<span class="c-green">kept</span>', size: 48, x: 1765, y: 490, in: 'pop', at: 1.0 },
+    c10_p1: { type: 'mono', html: 'base_commit&ensp;→ <span class="c-red">tests fail</span>', size: 36, x: GXR - 250, y: 215, in: 'wipe', dur: 0.5, at: 0.05 },
+    c10_p2: { type: 'mono', html: '+ gold patch → <span class="c-green">tests pass</span>', size: 36, x: GXR - 250, y: 272, in: 'wipe', dur: 0.5, at: 0.5 },
+    c10_p3: { type: 'text', html: '<span class="c-green">kept</span>', size: 48, x: 1762, y: 480, in: 'pop', at: 1.0 },
   }, { sfx: [{ at: 0.1, kind: 'tick' }, { at: 0.55, kind: 'tick' }, { at: 1.05, kind: 'pop' }] });
   // 352 (4.5) — WIDE the public grid at left
   const nw = (s) => `<span style="white-space:nowrap">${s}</span>`;
@@ -293,7 +294,8 @@
   const [hcx, hcy] = cellGrid(20, TP({ gx: 960, gy: 500, gs: 0.8 }));
   const TBX = 1260, TBY = (k) => 420 + k * 62;
   const tb = {}; for (let k = 0; k < 5; k++) tb['c10_tb' + k] = { type: 'rect', x: TBX, y: TBY(k), w: 340, h: 40, rad: 8, fill: '#3A4452', in: 'fade', at: 0.5 + k * 0.05, z: 6 };
-  const tg = {}; for (let k = 0; k < 5; k++) tg['c10_tg' + k] = { type: 'rect', x: TBX, y: TBY(k), w: 340, h: 40, rad: 8, fill: T.GREEN, in: 'fade', at: 1.3 + k * 0.16, dur: 0.3, z: 7 };
+  const tg = {}; for (let k = 0; k < 5; k++) tg['c10_tg' + k] = { type: 'rect', x: TBX, y: TBY(k), w: 340, h: 40, rad: 8, fill: T.GREEN, in: 'fade', at: 1.2 + k * 0.12, dur: 0.25, z: 7 };
+  const T360 = F.now();
   c(3.5, {
     c10_oc: 'down',
     c10_one: { type: 'box', w: 1320, h: 720, x: 960, y: 540, stroke: T.REPO[0], fill: T.PANEL, sw: 3, rad: 22, html: '', in: 'zoom', from: { x: hcx, y: hcy, s: 0.07, o: 1 }, dur: 0.9, ease: 'expo.inOut', z: 5 },
@@ -301,17 +303,28 @@
     c10_op: { type: 'box', w: 440, h: 110, x: 640, y: 545, stroke: T.GOLD, fill: 'rgba(240,172,95,0.10)', sw: 3.5, rad: 18, versions: ['<span class="m" style="color:#F0AC5F">gold patch</span>', '<span class="m c-dim">null patch (empty)</span>'], ver: 0, size: 38, in: 'down', at: 0.8, z: 6 },
     c10_tl: { type: 'text', html: cap('tests'), size: 28, color: T.DIM, x: TBX, y: 360, in: 'fade', at: 0.6, z: 6 },
     ...tb, ...tg,
-    c10_vd: { type: 'text', html: '<span class="c-green">pass</span>', size: 60, x: TBX, y: 780, in: 'pop', at: 2.25, z: 6 },
-  }, { sfx: [{ at: 1.3, kind: 'click' }, { at: 2.25, kind: 'tick' }] });
+    // "pass" only once every test bar is green; its entry finishes well inside this comp
+    c10_vd: { type: 'text', html: '<span class="c-green">pass</span>', size: 60, x: TBX, y: 780, in: 'pop', at: 1.95, dur: 0.4, z: 6 },
+  }, { sfx: [{ at: 1.3, kind: 'click' }, { at: 2.0, kind: 'tick' }] });
   // 361 (2) — the null (empty) patch applies; the stale "pass" leaves at once, the tests turn red, then "fail"
-  const tr = {}; for (let k = 0; k < 5; k++) tr['c10_tg' + k] = { fill: T.RED, at: 0.3 + k * 0.1, dur: 0.25 };
+  // Honesty rule: the verdict is a hard switch at the instant the bars turn red (RED_AT) — never a stale
+  // "pass" over red bars, never both words at once. A hook enforces the windows whatever the seek order.
+  const RED_AT = 0.35;
+  const tr = {}; for (let k = 0; k < 5; k++) tr['c10_tg' + k] = { fill: T.RED, at: RED_AT, dur: 0.12, ease: 'power2.out' };
+  const T361 = F.now();
   c(2, {
-    c10_op: { ver: 1, stroke: T.DIM, fill: 'rgba(154,163,173,0.06)', at: 0.0, dur: 0.4 }, ...tr,
-    c10_vd: 'quick',
-    c10_vf: { type: 'text', html: '<span class="c-red">fail</span>', size: 60, x: TBX, y: 780, in: 'pop', at: 0.95, z: 6 },
-  }, { exitLead: 0, sfx: [{ at: 0.35, kind: 'click' }, { at: 1.0, kind: 'tick' }] });
+    c10_op: { ver: 1, stroke: T.DIM, fill: 'rgba(154,163,173,0.06)', at: 0.0, dur: 0.3 }, ...tr,
+    c10_vd: { o: 0, at: RED_AT, dur: 0.01, ease: 'none' },
+    c10_vf: { type: 'text', html: '<span class="c-red">fail</span>', size: 60, x: TBX, y: 780, in: 'pop', at: RED_AT - 0.05, dur: 0.35, z: 6 },
+  }, { sfx: [{ at: 0.05, kind: 'click' }, { at: RED_AT, kind: 'tick' }] });
+  const T362 = F.now();
+  F.hook((t) => {
+    const vd = FILM.EL.c10_vd, vf = FILM.EL.c10_vf;
+    if (vd && (t < T360 + 2.0 || t >= T361 + RED_AT)) vd.proxy.o = 0;
+    if (vf && (t < T361 + RED_AT || t >= T362 + 0.35)) vf.proxy.o = 0;
+  });
   // 362 (2) — gold sweep: the reference patch drops onto every cell
-  const oneOut = { c10_one: { x: hcx, y: hcy, s: 0.07, o: 0, dur: 0.6, ease: 'power3.in' }, c10_ok: 'quick', c10_op: 'quick', c10_tl: 'quick', c10_vf: 'quick', ...Object.fromEntries([0, 1, 2, 3, 4].flatMap((k) => [['c10_tb' + k, 'quick'], ['c10_tg' + k, 'quick']])) };
+  const oneOut = { c10_one: { x: hcx, y: hcy, s: 0.07, o: 0, dur: 0.6, ease: 'power3.in' }, c10_vd: null, c10_ok: 'quick', c10_op: 'quick', c10_tl: 'quick', c10_vf: 'quick', ...Object.fromEntries([0, 1, 2, 3, 4].flatMap((k) => [['c10_tb' + k, 'quick'], ['c10_tg' + k, 'quick']])) };
   const GP = (o) => TP(Object.assign({ gx: 960, gy: 500, gs: 0.8, dim: 0.2, outline: 1 }, o));
   c(2, {
     ...oneOut,

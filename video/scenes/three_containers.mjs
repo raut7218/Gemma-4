@@ -156,7 +156,10 @@ window.THREE_SCENES.containers = {
     const a = s.A.position, b = s.B.position;
     AN.aTop = P(a.x, a.y + 2.5, a.z); AN.bTop = P(b.x, b.y + 2.5, b.z);
     AN.ws = P(a.x - 0.55, a.y + 1.05, a.z + 0.1); AN.tray = P(a.x + 1.05, a.y + 0.3, a.z + 0.45);
-    AN.plaques = P(a.x + 1.07, a.y + 0.75, a.z - 0.75);
+    AN.plaques = P(a.x + 1.07, a.y + 0.45, a.z - 0.75);
+    // screen bounding boxes of the two rims (top edges), for the 2D outlines that take over
+    const box = (o) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const sx of [-1.81, 1.81]) for (const sz of [-1.31, 1.31]) { const q = P(o.x + sx, o.y + 2.32, o.z + sz); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); } return [x0, y0, x1, y1]; };
+    AN.aRim = box(a); AN.bRim = box(b);
     AN.aBase = P(a.x, a.y - 0.1, a.z + 1.4); AN.bBase = P(b.x, b.y - 0.1, b.z + 1.4);
     AN.bWs = P(b.x - 0.55, b.y + 1.05, b.z + 0.1); AN.bTest = P(b.x, b.y + 1.1, b.z + 0.35);
     AN.chip = P(s.chip.position.x, s.chip.position.y + 0.2, s.chip.position.z);
