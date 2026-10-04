@@ -1,7 +1,0 @@
-# Same budget as the best measured public config (4.5 min scored 0.10; 5.5 min ran past
-# the 12 h cap). timeout_seconds also bounds the hidden-test run, so keep it >= 180.
-evaluation:
-  timeout_seconds: 180
-  max_tool_calls: 30
-  max_time_minutes: 4.5
-  max_turns: 60

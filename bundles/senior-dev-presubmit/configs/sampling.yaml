@@ -1,8 +1,0 @@
-# senior-dev's coder agent runs at temperature 0.2. Thinking stays off: it shares the 32k
-# window with tool output, and nothing is compacted within a task.
-temperature: 0.2
-top_p: 0.95
-top_k: 40
-max_output_tokens: 4096
-thinking_config:
-  include_thoughts: false
