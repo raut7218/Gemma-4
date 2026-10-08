@@ -3,3 +3,7 @@ results/
 .venv*/
 __pycache__/
 submission.zip
+video/media-*/
+video/logs/
+video/list.txt
+__pycache__/
