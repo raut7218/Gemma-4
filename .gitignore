@@ -7,3 +7,5 @@ video/media-*/
 video/logs/
 video/list.txt
 __pycache__/
+video/norm/
+video/list2.txt
