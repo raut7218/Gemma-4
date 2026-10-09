@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 
@@ -39,6 +40,17 @@ class Ctx:
     calls: int = 0
     patch_submitted: bool = False
     patch: str = ""
+    turns: int = 0
+    aborted: str = ""  # set when a parallel branch ends the whole session (overflow, LLM error, budget)
+    lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+
+    def take_turn(self) -> bool:
+        """Counts one model call against max_turns, shared by every agent in the tree."""
+        with self.lock:
+            if self.turns >= self.budget.max_turns:
+                return False
+            self.turns += 1
+            return True
 
     def remaining_s(self) -> float:
         return self.budget.max_time_minutes * 60 - (time.time() - self.start)
@@ -140,15 +152,16 @@ class Ctx:
 
     FREE = {"get_status", "submit_patch"}
 
-    def call(self, name: str, args: dict) -> str:
+    def call(self, name: str, args: dict, allowed: list[str] | None = None) -> str:
         fn = getattr(self, name, None)
-        if name not in TOOL_NAMES or fn is None:
+        if name not in TOOL_NAMES or fn is None or (allowed is not None and name not in allowed):
             return _err("UnknownTool", f"unknown tool {name}")
         if name not in self.FREE:
-            why = self.out_of_budget()
-            if why:
-                return _err("BudgetExhausted", f"{why} budget exhausted")
-            self.calls += 1
+            with self.lock:  # parallel branches share one budget
+                why = self.out_of_budget()
+                if why:
+                    return _err("BudgetExhausted", f"{why} budget exhausted")
+                self.calls += 1
         try:
             res = fn(**args)
         except TypeError as ex:

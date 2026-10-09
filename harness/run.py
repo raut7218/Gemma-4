@@ -12,28 +12,20 @@ import time
 import traceback
 from pathlib import Path
 
-import yaml
-
 from .agent import run_agent
+from .bundle import load_submission
 from .sandbox import Sandbox
 from .tools import Budget, Ctx
 from .verify import verify
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "data"
 
 
-def load_tasks(ids: list[str] | None) -> list[dict]:
-    rows = [json.loads(l) for l in (DATA / "tasks.jsonl").open()]
-    have = {p.stem for p in (DATA / "snapshots").glob("*.tgz")}
+def load_tasks(data: Path, ids: list[str] | None) -> list[dict]:
+    rows = [json.loads(l) for l in (data / "tasks.jsonl").open()]
+    have = {p.stem for p in (data / "snapshots").glob("*.tgz")}
     rows = [r for r in rows if r["instance_id"] in have]
     return [r for r in rows if not ids or r["instance_id"] in ids]
-
-
-def load_submission(d: Path) -> dict:
-    ev = (yaml.safe_load((d / "eval_config.yaml").read_text()) or {}).get("evaluation", {})
-    sampling = yaml.safe_load((d / "configs" / "sampling.yaml").read_text()) or {}
-    return {"system": (d / "prompts" / "system.md").read_text(), "eval": ev, "sampling": sampling}
 
 
 def classify(reason: str, patch: str, v: dict | None) -> str:
@@ -57,7 +49,9 @@ def main():
     ap.add_argument("--extra-body", default="{}", help="JSON merged into the request, e.g. chat_template_kwargs")
     ap.add_argument("--results-dir", default=None)
     ap.add_argument("--venv", default=str(ROOT / ".venv-sandbox"))
+    ap.add_argument("--data", default=str(ROOT / "data"), help="dir with tasks.jsonl, snapshots/ and reference/")
     a = ap.parse_args()
+    DATA = Path(a.data)
 
     sub = load_submission(Path(a.submission))
     budget = Budget(**{k: v for k, v in sub["eval"].items() if k in Budget.__dataclass_fields__})
@@ -67,7 +61,7 @@ def main():
     cfg = {"base_url": a.base_url, "model": a.model, "sampling": sub["sampling"], "extra_body": json.loads(a.extra_body)}
 
     results = []
-    for task in load_tasks(a.task_ids):
+    for task in load_tasks(DATA, a.task_ids):
         tid, snap = task["instance_id"], DATA / "snapshots" / f"{task['instance_id']}.tgz"
         print(f"== {tid}", flush=True)
         sb, trace, t0, reason = Sandbox(snap, Path(a.venv), prefix="agent"), [], time.time(), "n/a"
@@ -77,7 +71,7 @@ def main():
                 sb.apply_patch(task["patch"])
                 ctx.submit_patch(); reason = "submitted"
             elif a.agent == "llm":
-                reason = run_agent(task, ctx, sub["system"], cfg, trace)
+                reason = run_agent(task, ctx, sub["root"], cfg, trace)
             patch = ctx.patch or sb.extract_patch()
         except Exception:  # noqa: BLE001
             reason, patch = "harness_error", ""
@@ -92,7 +86,9 @@ def main():
         (out / "test_outputs" / f"{tid}.log").write_text((v or {}).get("log", ""))
         asst = [t for t in trace if t["type"] == "assistant"]
         r = {"instance_id": tid, "repo": task["repo"], "category": cat, "resolved": cat == "RESOLVED", "end_reason": reason,
-             "tool_calls": ctx.calls, "turns": len(asst), "agent_seconds": round(agent_s, 1),
+             "tool_calls": ctx.calls, "turns": len(asst),
+             "calls_by_agent": {n: sum(t["type"] == "tool" and t.get("agent") == n for t in trace)
+                                for n in dict.fromkeys(t.get("agent") for t in asst)}, "agent_seconds": round(agent_s, 1),
              "max_prompt_tokens": max([t.get("prompt_tokens") or 0 for t in asst], default=0), "patch_chars": len(patch)}
         results.append(r)
         print(json.dumps(r), flush=True)

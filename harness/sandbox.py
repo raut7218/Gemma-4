@@ -55,8 +55,9 @@ class Sandbox:
         return e
 
     def rewrite(self, cmd: str) -> str:
-        cmd = re.sub(r"(?<![\w.])/workspace\b", str(self.ws), cmd)
-        return re.sub(r"(?<![\w.])/tmp\b", str(self.tmp), cmd)
+        # One pass: the sandbox root itself lives under /tmp, so rewriting twice would mangle it.
+        dirs = {"/workspace": str(self.ws), "/tmp": str(self.tmp)}
+        return re.sub(r"(?<![\w.])(/workspace|/tmp)\b", lambda m: dirs[m.group(1)], cmd)
 
     def run(self, cmd: str, timeout: float = 300, rewrite: bool = True) -> tuple[int, str, str]:
         cmd = self.rewrite(cmd) if rewrite else cmd

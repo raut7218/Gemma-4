@@ -1,0 +1,9 @@
+# Branches run concurrently and cannot see each other's events. None of them may touch /workspace:
+# the graded patch is the single git diff of the shared workspace.
+agent_class: ParallelAgent
+name: investigate
+description: Runs the localizer, reproducer and test scout at the same time.
+sub_agents:
+  - config_path: localizer.yaml
+  - config_path: reproducer.yaml
+  - config_path: test_scout.yaml
