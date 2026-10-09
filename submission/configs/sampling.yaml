@@ -1,6 +1,7 @@
 temperature: 0.2
 top_p: 0.95
 max_output_tokens: 8192
+# thinking_budget must be >= 1 in adk_submission's schema, so 0 fails to compile.
+# include_thoughts: false alone sets enable_thinking=False (the default budget of 4096 is then unused).
 thinking_config:
-  thinking_budget: 0
   include_thoughts: false

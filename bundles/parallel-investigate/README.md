@@ -13,19 +13,26 @@ swe_pipeline (SequentialAgent)
 
 - Every agent has `include_contents: none`. The investigators see the first user message and their own calls. The fixer starts from the last investigator's reply and reads all three answers from state (`{location?}`, `{repro?}`, `{tests?}`), not from their raw tool output.
 - Each investigator also writes its answer to `/tmp/<name>.md`. If the runner nudges and runs the tree again, the investigator finds that file and replies with it, using one tool call. The fixer checks `git diff` first, so a second run continues the earlier fix instead of starting over.
-- `read_file` and `get_code_subgraph` are left out, because the scorer's parser turns their integer and list arguments into strings. Files are read with `grep -n` and `sed -n`.
+- `read_file` and `get_code_subgraph` are left out, so each agent has fewer tools to choose from. Files are read with `grep -n` and `sed -n`. An earlier note blamed string-typed arguments for `read_file` failing, but the community repo later traced that to its proxy. On the real stack (vLLM 0.19.1, ADK 1.36.1), `read_file` works, so adding it back is an option to test.
 - `max_output_tokens` is 2048 instead of 8192. This reserves less of the 32k window for output and stops one long reply from using up the task's time.
 - Prompts and sampling are written inline in each sub-agent file. That avoids depending on how `!include` paths resolve in nested files.
 
-## Not yet verified against the official scorer
+## Checked against the official source
 
-These are the questions a first leaderboard probe has to answer. Each one can sink the score.
+Kaggle is unreachable from the build container, so the official compiler wasn't run. Instead, these points were checked by reading the released `adk_submission` 0.2.11 and `swegemma` 0.2.7 source (vendored in the public `happyc0der/gemma-swe-agent` repo). `uv run python -m harness.check_bundle bundles/parallel-investigate` re-checks the schema rules.
 
-1. **Does `adk_submission` compile it?** The files pass ADK's own `AgentConfig` schema (google-adk 2.11, with tools as `{name: ...}` objects). The competition compiler may want a different layout: tool lists, `config_path` resolution, `model` on workflow agents.
-2. **How do nudges interact with sub-agents?** If the scorer's "3 turns without a tool call" counter is session-wide, or if it nudges inside each LlmAgent, the investigators' final text replies could end the session or keep them going after they should stop.
-3. **Are the budgets per task?** Most likely yes, so the three branches share `max_tool_calls` and `max_turns`. That's why they're raised to 50 and 100.
-4. **Do runaway investigators stall the fixer?** The `ParallelAgent` waits for every branch. One investigator that ignores its 4-call limit delays the fixer, and if it runs out the time budget the patch is empty. Check the per-agent call counts in the traces.
-5. **What's the real speedup?** It depends on vLLM batching on 4×L4 and on how hard pytest runs compete for 2 vCPUs. Measure total output tokens per second with 1 stream and with 3.
+- **Schema.** `SequentialAgent`, `ParallelAgent`, `config_path` sub-agents, `output_key`, `include_contents: none`, bare tool names and per-agent `generate_content_config` are all in the restricted schema. Workflow agents take no `model`.
+- **`config_path`** resolves against the referencing file's directory when the file exists there, so `localizer.yaml` inside `sub_agents/investigate.yaml` works. `!include` also resolves relative to the including file.
+- **Thinking.** `thinking_budget: 0` fails the schema, which requires at least 1. Thinking is turned off by `include_thoughts: false`, which sets `enable_thinking=False`. Without it, the default budget of 4096 turns thinking on.
+- **State.** `problem_description` is always in state. `hints` is set only when the task has hints, and public tasks have none, so prompts must use `{hints?}`.
+- **Nudges** (`agent_runner.py`) work at the runner level. When a whole run of the tree ends without `submit_patch`, the runner sends a nudge as a new message, which runs the tree again. Three nudges in a row with no tool call end the task. Investigators ending with a text reply inside the tree is normal.
+- **Budgets.** Time, tool calls and turns are one per-task context shared by every agent, as assumed.
+
+## Still open
+
+1. **Does the real build pass?** Only the schema was checked. Run the actual `adk_submission` compile, for example with that repo's `scripts/compile_check.py`, before using a daily submission.
+2. **Do runaway investigators stall the fixer?** The `ParallelAgent` waits for every branch. One investigator that ignores its 4-call limit delays the fixer, and if it runs out the time budget the patch is empty. Check `calls_by_agent` in the traces.
+3. **What's the real speedup?** It depends on vLLM batching on 4×L4 and on how hard pytest runs compete for 2 vCPUs. Measure total output tokens per second with 1 stream and with 3.
 
 ## Local run
 

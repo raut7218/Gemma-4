@@ -13,7 +13,6 @@ generate_content_config:
   top_k: 40
   max_output_tokens: 2048
   thinking_config:
-    thinking_budget: 0
     include_thoughts: false
 instruction: |
   # The request

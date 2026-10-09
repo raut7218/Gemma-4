@@ -177,17 +177,26 @@ def run_node(node: dict, ctx: Ctx, cfg: dict, trace: list, user: str, state: dic
 
 def run_agent(task: dict, ctx: Ctx, root: dict, cfg: dict, trace: list) -> str:
     """Returns the termination reason."""
-    state = {"problem_description": task["problem_statement"], "hints": task.get("hints_text", "")}
+    state = {"problem_description": task["problem_statement"]}
+    if (task.get("hints_text") or "").strip():  # like swegemma: an empty hint leaves the key unset
+        state["hints"] = task["hints_text"].strip()
     histories: dict = {}
     user = build_prompt(task, ctx)
     if root["agent_class"] == "LlmAgent":
         return run_llm(root, ctx, cfg, trace, user, state, True, histories)[0]
-    # A workflow root ends its invocation when the last agent replies; the runner then nudges, which
-    # starts a whole new invocation of the tree. Approximates the official "3 turns without a tool call".
-    for _ in range(4):
+    # Mirrors swegemma's agent_runner: when an invocation of the tree ends without submit_patch, the runner
+    # sends a nudge as a new message, which runs the whole tree again. Three nudges in a row without any
+    # tool call in between end the task.
+    nudges = 0
+    while True:
+        calls_before = ctx.calls
         reason = run_node(root, ctx, cfg, trace, user, state, histories)[0]
         if reason in FATAL:
             return reason
+        if ctx.calls > calls_before:
+            nudges = 0
+        if nudges >= 3:
+            return "no_tool_calls"
+        nudges += 1
         trace.append({"type": "nudge", "content": NUDGES["stop"]})
         user = NUDGES["stop"]
-    return "no_tool_calls"

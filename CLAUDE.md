@@ -16,6 +16,7 @@ There is no test suite, linter or build step. "Testing" means running the harnes
 
 ```bash
 ./fetch_task.sh requests_6592 requests_6589 httpx_3672   # needs kaggle CLI and an existing data/ dir; data/tasks.jsonl comes from the competition too
+uv run python -m harness.check_bundle submission bundles/parallel-investigate   # static check of official compile rules
 uv run python -m harness.run --agent gold --task-ids requests_6592   # reference patch must RESOLVE (pipeline sanity)
 uv run python -m harness.run --agent noop --task-ids requests_6592   # empty patch must NOT resolve
 uv run python tests/fake_llm.py &                                    # scripted OpenAI-compatible server on :8765
@@ -61,4 +62,5 @@ Details that are easy to get wrong:
 
 - `submission/agent.yaml` lists the graph tools (`search_similar_code`, `get_code_neighbors`, `get_code_subgraph`) and `system.md` mentions `search_similar_code`, but the local harness only implements the six core tools. Calls to the others return `UnknownTool`.
 - Skills, AgentTool, LoopAgent, LlmAgent `sub_agents` (transfer) and ADK context compaction aren't implemented. Agents with `include_contents: default` in a tree see only their own history, not other agents' events. Overflow is detected only from `usage.prompt_tokens`.
+- `harness/check_bundle.py` transcribes the compile rules of `adk_submission` 0.2.11 / `swegemma` 0.2.7 (field allowlists, tool and model names, `config_path`/`!include` resolution, `thinking_budget >= 1`, state placeholders). It doesn't run the real compiler. The released source is vendored in the public repo `happyc0der/gemma-swe-agent` under `harness/official/`.
 - To validate the YAML against the real `adk_submission` package, run `kaggle datasets download metric/gemma-4-developer-agent-wheelhouse` (867 MB).
