@@ -1,6 +1,8 @@
 name: swe_baseline_agent
 model: gemma-4-31b-it-qat-w4a16-ct
 instruction: !include prompts/system.md
+# The code-graph tools (search_similar_code, get_code_neighbors, get_code_subgraph) are left out: the model never
+# called them in measured runs, and most task snapshots have empty graph or embedding files.
 tools:
   - run_command
   - read_file
@@ -8,7 +10,4 @@ tools:
   - write_file
   - get_status
   - submit_patch
-  - search_similar_code
-  - get_code_neighbors
-  - get_code_subgraph
 generate_content_config: !include configs/sampling.yaml

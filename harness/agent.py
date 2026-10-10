@@ -94,8 +94,6 @@ def run_llm(node: dict, ctx: Ctx, cfg: dict, trace: list, user: str, state: dict
         msgs.append({"role": "user", "content": user})
     nudges = 0
     while True:
-        if ctx.patch_submitted:
-            return "submitted", ""
         if ctx.aborted:
             return ctx.aborted, ""
         if ctx.remaining_s() <= 0:
@@ -127,11 +125,11 @@ def run_llm(node: dict, ctx: Ctx, cfg: dict, trace: list, user: str, state: dict
             res = ctx.call(fn["name"], args, allowed) if isinstance(args, dict) else json.dumps({"status": "error", "error_type": "InvalidArguments", "error_message": "arguments are not valid JSON"})
             trace.append({"type": "tool", "agent": name, "name": fn["name"], "args": args, "result": res[:2000]})
             msgs.append({"role": "tool", "tool_call_id": tc["id"], "content": res})
-        if ctx.patch_submitted:
-            return "submitted", ""
-        if calls:
+        if calls:  # like swegemma, submit_patch doesn't end the run: the agent may keep editing and resubmit
             nudges = 0
             continue
+        if ctx.patch_submitted:  # the run ends at the first text-only reply after a submission
+            return "submitted", m.get("content") or ""
         text = m.get("content") or ""
         if not is_root:  # in ADK a reply without a function call is the agent's final response
             if node.get("output_key"):

@@ -1,6 +1,8 @@
 temperature: 0.2
 top_p: 0.95
-max_output_tokens: 8192
+top_k: 40
+# 4096 instead of 8192: one long reply can't use up the task's time, and less of the 32k window is reserved for output.
+max_output_tokens: 4096
 # thinking_budget must be >= 1 in adk_submission's schema, so 0 fails to compile.
 # include_thoughts: false alone sets enable_thinking=False (the default budget of 4096 is then unused).
 thinking_config:
