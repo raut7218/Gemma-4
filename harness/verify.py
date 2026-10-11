@@ -6,7 +6,7 @@ import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from .sandbox import PROTECTED, Sandbox
+from .sandbox import PROTECTED, Sandbox, strip_protected
 
 
 def patch_files(patch: str) -> list[str]:
@@ -48,6 +48,7 @@ def verify(task: dict, patch: str, snapshot: Path, venv: Path, cache: Path | Non
 def _verify(task: dict, patch: str, snapshot: Path, venv: Path) -> dict:
     sb = Sandbox(snapshot, venv, prefix="verify")
     try:
+        patch = strip_protected(patch, patch_files(task["test_patch"]))  # the scorer drops these sections again
         if patch.strip():
             ok, err = sb.apply_patch(patch)
             if not ok:

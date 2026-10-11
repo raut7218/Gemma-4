@@ -1,4 +1,4 @@
-"""Static bundle check mirroring the official adk_submission 0.2.11 / swegemma 0.2.7 compile rules.
+"""Static bundle check mirroring the official adk_submission 0.2.13 / swegemma 0.2.11 compile rules.
 
   uv run python -m harness.check_bundle submission bundles/parallel-investigate
 
@@ -134,10 +134,24 @@ class Checker:
         for k in set(tc) - THINK:
             self.err(where, f"thinking_config.{k} is not allowed")
         b = tc.get("thinking_budget")
-        if b is not None and (not _num(b) or not 1 <= b <= 32768):
-            self.err(where, f"thinking_budget={b!r}: the schema requires 1..32768 (use include_thoughts: false to turn thinking off)")
-        if not tc or ("include_thoughts" not in tc and "thinking_level" not in tc and b is None):
-            self.warnings.append(f"{where}: thinking is ON by default (thinking_budget 4096 merged in); set include_thoughts: false to disable")
+        if b is not None and (not _num(b) or not 0 <= b <= 32768):
+            self.err(where, f"thinking_budget={b!r}: the schema requires 0..32768 (0 turns thinking off)")
+        level = str(tc.get("thinking_level") or "").lower()
+        if level and level not in {"minimal", "low", "medium", "high", "none"}:
+            self.warnings.append(f"{where}: thinking_level={tc['thinking_level']!r} is not a level the compiler acts on")
+        # 0.2.13: a missing budget becomes 4096, and the budget decides before include_thoughts does.
+        budget = 4096 if b is None else b
+        on = level != "none" and _num(budget) and budget > 0
+        if on and tc.get("include_thoughts") is False:
+            self.warnings.append(f"{where}: include_thoughts: false no longer turns thinking off (adk_submission >= 0.2.13): "
+                                 f"thinking runs with a budget of {budget} and its text is dropped from the history. "
+                                 "Use thinking_budget: 0 to disable, or include_thoughts: true to keep the thoughts")
+        elif on and b is None and not level:
+            self.warnings.append(f"{where}: no thinking_budget set, so the default of 4096 applies")
+        cap = g.get("max_output_tokens")
+        if on and _num(cap) and cap < budget + 1024:
+            self.warnings.append(f"{where}: max_output_tokens={cap} leaves under 1024 tokens after a full thinking budget "
+                                 f"of {budget}; tool calls can be cut off")
         if d.get("output_key"):
             self.output_keys.add(d["output_key"])
         self.instructions.append((where, d.get("instruction") or ""))

@@ -3,7 +3,7 @@
 Plays a fixed tool-call script for requests_6592 (and the toy copy from make_toy_task.py). The script is
 picked from the system prompt: the parallel-investigate bundle's roles ("Your role: LOCALIZER" ...) each
 get their own, anything else gets the single-agent script (grep -> read -> edit -> diff -> submit).
-  uv run python tests/fake_llm.py   # serves :8765
+  uv run python tests/fake_llm.py   # serves :8765; GET /requests shows the sampling fields it was sent
 """
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -45,11 +45,22 @@ SCRIPTS = {
 }
 
 
+SEEN: list = []  # request fields other than messages/tools; GET /requests returns and clears them
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
+    def do_GET(self):
+        b = json.dumps(SEEN).encode()
+        SEEN.clear()
+        self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+
     def do_POST(self):
         req = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        SEEN.append({k: v for k, v in req.items() if k not in ("messages", "tools")} | {
+            "roles": [m["role"] for m in req["messages"]],
+            "reasoning_in_history": sum(1 for m in req["messages"] if m.get("reasoning"))})
         system = req["messages"][0].get("content") or ""
         role = next((r for r in SCRIPTS if f"Your role: {r}" in system), "default")
         script = SCRIPTS[role]
@@ -62,6 +73,8 @@ class H(BaseHTTPRequestHandler):
             msg = {"role": "assistant", "content": None, "tool_calls": [{"id": f"{role[:3]}{step}", "type": "function",
                    "function": {"name": name, "arguments": json.dumps(args)}}]}
             fin = "tool_calls"
+        if (req.get("chat_template_kwargs") or {}).get("enable_thinking"):  # vLLM's gemma4 reasoning parser field
+            msg["reasoning"] = f"step {step}: thinking"
         out = {"choices": [{"message": msg, "finish_reason": fin}], "usage": {"prompt_tokens": 1000 + 500 * step, "completion_tokens": 50}}
         b = json.dumps(out).encode()
         self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)

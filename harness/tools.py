@@ -18,8 +18,8 @@ MAX_STDOUT, MAX_LINES, MAX_CHARS = 5000, 150, 10000
 
 @dataclass
 class Budget:
-    max_time_minutes: float = 4.5
-    max_tool_calls: int = 40
+    max_time_minutes: float = 5.0
+    max_tool_calls: int = 50
     max_turns: int = 80
     timeout_seconds: int = 180
 
@@ -147,8 +147,7 @@ class Ctx:
     def submit_patch(self) -> str:
         self.patch = self.sb.extract_patch()
         self.patch_submitted = True
-        files = len(re.findall(r"^diff --git ", self.patch, re.M))
-        return _ok(patch_size=len(self.patch), files_changed=files)
+        return _ok(patch_size=len(self.patch), files_changed=self.patch.count("diff --git"))
 
     FREE = {"get_status", "submit_patch"}
 
@@ -188,6 +187,6 @@ SCHEMAS = [
         {"filepath": S, "old_string": S, "new_string": S, "allow_multiple": B}, ["filepath", "old_string", "new_string"]),
     _fn("write_file", "Create or overwrite a file.", {"filepath": S, "content": S}, ["filepath", "content"]),
     _fn("get_status", "Show remaining budget and patch status (free).", {}, []),
-    _fn("submit_patch", "Record the current git diff as your final patch (free). Call last.", {}, []),
+    _fn("submit_patch", "Capture the current working tree modifications as your submission (free). You can submit multiple times; only the final submission is evaluated.", {}, []),
 ]
 TOOL_NAMES = {s["function"]["name"] for s in SCHEMAS}

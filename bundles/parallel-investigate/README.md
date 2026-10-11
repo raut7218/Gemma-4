@@ -1,5 +1,7 @@
 # parallel-investigate
 
+> Shelved. Public ablations on the 129 tasks found thinking off to be the worst setting tried (23 resolved against 48-51 with thinking on), and an analyzer sub-agent gained one task over a single agent. This bundle runs with thinking off and has never been scored, so `submission/` is the bundle to submit. It stays here as a working example of a SequentialAgent → ParallelAgent tree for the local harness.
+
 Investigate in parallel, then fix in one agent. Tasks run one after another inside the 12 h cap, so each task has about 4.5 minutes of wall time. This bundle tries to get more work out of those minutes. When three agents send requests together, vLLM batches them, which uses GPU capacity a single agent leaves idle. Each agent also gets its own 32k window.
 
 ```
@@ -19,11 +21,11 @@ swe_pipeline (SequentialAgent)
 
 ## Checked against the official source
 
-Kaggle is unreachable from the build container, so the official compiler wasn't run. Instead, these points were checked by reading the released `adk_submission` 0.2.11 and `swegemma` 0.2.7 source (vendored in the public `happyc0der/gemma-swe-agent` repo). `uv run python -m harness.check_bundle bundles/parallel-investigate` re-checks the schema rules.
+The official compiler wasn't run. Instead, these points were checked by reading the released `adk_submission` and `swegemma` source: first 0.2.11 / 0.2.7, then the thinking and patch-stripping rules again in 0.2.13 / 0.2.11 from the wheelhouse dataset. `uv run python -m harness.check_bundle bundles/parallel-investigate` re-checks the schema rules.
 
 - **Schema.** `SequentialAgent`, `ParallelAgent`, `config_path` sub-agents, `output_key`, `include_contents: none`, bare tool names and per-agent `generate_content_config` are all in the restricted schema. Workflow agents take no `model`.
 - **`config_path`** resolves against the referencing file's directory when the file exists there, so `localizer.yaml` inside `sub_agents/investigate.yaml` works. `!include` also resolves relative to the including file.
-- **Thinking.** `thinking_budget: 0` fails the schema, which requires at least 1. Thinking is turned off by `include_thoughts: false`, which sets `enable_thinking=False`. Without it, the default budget of 4096 turns thinking on.
+- **Thinking.** Since `adk_submission` 0.2.13, `thinking_budget` alone decides: 0 turns thinking off, anything above 0 turns it on, and a config without a budget gets 4096. `include_thoughts: false` no longer disables it. The sub-agents here set `thinking_budget: 0`, which keeps the short replies this design was built around.
 - **State.** `problem_description` is always in state. `hints` is set only when the task has hints, and public tasks have none, so prompts must use `{hints?}`.
 - **Nudges** (`agent_runner.py`) work at the runner level. When a whole run of the tree ends without `submit_patch`, the runner sends a nudge as a new message, which runs the tree again. Three nudges in a row with no tool call end the task. Investigators ending with a text reply inside the tree is normal.
 - **Budgets.** Time, tool calls and turns are one per-task context shared by every agent, as assumed.

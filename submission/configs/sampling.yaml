@@ -1,9 +1,15 @@
-temperature: 0.2
+# Ablations on the 129 public tasks (discussion 746250) resolved 48-51 with thinking on and summaries kept,
+# 35 with summaries hidden and 23 with thinking off. Temperatures 0.4 and 1.0 tied, both ahead of 0.2 and 0.0.
+temperature: 0.4
 top_p: 0.95
 top_k: 40
-# 4096 instead of 8192: one long reply can't use up the task's time, and less of the 32k window is reserved for output.
-max_output_tokens: 4096
-# thinking_budget must be >= 1 in adk_submission's schema, so 0 fails to compile.
-# include_thoughts: false alone sets enable_thinking=False (the default budget of 4096 is then unused).
+# Thinking tokens count against this cap, so it has to sit well above thinking_budget or a tool call gets cut off.
+# 6144 = 2048 of thinking + the 4096 of visible output used before. A model call is not interrupted when the
+# task's time runs out, so a higher cap lets one runaway reply overrun the per-task budget by minutes.
+max_output_tokens: 6144
+# Since adk_submission 0.2.13 the budget alone switches thinking on (> 0) or off (0). include_thoughts decides
+# whether earlier thoughts stay in the history; false ran thinking anyway and then threw its text away.
+# 2048 scored like 4096 in the ablation (50 vs 48 of 129) and leaves more of the 5 minutes for tool calls.
 thinking_config:
-  include_thoughts: false
+  include_thoughts: true
+  thinking_budget: 2048

@@ -1,5 +1,9 @@
+# The scorer runs about 120 tasks one after another inside 12 h, sandbox setup included. An overrun fails the whole
+# submission, it does not score the unfinished tasks as zero. 5.0 min leaves about 2 h for setup; a public
+# 5.5 min submission finished in time, and an earlier note in this repo says 5.5 min overran.
+# 50 calls: cutting 50 to 25 lost 14 of 129 tasks in the same ablations.
 evaluation:
   timeout_seconds: 180
-  max_tool_calls: 40
-  max_time_minutes: 4.5
+  max_tool_calls: 50
+  max_time_minutes: 5.0
   max_turns: 80
