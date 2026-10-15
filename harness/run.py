@@ -34,7 +34,7 @@ def classify(reason: str, patch: str, v: dict | None) -> str:
     if reason == "context_overflow":
         return "CONTEXT_OVERFLOW"
     if not patch.strip():
-        return {"time": "BUDGET_EXHAUSTED", "turns": "BUDGET_EXHAUSTED", "no_tool_calls": "LOOP_BREAKOUT",
+        return {"time": "BUDGET_EXHAUSTED", "turns": "BUDGET_EXHAUSTED", "tool_calls": "BUDGET_EXHAUSTED", "no_tool_calls": "LOOP_BREAKOUT",
                 "llm_error": "LLM_ERROR"}.get(reason, "NO_PATCH")
     return (v or {}).get("error") or "TESTS_FAILED"
 

@@ -18,10 +18,10 @@ MAX_STDOUT, MAX_LINES, MAX_CHARS = 5000, 150, 10000
 
 @dataclass
 class Budget:
-    max_time_minutes: float = 5.0
-    max_tool_calls: int = 50
+    max_time_minutes: float = 8.0
+    max_tool_calls: int = 28
     max_turns: int = 80
-    timeout_seconds: int = 180
+    timeout_seconds: int = 240
 
 
 def _ok(**kw) -> str:

@@ -188,6 +188,8 @@ def run_llm(node: dict, ctx: Ctx, cfg: dict, trace: list, user: str, state: dict
         if ctx.patch_submitted:  # the run ends at the first text-only reply after a submission
             return "submitted", m.get("content") or ""
         text = m.get("content") or ""
+        if is_root and ctx.calls >= ctx.budget.max_tool_calls:  # swegemma ends the run at the first final reply once the call budget is spent
+            return "tool_calls", text
         if not is_root:  # in ADK a reply without a function call is the agent's final response
             if node.get("output_key"):
                 state[node["output_key"]] = text
@@ -254,6 +256,8 @@ def run_agent(task: dict, ctx: Ctx, root: dict, cfg: dict, trace: list) -> str:
             return reason
         if ctx.calls > calls_before:
             nudges = 0
+        if ctx.calls >= ctx.budget.max_tool_calls:
+            return "tool_calls"
         if nudges >= 3:
             return "no_tool_calls"
         nudges += 1

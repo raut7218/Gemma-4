@@ -1,9 +1,11 @@
-# The scorer runs about 120 tasks one after another inside 12 h, sandbox setup included. An overrun fails the whole
-# submission, it does not score the unfinished tasks as zero. 5.0 min leaves about 2 h for setup; a public
-# 5.5 min submission finished in time, and an earlier note in this repo says 5.5 min overran.
-# 50 calls: cutting 50 to 25 lost 14 of 129 tasks in the same ablations.
+# The scorer runs about 120 tasks one after another inside 12 h, sandbox setup included, and an overrun fails the
+# whole submission instead of scoring the unfinished tasks as zero. 8 min x 120 = 16 h is only the worst case where
+# every task burns the full clock: what keeps the total inside 12 h is the 28-call cap, which ends a stuck run at its
+# first text reply once spent (swegemma agent_runner). This is the budget shape of the public 0.22-0.24 notebooks;
+# v3 (5 min / 50 calls) scored 0.17. The ablation that lost 14 of 129 tasks going from 50 to 25 calls used another prompt.
+# timeout_seconds also bounds the hidden-test run in the shipped source, so it stays at 240.
 evaluation:
-  timeout_seconds: 180
-  max_tool_calls: 50
-  max_time_minutes: 5.0
+  timeout_seconds: 240
+  max_tool_calls: 28
+  max_time_minutes: 8.0
   max_turns: 80

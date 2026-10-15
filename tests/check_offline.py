@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "tests")]
 
 import fake_llm  # noqa: E402
+import harness.agent as agent_mod  # noqa: E402
 from harness.agent import build_prompt, declared_tools, effective_sampling, render, thinking_body  # noqa: E402
 from harness.bundle import load_submission  # noqa: E402
 from harness.check_bundle import Checker  # noqa: E402
@@ -111,13 +112,28 @@ def units(tmp: Path):
     check("submission: thinking on, thoughts kept", thinking_body(tc)["chat_template_kwargs"]["enable_thinking"] and tc["include_thoughts"] is True, tc)
     check("submission: output cap leaves room after thinking", g["max_output_tokens"] >= tc["thinking_budget"] + 2048, g)
     ev = sub["eval"]
-    check("submission: 120 tasks fit in 12 h with an hour to spare", ev["max_time_minutes"] * 120 <= 11 * 60, ev)
+    # 8 min x 120 tasks = 16 h if every task burned the clock, so the 12 h total rests on the call cap ending stuck runs
+    check("submission: call cap is small enough to end stuck runs early", ev["max_tool_calls"] <= 30, ev)
     eq("submission: budget fields", {k: ev[k] for k in ("max_tool_calls", "max_turns", "timeout_seconds")},
-       {"max_tool_calls": 50, "max_turns": 80, "timeout_seconds": 180})
+       {"max_tool_calls": 28, "max_turns": 80, "timeout_seconds": 240})
     text = sub["root"]["instruction"]
     check("submission: no stray braces in the prompt", "{" not in text and "}" not in text)
     check("submission: prompt no longer caps reasoning or claims nothing is dropped",
           "few sentences per step" not in text and "nothing in it is dropped" not in text)
+    check("submission: prompt plans an edit by call 12 and a git diff before submit",
+          "By call 12" in text and "git status --short && git diff" in text and "docs_src/" in text and "28 tool calls" in text)
+    # call budget spent: the first text-only reply ends the run, with no nudge (swegemma agent_runner)
+    sent = []
+    real_chat = agent_mod.chat
+    agent_mod.chat = lambda *a, **k: sent.append(1) or {"choices": [{"message": {"role": "assistant", "content": "done"}}], "usage": {"prompt_tokens": 10}}
+    try:
+        spent = Ctx(None, Budget(max_tool_calls=2)); spent.calls = 2
+        cfg = {"base_url": "x", "model": "m", "extra_body": {}, "sampling": {}}
+        eq("loop: spent call budget ends the run at the next text reply",
+           (agent_mod.run_llm({"agent_class": "LlmAgent", "instruction": "i"}, spent, cfg, [], "go", {}, True, {})[0], len(sent)),
+           ("tool_calls", 1))
+    finally:
+        agent_mod.chat = real_chat
     eq("budget defaults follow the submission", (Budget().max_time_minutes, Budget().max_tool_calls), (ev["max_time_minutes"], ev["max_tool_calls"]))
 
 
