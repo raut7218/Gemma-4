@@ -74,9 +74,10 @@ class Ctx:
         return _ok(stdout=o, stderr=e, exit_code=0)
 
     def _path(self, fp: str):
-        fp = re.sub(r"^/workspace/?", "", fp).lstrip("/")
-        if ".." in fp.split("/"):
-            raise ValueError("path traversal not allowed")
+        # like swegemma's _resolve_workspace_path: absolute paths outside /workspace (e.g. /tmp) are rejected
+        fp = re.sub(r"^/workspace(/|$)", "", fp)
+        if fp.startswith("/") or ".." in fp.split("/"):
+            raise ValueError(f"Path traversal detected: '{fp}' escapes workspace root.")
         return self.sb.ws / fp
 
     def read_file(self, filepath: str, start_line: int | None = None, end_line: int | None = None) -> str:

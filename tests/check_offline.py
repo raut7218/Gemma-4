@@ -120,8 +120,10 @@ def units(tmp: Path):
     check("submission: no stray braces in the prompt", "{" not in text and "}" not in text)
     check("submission: prompt no longer caps reasoning or claims nothing is dropped",
           "few sentences per step" not in text and "nothing in it is dropped" not in text)
-    check("submission: prompt plans an edit by call 12 and a git diff before submit",
-          "By call 12" in text and "git status --short && git diff" in text and "docs_src/" in text and "28 tool calls" in text)
+    check("submission: prompt plans an edit by call 12 and a cleanup before submit",
+          "By call 12" in text and "git status --short | grep '^??'" in text and "docs_src/" in text and "28 tool calls" in text)
+    check("submission: prompt has the contract step, a /tmp heredoc repro and tail on test output",
+          "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text and "-k KEYWORD 2>&1 | tail -20" in text)
     # call budget spent: the first text-only reply ends the run, with no nudge (swegemma agent_runner)
     sent = []
     real_chat = agent_mod.chat
@@ -152,6 +154,8 @@ def sandbox_checks(data: Path):
            {"run_command", "edit_file", "get_status", "submit_patch", "get_code_neighbors"})
         ctx.edit_file("src/requests/status_codes.py", fake_llm.OLD, fake_llm.NEW)
         ctx.write_file("tests/test_new.py", "def test_x():\n    assert True\n")
+        check("write_file: /tmp is outside the workspace, as in swegemma", "error" in ctx.write_file("/tmp/repro.py", "x").lower()
+              and not (sb.ws / "tmp").exists())
         ctx.run_command("echo '# touched' >> tests/test_status.py; echo x > /tmp/scratch.txt")
         check("sandbox: host git config does not leak in", "diff --git a/src/" in sb.git("diff").stdout
               and "diff --git a/src/" in json.loads(ctx.run_command("git diff"))["stdout"])
@@ -189,7 +193,7 @@ def end_to_end(data: Path, tmp: Path):
     reqs = seen()
     check("request: thinking on with the budget from sampling.yaml",
           bool(reqs) and all(q.get("chat_template_kwargs") == {"enable_thinking": True} and q.get("thinking_token_budget") == 2048 for q in reqs), reqs[:1])
-    check("request: sampling fields", bool(reqs) and all((q.get("temperature"), q.get("top_p"), q.get("top_k"), q.get("max_tokens")) == (0.4, 0.95, 40, 6144) for q in reqs), reqs[:1])
+    check("request: sampling fields", bool(reqs) and all((q.get("temperature"), q.get("top_p"), q.get("top_k"), q.get("max_tokens")) == (0.4, 0.95, 40, 4096) for q in reqs), reqs[:1])
     check("request: earlier thoughts stay in the history", bool(reqs) and reqs[-1]["reasoning_in_history"] == len(reqs) - 1, reqs[-1:])
     trace = json.loads((tmp / "single" / "traces" / "toy_6592.json").read_text())
     check("trace: reasoning is recorded", all(t.get("reasoning") for t in trace if t["type"] == "assistant"))
