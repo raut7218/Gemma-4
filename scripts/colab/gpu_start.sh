@@ -2,10 +2,11 @@
 # First command on the G4 runtime: rebuilds /content from the Drive cache, then starts vLLM in the background.
 #   bash /content/drive/MyDrive/gemma4/gpu_start.sh        (a copy of this file lives on Drive)
 #   SKIP_SERVE=1 bash gpu_start.sh                         restore only (the dry run on the CPU runtime)
-# Drive is the slow part (cp runs at ~30 MB/s, all streams together at ~80-110 MB/s), so three different sources work at once:
+# Drive is slow to read (measured ~25-35 MB/s cold), so three different sources work at once:
 #   vLLM env   <- PyPI, exact versions from cache/vllm-lock.txt (Drive tar vllm-env.tar is the fallback)
 #   venvs+data <- Drive tars (5 GB)
-#   weights    <- shard 1 (49.8 GB) from Drive with parallel ranged dd, shard 2 (12.8 GB) from Hugging Face (Drive is the fallback)
+#   weights    <- Hugging Face (not gated; ~60-100 MB/s). Cold Drive reads run at only ~25-35 MB/s, so the Drive copy of the
+#                 model (model/) is the fallback, read with parallel ranged dd
 set -uo pipefail
 G=/content/drive/MyDrive/gemma4
 M=/content/model
@@ -25,11 +26,9 @@ pcopy() {  # pcopy SRC DST STREAMS: one file, many ranged streams
 
 ( tar -xf $G/cache/venvs.tar -C /content && tar -xf $G/cache/data-external.tar -C /content && echo "venvs+data restored $(el)" ) &
 
-( for f in $G/model/*; do [ -d "$f" ] || { case "$f" in *.safetensors) ;; *) cp "$f" $M/ ;; esac; }; done
-  pcopy $G/model/model-00001-of-00002.safetensors $M/model-00001-of-00002.safetensors 16 &
-  ( hf download google/gemma-4-31b-it model-00002-of-00002.safetensors --local-dir $M > /content/work/hf_shard2.log 2>&1 \
-    || { echo "HF download failed; copying shard 2 from Drive"; pcopy $G/model/model-00002-of-00002.safetensors $M/model-00002-of-00002.safetensors 8; } ) &
-  wait
+( HF_XET_HIGH_PERFORMANCE=1 hf download google/gemma-4-31b-it --local-dir $M > /content/work/hf_model.log 2>&1 \
+    || { echo "HF download failed; copying the weights from Drive"; for f in $G/model/*; do [ -d "$f" ] && continue
+         case "$f" in *.safetensors) pcopy "$f" $M/$(basename "$f") 12 & ;; *) cp "$f" $M/ ;; esac; done; wait; }
   ok=1; for f in $G/model/*.safetensors; do [ "$(stat -c %s "$f")" = "$(stat -c %s $M/$(basename "$f") 2>/dev/null)" ] || ok=0; done
   [ $ok = 1 ] && echo "model ready $(el)" || echo "MODEL SIZE MISMATCH" ) &
 
