@@ -1,6 +1,7 @@
 # Ablations on the 129 public tasks (discussion 746250) resolved 48-51 with thinking on and summaries kept,
-# 35 with summaries hidden and 23 with thinking off. Temperatures 0.4 and 1.0 tied, both ahead of 0.2 and 0.0.
-temperature: 0.4
+# 35 with summaries hidden and 23 with thinking off. In that ablation temperatures 0.4 and 1.0 tied, both ahead of
+# 0.2 and 0.0; v6 uses 0.2 anyway (user's choice, not measured).
+temperature: 0.2
 top_p: 0.95
 top_k: 40
 # Thinking tokens count against this cap, so it has to sit well above thinking_budget or a tool call gets cut off.

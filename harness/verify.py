@@ -64,7 +64,10 @@ def _verify(task: dict, patch: str, snapshot: Path, venv: Path) -> dict:
             return {"resolved": False, "error": "TEST_PATCH_FAILED", "log": p.stderr}
         targets = [f for f in patch_files(task["test_patch"]) if f.endswith(".py")]
         xml = sb.tmp / "junit.xml"
-        code, out, err = sb.run(f"PYTHONSAFEPATH=1 python -s -m pytest {' '.join(targets)} --junitxml={xml} -p no:anyio -o timeout=0 -o python_classes='Test* *Test' -q",
+        # the scorer's command disables the anyio plugin; data-external tasks (they carry a `domain`) come from repos such as
+        # starlette and anyio whose own tests need it, so they keep it
+        no_anyio = "" if task.get("domain") else "-p no:anyio "
+        code, out, err = sb.run(f"PYTHONSAFEPATH=1 python -s -m pytest {' '.join(targets)} --junitxml={xml} {no_anyio}-o timeout=0 -o python_classes='Test* *Test' -q",
                                 timeout=900, rewrite=False)
         log = (out + err)[-4000:]
         try:

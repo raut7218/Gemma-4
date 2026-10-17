@@ -39,6 +39,51 @@ def classify(reason: str, patch: str, v: dict | None) -> str:
     return (v or {}).get("error") or "TESTS_FAILED"
 
 
+def venv_for(task: dict, venv: Path, venv_root: Path | None) -> Path:
+    """One venv per repo under --venv-root (repo "a/b" -> a__b); the single --venv otherwise."""
+    if venv_root is None:
+        return venv
+    v = venv_root / task["repo"].replace("/", "__")
+    return v if v.exists() else venv
+
+
+def run_task(task: dict, *, agent: str, sub: dict, budget: Budget, cfg: dict, venv: Path, data: Path, out: Path,
+             name: str | None = None) -> tuple[dict, list]:
+    """Runs one task end to end (agent phase, then grading) and writes patches/, traces/ and test_outputs/ under out.
+    Returns (result row, full conversation of the root agent). Safe to call from several threads."""
+    tid, snap = task["instance_id"], data / "snapshots" / f"{task['instance_id']}.tgz"
+    name = name or tid  # file stem under out/; gen.py adds the attempt number
+    sb, trace, t0, reason, msgs = Sandbox(snap, venv, prefix="agent"), [], time.time(), "n/a", []
+    ctx = Ctx(sb, budget)
+    try:
+        if agent == "gold":
+            sb.apply_patch(task["patch"])
+            ctx.submit_patch(); reason = "submitted"
+        elif agent == "llm":
+            reason = run_agent(task, ctx, sub["root"], cfg, trace)
+            msgs = (getattr(ctx, "histories", None) or {}).get(sub["root"].get("name", "agent"), [])
+        patch = ctx.patch or sb.extract_patch()
+    except Exception:  # noqa: BLE001
+        reason, patch = "harness_error", ""
+        trace.append({"type": "harness_error", "tb": traceback.format_exc()})
+    finally:
+        sb.cleanup()
+    agent_s = time.time() - t0
+    v = verify(task, patch, snap, venv, data / "reference") if patch.strip() else None
+    cat = classify(reason, patch, v)
+    (out / "patches" / f"{name}.patch").write_text(patch)
+    (out / "traces" / f"{name}.json").write_text(json.dumps(trace, indent=1, default=str))
+    (out / "test_outputs" / f"{name}.log").write_text((v or {}).get("log", ""))
+    asst = [t for t in trace if t["type"] == "assistant"]
+    r = {"instance_id": tid, "repo": task["repo"], "category": cat, "resolved": cat == "RESOLVED", "end_reason": reason,
+         "tool_calls": ctx.calls, "turns": len(asst),
+         "calls_by_agent": {n: sum(t["type"] == "tool" and t.get("agent") == n for t in trace)
+                            for n in dict.fromkeys(t.get("agent") for t in asst)}, "agent_seconds": round(agent_s, 1),
+         "max_prompt_tokens": max([t.get("prompt_tokens") or 0 for t in asst], default=0), "patch_chars": len(patch),
+         "completion_tokens": sum(t.get("completion_tokens") or 0 for t in asst)}
+    return r, msgs
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent", choices=["llm", "gold", "noop"], default="llm")
@@ -49,6 +94,7 @@ def main():
     ap.add_argument("--extra-body", default="{}", help="JSON merged into the request, e.g. chat_template_kwargs")
     ap.add_argument("--results-dir", default=None)
     ap.add_argument("--venv", default=str(ROOT / ".venv-sandbox"))
+    ap.add_argument("--venv-root", default=None, help="dir with one venv per repo (a__b); falls back to --venv")
     ap.add_argument("--data", default=str(ROOT / "data"), help="dir with tasks.jsonl, snapshots/ and reference/")
     a = ap.parse_args()
     DATA = Path(a.data)
@@ -62,34 +108,9 @@ def main():
 
     results = []
     for task in load_tasks(DATA, a.task_ids):
-        tid, snap = task["instance_id"], DATA / "snapshots" / f"{task['instance_id']}.tgz"
-        print(f"== {tid}", flush=True)
-        sb, trace, t0, reason = Sandbox(snap, Path(a.venv), prefix="agent"), [], time.time(), "n/a"
-        ctx = Ctx(sb, budget)
-        try:
-            if a.agent == "gold":
-                sb.apply_patch(task["patch"])
-                ctx.submit_patch(); reason = "submitted"
-            elif a.agent == "llm":
-                reason = run_agent(task, ctx, sub["root"], cfg, trace)
-            patch = ctx.patch or sb.extract_patch()
-        except Exception:  # noqa: BLE001
-            reason, patch = "harness_error", ""
-            trace.append({"type": "harness_error", "tb": traceback.format_exc()})
-        finally:
-            sb.cleanup()
-        agent_s = time.time() - t0
-        v = verify(task, patch, snap, Path(a.venv), DATA / "reference") if patch.strip() else None
-        cat = classify(reason, patch, v)
-        (out / "patches" / f"{tid}.patch").write_text(patch)
-        (out / "traces" / f"{tid}.json").write_text(json.dumps(trace, indent=1, default=str))
-        (out / "test_outputs" / f"{tid}.log").write_text((v or {}).get("log", ""))
-        asst = [t for t in trace if t["type"] == "assistant"]
-        r = {"instance_id": tid, "repo": task["repo"], "category": cat, "resolved": cat == "RESOLVED", "end_reason": reason,
-             "tool_calls": ctx.calls, "turns": len(asst),
-             "calls_by_agent": {n: sum(t["type"] == "tool" and t.get("agent") == n for t in trace)
-                                for n in dict.fromkeys(t.get("agent") for t in asst)}, "agent_seconds": round(agent_s, 1),
-             "max_prompt_tokens": max([t.get("prompt_tokens") or 0 for t in asst], default=0), "patch_chars": len(patch)}
+        print(f"== {task['instance_id']}", flush=True)
+        venv = venv_for(task, Path(a.venv), Path(a.venv_root) if a.venv_root else None)
+        r, _ = run_task(task, agent=a.agent, sub=sub, budget=budget, cfg=cfg, venv=venv, data=DATA, out=out)
         results.append(r)
         print(json.dumps(r), flush=True)
         with (out / "task_results.jsonl").open("a") as f:

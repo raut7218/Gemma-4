@@ -180,7 +180,7 @@ def run_llm(node: dict, ctx: Ctx, cfg: dict, trace: list, user: str, state: dict
             except json.JSONDecodeError:
                 args = None
             res = ctx.call(fn["name"], args, allowed) if isinstance(args, dict) else json.dumps({"status": "error", "error_type": "InvalidArguments", "error_message": "arguments are not valid JSON"})
-            trace.append({"type": "tool", "agent": name, "name": fn["name"], "args": args, "result": res[:2000]})
+            trace.append({"type": "tool", "agent": name, "name": fn["name"], "args": args, "result": res})
             msgs.append({"role": "tool", "tool_call_id": tc["id"], "content": res})
         if calls:  # like swegemma, submit_patch doesn't end the run: the agent may keep editing and resubmit
             nudges = 0
@@ -242,6 +242,7 @@ def run_agent(task: dict, ctx: Ctx, root: dict, cfg: dict, trace: list) -> str:
     if (task.get("hints_text") or "").strip():  # like swegemma: an empty hint leaves the key unset
         state["hints"] = task["hints_text"].strip()
     histories: dict = {}
+    ctx.histories = histories  # the full conversation of every agent, for run.py to save as a trajectory
     user = build_prompt(task, ctx, declared_tools(root))
     if root["agent_class"] == "LlmAgent":
         return run_llm(root, ctx, cfg, trace, user, state, True, histories)[0]

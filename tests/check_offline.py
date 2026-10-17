@@ -146,7 +146,7 @@ def sandbox_checks(data: Path):
         task = {"repo": "psf/requests", "problem_statement": "P", "hints_text": ""}
         p = build_prompt(task, ctx, {"run_command", "read_file"})
         check("prompt: official instruction block", "## Instructions:\n0. All source code is under `/workspace`." in p and "5. As your final action" in p)
-        check("prompt: budget from the bundle", "- Time allowance: 5.0 minutes\n- Tool calls allowance: 50 calls" in p, p[:400])
+        check("prompt: budget from the bundle", "- Time allowance: 8.0 minutes\n- Tool calls allowance: 28 calls" in p, p[:400])
         check("prompt: read_file limits listed", "File view limit: 150 lines" in p)
         check("prompt: read_file limits dropped without the tool", "File view limit" not in build_prompt(task, ctx, {"run_command"}))
         check("prompt: workspace layout", "## Workspace Layout" in p and "status_codes.py" in p)
@@ -193,7 +193,7 @@ def end_to_end(data: Path, tmp: Path):
     reqs = seen()
     check("request: thinking on with the budget from sampling.yaml",
           bool(reqs) and all(q.get("chat_template_kwargs") == {"enable_thinking": True} and q.get("thinking_token_budget") == 2048 for q in reqs), reqs[:1])
-    check("request: sampling fields", bool(reqs) and all((q.get("temperature"), q.get("top_p"), q.get("top_k"), q.get("max_tokens")) == (0.4, 0.95, 40, 4096) for q in reqs), reqs[:1])
+    check("request: sampling fields", bool(reqs) and all((q.get("temperature"), q.get("top_p"), q.get("top_k"), q.get("max_tokens")) == (0.2, 0.95, 40, 4096) for q in reqs), reqs[:1])
     check("request: earlier thoughts stay in the history", bool(reqs) and reqs[-1]["reasoning_in_history"] == len(reqs) - 1, reqs[-1:])
     trace = json.loads((tmp / "single" / "traces" / "toy_6592.json").read_text())
     check("trace: reasoning is recorded", all(t.get("reasoning") for t in trace if t["type"] == "assistant"))
@@ -208,6 +208,34 @@ def end_to_end(data: Path, tmp: Path):
           bool(reqs) and all(q["chat_template_kwargs"] == {"enable_thinking": False} and "thinking_token_budget" not in q and q["reasoning_in_history"] == 0 for q in reqs), reqs[:1])
 
 
+def generator(data: Path, tmp: Path):
+    """harness.gen: validation, a parallel run with the fake model, the saved conversation, resume and the Drive-style sync."""
+    def gen(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run([sys.executable, "-m", "harness.gen", "--data", str(data), *args], cwd=ROOT, capture_output=True, text=True)
+
+    p = gen("--validate", "--workers", "2")
+    val = [json.loads(l) for l in (data / "validation.jsonl").read_text().splitlines()] if (data / "validation.jsonl").exists() else []
+    check("gen: --validate accepts the toy task (gold passes, baseline fails)", p.returncode == 0 and len(val) == 1 and val[0]["ok"], p.stdout[-300:] + p.stderr[-300:])
+    out, sync = tmp / "gen", tmp / "gen-sync"
+    args = ("--agent", "llm", "--base-url", "http://127.0.0.1:8765/v1", "--model", "fake", "--workers", "2", "--epochs", "2",
+            "--results-dir", str(out), "--sync-dir", str(sync))
+    seen()
+    p = gen(*args)
+    rows = [json.loads(l) for l in (out / "task_results.jsonl").read_text().splitlines()] if (out / "task_results.jsonl").exists() else []
+    check("gen: one attempt, resolved, no retry of a resolved task", p.returncode == 0 and len(rows) == 1 and rows[0]["resolved"] and rows[0]["attempt"] == 1, p.stdout[-400:] + p.stderr[-400:])
+    f = out / "trajectories" / "toy_6592__a1.json"
+    tr = json.loads(f.read_text()) if f.exists() else {}
+    msgs = tr.get("messages", [])
+    check("gen: trajectory keeps system + user prompt, tool calls, full tool results and reasoning",
+          [m["role"] for m in msgs[:2]] == ["system", "user"] and any(m.get("tool_calls") for m in msgs) and any(m["role"] == "tool" for m in msgs)
+          and any(m.get("reasoning") for m in msgs), [m["role"] for m in msgs])
+    check("gen: trajectory lists the six tool schemas of the bundle", len(tr.get("tools", [])) == 6, len(tr.get("tools", [])))
+    check("gen: meta has the context flag and a single submit", rows and rows[0]["over_compaction"] is False and rows[0]["submit_calls"] == 1, rows[:1])
+    check("gen: sync dir holds the results", (sync / "task_results.jsonl").exists() and (sync / "trajectories" / "toy_6592__a1.json").exists())
+    p = gen(*args)
+    check("gen: resuming does not run a resolved task again", "0 usable" not in p.stdout and len((out / "task_results.jsonl").read_text().splitlines()) == 1, p.stdout[-300:])
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as t:
         tmp = Path(t)
@@ -219,6 +247,7 @@ def main() -> int:
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         try:
             end_to_end(data, tmp)
+            generator(data, tmp)
         finally:
             srv.shutdown()
     print(f"\n{'ALL CHECKS PASSED' if not FAILED else f'{len(FAILED)} FAILED: ' + ', '.join(FAILED)}")
