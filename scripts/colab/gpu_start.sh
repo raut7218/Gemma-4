@@ -26,7 +26,7 @@ pcopy() {  # pcopy SRC DST STREAMS: one file, many ranged streams
 
 ( tar -xf $G/cache/venvs.tar -C /content && tar -xf $G/cache/data-external.tar -C /content && echo "venvs+data restored $(el)" ) &
 
-( HF_XET_HIGH_PERFORMANCE=1 hf download google/gemma-4-31b-it --local-dir $M > /content/work/hf_model.log 2>&1 \
+( hf download google/gemma-4-31b-it --local-dir $M > /content/work/hf_model.log 2>&1 \
     || { echo "HF download failed; copying the weights from Drive"; for f in $G/model/*; do [ -d "$f" ] && continue
          case "$f" in *.safetensors) pcopy "$f" $M/$(basename "$f") 12 & ;; *) cp "$f" $M/ ;; esac; done; wait; }
   ok=1; for f in $G/model/*.safetensors; do [ "$(stat -c %s "$f")" = "$(stat -c %s $M/$(basename "$f") 2>/dev/null)" ] || ok=0; done
