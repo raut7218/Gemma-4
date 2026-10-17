@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import os
 import random
 import shutil
 import threading
@@ -21,10 +22,12 @@ import time
 import urllib.request
 from pathlib import Path
 
+os.environ.setdefault("SWEGEMMA_NETNS", "1")  # before harness.sandbox is imported; SWEGEMMA_NETNS=0 turns it off
+
 from .bundle import load_submission
 from .run import ROOT, run_task, venv_for
 from .tools import SCHEMAS, Budget
-from .verify import _verify
+from .verify import CLOCK_ID, _verify
 
 COMPACTION_TOKENS = 14336  # the scorer's ADK compaction starts here; the harness does not reproduce it
 
@@ -52,7 +55,7 @@ def validate_task(task: dict, data: Path, venv: Path) -> dict:
     row = {"instance_id": tid, "repo": task["repo"], "ok": False, "reason": "", "required": 0, "f2p": 0}
     try:
         gold = _verify(task, task["patch"], snap, venv)
-        req = set(gold.get("passed_ids") or [])
+        req = {i for i in gold.get("passed_ids") or [] if not CLOCK_ID.search(i)}
         if gold.get("error") in ("PATCH_REJECTED", "TEST_PATCH_FAILED", "NO_JUNIT"):
             row["reason"] = gold["error"] + ": " + (gold.get("log") or "")[-300:].replace("\n", " | ")
         elif not req:
@@ -152,9 +155,22 @@ def main():
     ap.add_argument("--sync-every", type=float, default=180)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--validate", action="store_true", help="check tasks with the gold patch instead of generating")
+    ap.add_argument("--validation-file", default="validation.jsonl", help="under --data; --validate appends to it and skips ids already in it")
+    ap.add_argument("--import-validation", default=None, help="scripts/external_validation.json: write validation.jsonl and reference/ from a finished validation")
     a = ap.parse_args()
     data, out, t_start = Path(a.data), Path(a.results_dir), time.time()
     venv_root = Path(a.venv_root) if a.venv_root else None
+    if a.import_validation:
+        imp = json.load(open(a.import_validation))
+        (data / "reference").mkdir(exist_ok=True)
+        with (data / "validation.jsonl").open("w") as f:
+            for tid, req in imp["valid"].items():
+                (data / "reference" / f"{tid}.json").write_text(json.dumps(req))
+                f.write(json.dumps({"instance_id": tid, "ok": True, "required": len(req), "reason": "imported"}) + "\n")
+            for tid, why in imp["invalid"].items():
+                f.write(json.dumps({"instance_id": tid, "ok": False, "required": 0, "reason": why}) + "\n")
+        print(f"imported {len(imp['valid'])} usable, {len(imp['invalid'])} unusable")
+        return
     tasks = load_tasks(data)
     if a.ids_file:
         keep = set(Path(a.ids_file).read_text().split())
@@ -162,7 +178,7 @@ def main():
     tasks = balanced_order(tasks, a.seed)
 
     if a.validate:
-        vf = data / "validation.jsonl"
+        vf = data / a.validation_file
         done = {r["instance_id"] for r in read_jsonl(vf)}
         todo, lock = [t for t in tasks if t["instance_id"] not in done], threading.Lock()
 

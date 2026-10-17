@@ -21,13 +21,17 @@ def _passed_ids(root) -> set[str]:
     return ok
 
 
+# a parametrized test whose id embeds the wall clock (marshmallow's invalid-datetime tests) has a different id every run
+CLOCK_ID = re.compile(r"\d{1,2}:\d{2}:\d{2}")
+
+
 def required_tests(task: dict, snapshot: Path, venv: Path, cache: Path) -> set[str]:
     """tasks.jsonl has no FAIL_TO_PASS/PASS_TO_PASS, so derive 'required' = tests passing with the gold patch."""
     f = cache / f"{task['instance_id']}.json"
     if f.exists():
-        return set(json.loads(f.read_text()))
+        return {i for i in json.loads(f.read_text()) if not CLOCK_ID.search(i)}
     ref = _verify(task, task["patch"], snapshot, venv)
-    req = ref.get("passed_ids", [])
+    req = [i for i in ref.get("passed_ids", []) if not CLOCK_ID.search(i)]
     cache.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(sorted(req)))
     return set(req)

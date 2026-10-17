@@ -18,6 +18,8 @@ GIT = ["git", "-c", "user.name=harness", "-c", "user.email=harness@local"]
 # strip_protected and verify.patch_files parse, and the scorer's container has no user config either.
 GIT_ENV = {"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1", "GIT_AUTHOR_NAME": "harness",
            "GIT_AUTHOR_EMAIL": "harness@local", "GIT_COMMITTER_NAME": "harness", "GIT_COMMITTER_EMAIL": "harness@local"}
+# SWEGEMMA_NETNS=1 runs every sandbox command in its own network namespace (needs `unshare` and `ip`; gen.py runs set it)
+NETNS = os.environ.get("SWEGEMMA_NETNS") == "1"
 EXCLUDE = ["__pycache__/", "*.pyc", ".pytest_cache/", "*.egg-info/", "build/", "dist/", ".coverage"]
 PROTECTED = re.compile(
     r"(^|/)(test_[^/]*\.py|[^/]*_test\.py|conftest\.py|pytest\.ini|pyproject\.toml|tox\.ini|setup\.cfg"
@@ -90,8 +92,11 @@ class Sandbox:
 
     def run(self, cmd: str, timeout: float = 300, rewrite: bool = True) -> tuple[int, str, str]:
         cmd = self.rewrite(cmd) if rewrite else cmd
+        argv = ["/bin/bash", "-c", cmd]
+        if NETNS:  # private loopback-only network: parallel sandboxes cannot collide on fixed test ports, and it is offline like the scorer's
+            argv = ["unshare", "-n", "-r", "/bin/bash", "-c", "ip link set lo up 2>/dev/null; " + cmd]
         try:
-            p = subprocess.run(["/bin/bash", "-c", cmd], cwd=self.ws, env=self.env(), capture_output=True,
+            p = subprocess.run(argv, cwd=self.ws, env=self.env(), capture_output=True,
                                text=True, errors="replace", timeout=timeout, start_new_session=True)
             return p.returncode, p.stdout, p.stderr
         except subprocess.TimeoutExpired as e:
