@@ -9,8 +9,18 @@ cd /content
 t0=$(date +%s)
 ( tar -xf $G/cache/vllm-env.tar -C /content && echo "vllm-env restored $(( $(date +%s) - t0 ))s" ) &
 ( tar -xf $G/cache/venvs.tar -C /content && tar -xf $G/cache/data-external.tar -C /content && echo "venvs+data restored $(( $(date +%s) - t0 ))s" ) &
+# Drive reads about 30 MB/s per stream with cp, but scales with parallel ranged dd streams (110+ MB/s measured), so the two
+# big weight shards are copied in many chunks at once.
+pcopy() {  # pcopy SRC DST STREAMS
+  local sz ch i; sz=$(stat -c %s "$1"); ch=$(( sz / $3 / 67108864 + 1 )); truncate -s "$sz" "$2"
+  for i in $(seq 0 $(( $3 - 1 ))); do dd if="$1" of="$2" bs=64M skip=$(( i * ch )) seek=$(( i * ch )) count=$ch conv=notrunc status=none & done; wait
+}
 mkdir -p /content/model
-( for f in $G/model/*; do [ -d "$f" ] || cp "$f" /content/model/ & done; wait; echo "model copied $(( $(date +%s) - t0 ))s" ) &
+( for f in $G/model/*; do [ -d "$f" ] && continue
+    case "$f" in *.safetensors) pcopy "$f" /content/model/$(basename "$f") 12 & ;; *) cp "$f" /content/model/ ;; esac
+  done; wait
+  ok=1; for f in $G/model/*.safetensors; do [ "$(stat -c %s "$f")" = "$(stat -c %s /content/model/$(basename "$f"))" ] || ok=0; done
+  [ $ok = 1 ] && echo "model copied $(( $(date +%s) - t0 ))s" || echo "MODEL COPY SIZE MISMATCH" ) &
 [ -d /content/Gemma-4 ] || git clone -q -b gen-trajectories https://github.com/raut7218/Gemma-4.git /content/Gemma-4
 wait
 if [ "${SKIP_SERVE:-0}" = 1 ]; then echo "restored in $(( $(date +%s) - t0 ))s (SKIP_SERVE=1: no vLLM)"; exit 0; fi
