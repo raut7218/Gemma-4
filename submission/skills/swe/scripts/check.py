@@ -4,7 +4,8 @@ Lists changed and untracked files, compiles the changed .py files, runs the whol
 changed modules (plus any given as args), and re-runs every failing test on a pristine copy of the baseline
 commit to label it NEW (your change broke it) or PRE-EXISTING (fails without your change too). The grader
 runs whole test files and needs every required test to pass, so a NEW failure is a failed task.
-Never stashes or resets the workspace: the baseline copy is a git archive under the temp dir.
+Never stashes or resets the workspace: the baseline copy is a git archive under the temp dir, and the files
+with failures are rerun there whole (passing node ids back to pytest breaks on ids with spaces).
 """
 import io
 import os
@@ -17,7 +18,7 @@ import tempfile
 WS = os.environ.get("SWE_WORKSPACE") or "/workspace"
 TEST = re.compile(r"(^|/)(tests?|testing)/|(^|/)(test_[^/]*|[^/]*_test|conftest)\.py$")
 DROPPED = re.compile(r"(^|/)(conftest\.py|pytest\.ini|pyproject\.toml|tox\.ini|setup\.cfg)$")
-CAP, MAX_FILES, T_RUN, T_BASE = 1500, 4, 110, 60
+CAP, MAX_FILES, T_RUN, T_BASE = 1500, 4, 110, 90
 out = []
 
 
@@ -37,8 +38,8 @@ def pytest(targets, cwd, env, timeout):
     except subprocess.TimeoutExpired:
         return f"timed out after {timeout}s", None
     fails = {}
-    for l in p.stdout.splitlines():
-        m = re.match(r"(FAILED|ERROR) (\S+)(?: - (.*))?", l)
+    for l in p.stdout.splitlines():  # node ids can contain spaces (parametrize ids); " - " starts the message
+        m = re.match(r"(FAILED|ERROR) (.+?)(?: - (.*))?$", l)
         if m:
             fails[m.group(2)] = (m.group(3) or m.group(1)).strip()[:110]
     tail = [l for l in p.stdout.splitlines() if re.search(r"\d+ (passed|failed|error)", l)]
@@ -59,7 +60,7 @@ def baseline_copy(base):
 
 def test_targets(changed, extra):
     tracked = git("ls-files", "*.py").split()
-    tests = [f for f in tracked if TEST.search(f) and not f.endswith("conftest.py")]
+    tests = [f for f in tracked if re.search(r"(^|/)(test_[^/]*|[^/]*_test)\.py$", f)]  # not helpers like tests/utils.py
     picked = [a for a in extra if os.path.exists(os.path.join(WS, a.split("::")[0]))]
     for f in changed:
         if not f.endswith(".py") or TEST.search(f):
@@ -130,8 +131,9 @@ def main():
                 where = sh([sys.executable, "-c", f"import {top},os;print(os.path.realpath({top}.__file__))"], cwd=d, env=env).stdout
                 if not where.startswith(os.path.realpath(d)):
                     why = f"baseline copy imports {top} from {where.strip() or '?'}, comparison skipped"
-            if not why:
-                bcounts, bfails = pytest(old, d, env, T_BASE)
+            if not why:  # rerun the whole failing files: ids parsed the same way in both runs compare exactly
+                files = sorted({i.split("::")[0] for i in old})
+                bcounts, bfails = pytest(files, d, env, T_BASE)
                 if bfails is None and "passed" not in bcounts:
                     why = "baseline run failed: " + bcounts
                 else:

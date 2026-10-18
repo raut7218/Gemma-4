@@ -127,7 +127,7 @@ def units(tmp: Path):
           and "call locate.py" in text and "Then call check.py" in text and "Do not call load_skill" in text)
     check("submission: prompt covers title-only issues, rereads and unchanged repros",
           "the title is the specification" in text and "Never read the same lines twice" in text
-          and "same result after an edit" in text and "State: FILE FUNCTION" in text)
+          and "same result after an edit" in text and "State: FILE FUNCTION" in text and "at most two repros before your first edit" in text)
     eq("submission: the root agent declares the swe skill", [Path(p).name for p in sub["root"]["skills"]], ["swe"])
     for name, md in (("Swe", "---\nname: Swe\ndescription: d\n---\n"), ("swe", "---\nname: other\ndescription: d\n---\n"),
                      ("nodesc", "---\nname: nodesc\n---\n")):
@@ -190,8 +190,10 @@ def skill_checks(data: Path):
     sb = Sandbox(data / "snapshots" / "toy_6592.tgz", ROOT / ".venv-sandbox", prefix="skill")
     try:
         t = sb.ws / "tests" / "test_status.py"
-        t.write_text(t.read_text() + "\n\ndef test_broken_before():\n    assert False\n")
-        sb.git("commit", "-qam", "baseline with a failing test"); sb.git("tag", "-f", "_swegemma_baseline")
+        t.write_text("import pytest\n" + t.read_text() + "\n\ndef test_broken_before():\n    assert False\n"
+                     '\n\n@pytest.mark.parametrize("v", ["a b"])\ndef test_param_with_space(v):\n    assert False\n')
+        (sb.ws / "tests" / "utils.py").write_text("import requests.status_codes\n")  # mentions the module, but is a helper, not a test file
+        sb.git("add", "-A"); sb.git("commit", "-qm", "baseline with failing tests"); sb.git("tag", "-f", "_swegemma_baseline")
         ctx = Ctx(sb, Budget())
         ctx.skills = {"swe": ROOT / "submission" / "skills" / "swe"}
 
@@ -212,9 +214,10 @@ def skill_checks(data: Path):
         (sb.ws / "repro.py").write_text("print(1)\n")
         out = run("check.py", [])
         check("check: maps status_codes.py to tests/test_status.py and runs the whole file",
-              "changed: src/requests/status_codes.py" in out and "ran whole files: tests/test_status.py" in out and "2 failed" in out, out)
-        check("check: NEW vs PRE-EXISTING", "NEW (passed before your change, fix it): tests/test_status.py::test_ok" in out
-              and "PRE-EXISTING (fails without your change too, ignore): tests/test_status.py::test_broken_before" in out, out)
+              "changed: src/requests/status_codes.py" in out and "ran whole files: tests/test_status.py\n" in out and "3 failed" in out, out)
+        check("check: NEW vs PRE-EXISTING, ids with spaces included", "NEW (passed before your change, fix it): tests/test_status.py::test_ok" in out
+              and "PRE-EXISTING (fails without your change too, ignore): tests/test_status.py::test_broken_before" in out
+              and "PRE-EXISTING (fails without your change too, ignore): tests/test_status.py::test_param_with_space[a b]" in out, out)
         check("check: lists the untracked scratch file", "untracked, will be IN your patch: repro.py" in out, out)
         sc.write_text("def broken(:\n")
         out = run("check.py", ["tests/test_status.py"])
