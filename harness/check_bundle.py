@@ -152,9 +152,26 @@ class Checker:
         if on and _num(cap) and cap < budget + 1024:
             self.warnings.append(f"{where}: max_output_tokens={cap} leaves under 1024 tokens after a full thinking budget "
                                  f"of {budget}; tool calls can be cut off")
+        for s in d.get("skills") or []:
+            self.skill(str(s), where)
         if d.get("output_key"):
             self.output_keys.add(d["output_key"])
         self.instructions.append((where, d.get("instruction") or ""))
+
+    def skill(self, rel: str, where: str):
+        """adk_submission resolve_skills (path relative to the bundle root) + google-adk load_skill_from_dir
+        (SKILL.md frontmatter: kebab-case name equal to the directory name, non-empty description)."""
+        p = (self.root / rel).resolve()
+        if Path(rel).is_absolute() or ".." in Path(rel).parts or not p.is_relative_to(self.root) or not (p / "SKILL.md").is_file():
+            return self.err(where, f"skill {rel} must be a directory with a SKILL.md, relative to the bundle root")
+        m = re.match(r"---\n(.*?)\n---", (p / "SKILL.md").read_text(), re.S)
+        fm = yaml.safe_load(m.group(1)) if m else None
+        if not isinstance(fm, dict):
+            return self.err(where, f"skill {rel}: SKILL.md needs a --- frontmatter block")
+        if fm.get("name") != p.name or not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", str(fm.get("name"))):
+            self.err(where, f"skill {rel}: name {fm.get('name')!r} must be kebab-case and equal the directory name")
+        if not fm.get("description"):
+            self.err(where, f"skill {rel}: description must not be empty")
 
     def run(self) -> bool:
         self.instructions = []

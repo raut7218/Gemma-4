@@ -10,4 +10,7 @@ tools:
   - write_file
   - get_status
   - submit_patch
+# locate.py and check.py, run with run_skill_script (one tool call each, executed inside the task container)
+skills:
+  - skills/swe
 generate_content_config: !include configs/sampling.yaml

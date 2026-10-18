@@ -121,9 +121,23 @@ def units(tmp: Path):
     check("submission: prompt no longer caps reasoning or claims nothing is dropped",
           "few sentences per step" not in text and "nothing in it is dropped" not in text)
     check("submission: prompt plans an edit by call 12 and a cleanup before submit",
-          "By call 12" in text and "git status --short | grep '^??'" in text and "docs_src/" in text and "28 tool calls" in text)
-    check("submission: prompt has the contract step, a /tmp heredoc repro and tail on test output",
-          "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text and "-k KEYWORD 2>&1 | tail -20" in text)
+          "By call 12" in text and "rm -f every scratch file check.py lists" in text and "docs_src/" in text and "28 tool calls" in text)
+    check("submission: prompt has the contract step, a /tmp heredoc repro and the two scripts",
+          "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text
+          and "call locate.py" in text and "Then call check.py" in text and "Do not call load_skill" in text)
+    check("submission: prompt covers title-only issues, rereads and unchanged repros",
+          "the title is the specification" in text and "Never read the same lines twice" in text
+          and "same result after an edit" in text and "State: FILE FUNCTION" in text)
+    eq("submission: the root agent declares the swe skill", [Path(p).name for p in sub["root"]["skills"]], ["swe"])
+    for name, md in (("Swe", "---\nname: Swe\ndescription: d\n---\n"), ("swe", "---\nname: other\ndescription: d\n---\n"),
+                     ("nodesc", "---\nname: nodesc\n---\n")):
+        d = tmp / f"sk_{name}"
+        (d / "skills" / name).mkdir(parents=True)
+        (d / "skills" / name / "SKILL.md").write_text(md)
+        (d / "agent.yaml").write_text(f"name: a\nmodel: gemma-4-31b-it-qat-w4a16-ct\ninstruction: x\nskills: [skills/{name}]\n"
+                                      "generate_content_config:\n  thinking_config:\n    thinking_budget: 0\n")
+        c = Checker(d)
+        check(f"checker: bad skill {name!r} is an error", not c.run() and any("skill" in e for e in c.errors), c.errors)
     # call budget spent: the first text-only reply ends the run, with no nudge (swegemma agent_runner)
     sent = []
     real_chat = agent_mod.chat
@@ -146,7 +160,8 @@ def sandbox_checks(data: Path):
         task = {"repo": "psf/requests", "problem_statement": "P", "hints_text": ""}
         p = build_prompt(task, ctx, {"run_command", "read_file"})
         check("prompt: official instruction block", "## Instructions:\n0. All source code is under `/workspace`." in p and "5. As your final action" in p)
-        check("prompt: budget from the bundle", "- Time allowance: 5.0 minutes\n- Tool calls allowance: 50 calls" in p, p[:400])
+        b = Budget()
+        check("prompt: budget from the bundle", f"- Time allowance: {b.max_time_minutes} minutes\n- Tool calls allowance: {b.max_tool_calls} calls" in p, p[:400])
         check("prompt: read_file limits listed", "File view limit: 150 lines" in p)
         check("prompt: read_file limits dropped without the tool", "File view limit" not in build_prompt(task, ctx, {"run_command"}))
         check("prompt: workspace layout", "## Workspace Layout" in p and "status_codes.py" in p)
@@ -165,6 +180,46 @@ def sandbox_checks(data: Path):
         check("submit_patch: /tmp files stay out", "scratch" not in ctx.patch)
         sb.git("checkout", "_swegemma_baseline", "--", "src")
         eq("fallback diff of test-only changes is empty", sb.extract_patch(), "")
+    finally:
+        sb.cleanup()
+
+
+def skill_checks(data: Path):
+    """locate.py and check.py through the harness's run_skill_script, on the toy repo with one test that already
+    fails at the baseline, so check.py has to tell a NEW failure from a PRE-EXISTING one."""
+    sb = Sandbox(data / "snapshots" / "toy_6592.tgz", ROOT / ".venv-sandbox", prefix="skill")
+    try:
+        t = sb.ws / "tests" / "test_status.py"
+        t.write_text(t.read_text() + "\n\ndef test_broken_before():\n    assert False\n")
+        sb.git("commit", "-qam", "baseline with a failing test"); sb.git("tag", "-f", "_swegemma_baseline")
+        ctx = Ctx(sb, Budget())
+        ctx.skills = {"swe": ROOT / "submission" / "skills" / "swe"}
+
+        def run(script, args):
+            r = json.loads(ctx.call("run_skill_script", {"skill_name": "swe", "file_path": script, "args": args}, ["run_skill_script"]))
+            return r.get("stdout") or r.get("error", "")
+
+        out = run("locate.py", ["unordered", "no_such_name_xyz"])
+        check("locate: finds the file, the module-level hit and the missing term",
+              "src/requests/status_codes.py  [unordered]" in out and "at module level" in out and "not found in source: no_such_name_xyz" in out, out)
+        out = run("locate.py", {"terms": "_Codes|setattr"})
+        check("locate: dict args and enclosing class", "in _Codes (L7-8)" in out and "[_Codes, setattr]" in out, out)
+        eq("skills: each script run is one tool call", ctx.calls, 2)
+        out = run("check.py", [])
+        check("check: clean tree", "changed: nothing" in out and "no test file covers" in out, out)
+        sc = sb.ws / "src" / "requests" / "status_codes.py"
+        sc.write_text(sc.read_text().replace('200: ("ok", "okay")', '200: ("okay",)'))
+        (sb.ws / "repro.py").write_text("print(1)\n")
+        out = run("check.py", [])
+        check("check: maps status_codes.py to tests/test_status.py and runs the whole file",
+              "changed: src/requests/status_codes.py" in out and "ran whole files: tests/test_status.py" in out and "2 failed" in out, out)
+        check("check: NEW vs PRE-EXISTING", "NEW (passed before your change, fix it): tests/test_status.py::test_ok" in out
+              and "PRE-EXISTING (fails without your change too, ignore): tests/test_status.py::test_broken_before" in out, out)
+        check("check: lists the untracked scratch file", "untracked, will be IN your patch: repro.py" in out, out)
+        sc.write_text("def broken(:\n")
+        out = run("check.py", ["tests/test_status.py"])
+        check("check: reports a syntax error", "compile: src/requests/status_codes.py:1:" in out, out)
+        check("check: never touched the working tree", sc.read_text() == "def broken(:\n" and (sb.ws / "repro.py").exists())
     finally:
         sb.cleanup()
 
@@ -215,6 +270,7 @@ def main() -> int:
         data = tmp / "data-toy"
         subprocess.run([sys.executable, str(ROOT / "tests" / "make_toy_task.py"), str(data)], check=True, capture_output=True)
         sandbox_checks(data)
+        skill_checks(data)
         srv = ThreadingHTTPServer(("127.0.0.1", 8765), fake_llm.H)
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         try:

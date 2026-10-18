@@ -14,8 +14,9 @@ import re
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
-from .tools import MAX_CHARS, MAX_LINES, MAX_STDOUT, SCHEMAS, TOOL_NAMES, Ctx
+from .tools import MAX_CHARS, MAX_LINES, MAX_STDOUT, SCHEMAS, SKILL_SCHEMA, SKILL_TOOL, TOOL_NAMES, Ctx
 
 CTX_LIMIT = 32768
 NUDGES = {
@@ -135,7 +136,10 @@ def run_llm(node: dict, ctx: Ctx, cfg: dict, trace: list, user: str, state: dict
     """One LlmAgent invocation. Returns (reason, final_text); reason is 'done' when a sub-agent answers."""
     name = node.get("name", "agent")
     allowed = [t for t in node.get("tools") or sorted(TOOL_NAMES) if t in TOOL_NAMES]  # unimplemented tools are dropped
-    schemas = [s for s in SCHEMAS if s["function"]["name"] in allowed]
+    if node.get("skills"):  # bundle.py resolved them to directories; ADK requires dir name == skill name
+        ctx.skills.update({Path(p).name: Path(p) for p in node["skills"]})
+        allowed.append(SKILL_TOOL)
+    schemas = [s for s in SCHEMAS + [SKILL_SCHEMA] if s["function"]["name"] in allowed]
     sampling = effective_sampling(node.get("generate_content_config") or cfg["sampling"])
     keep_thoughts = (sampling.get("thinking_config") or {}).get("include_thoughts") is not False
     sysmsg = {"role": "system", "content": render(node.get("instruction", ""), state)}

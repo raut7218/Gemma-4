@@ -1,15 +1,21 @@
-"""The six core swegemma tools (run_command, read_file, edit_file, write_file, get_status, submit_patch).
+"""The six core swegemma tools (run_command, read_file, edit_file, write_file, get_status, submit_patch), plus
+ADK's run_skill_script for agents that declare skills.
 
-Graph tools (search_similar_code / get_code_neighbors / get_code_subgraph) are not implemented yet.
-Every tool returns a JSON string, with the same truncation caps and budget gate as the real harness.
+Graph tools (search_similar_code / get_code_neighbors / get_code_subgraph) are not implemented yet, nor are
+load_skill / load_skill_resource. Every tool returns a JSON string, with the same truncation caps and budget
+gate as the real harness.
 """
 from __future__ import annotations
 
 import json
 import re
+import shlex
+import shutil
+import tempfile
 import threading
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from .sandbox import Sandbox
 
@@ -18,7 +24,7 @@ MAX_STDOUT, MAX_LINES, MAX_CHARS = 5000, 150, 10000
 
 @dataclass
 class Budget:
-    max_time_minutes: float = 8.0
+    max_time_minutes: float = 10.0
     max_tool_calls: int = 28
     max_turns: int = 80
     timeout_seconds: int = 240
@@ -42,6 +48,7 @@ class Ctx:
     patch: str = ""
     turns: int = 0
     aborted: str = ""  # set when a parallel branch ends the whole session (overflow, LLM error, budget)
+    skills: dict = field(default_factory=dict)  # skill name -> its directory in the bundle
     lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def take_turn(self) -> bool:
@@ -150,11 +157,35 @@ class Ctx:
         self.patch_submitted = True
         return _ok(patch_size=len(self.patch), files_changed=self.patch.count("diff --git"))
 
+    def run_skill_script(self, skill_name: str, file_path: str, args=None, short_options=None, positional_args=None) -> str:
+        """ADK's SkillToolset: the skill is copied to a temp dir, which is the script's cwd, and the script runs
+        with the sandbox's python; arguments map to argv as in _build_wrapper_code. Scripts find the workspace
+        through SWE_WORKSPACE here (/workspace in the scorer's container)."""
+        d = self.skills.get(skill_name)
+        rel = file_path if file_path.startswith("scripts/") else f"scripts/{file_path}"
+        if d is None or not (Path(d) / rel).is_file():
+            return json.dumps({"error": f"no script {rel} in skill {skill_name!r}", "error_code": "SCRIPT_NOT_FOUND"})
+        argv = [str(v) for v in args] if isinstance(args, list) else []
+        if isinstance(args, dict):
+            argv += [x for k, v in args.items() for x in (f"--{k}", str(v))]
+        argv += [x for k, v in (short_options or {}).items() for x in (f"-{k}", str(v))]
+        argv += ["--", *map(str, positional_args)] if positional_args else []
+        td = tempfile.mkdtemp(dir=self.sb.tmp)
+        shutil.copytree(d, td, dirs_exist_ok=True)
+        to = min(self.budget.timeout_seconds, max(5, int(self.remaining_s())))
+        cmd = f"cd {shlex.quote(td)} && SWE_WORKSPACE={shlex.quote(str(self.sb.ws))} python3 {shlex.join([rel, *argv])}"
+        code, out, err = self.sb.run(cmd, timeout=to, rewrite=False)
+        shutil.rmtree(td, ignore_errors=True)
+        if code:
+            return json.dumps({"error": f"Failed to execute script '{rel}': exited with code {code}\n{err[-300:]}", "error_code": "EXECUTION_ERROR"})
+        return json.dumps({"skill_name": skill_name, "file_path": rel, "stdout": out, "stderr": err,
+                           "status": "warning" if err and out else "error" if err else "success"})
+
     FREE = {"get_status", "submit_patch"}
 
     def call(self, name: str, args: dict, allowed: list[str] | None = None) -> str:
         fn = getattr(self, name, None)
-        if name not in TOOL_NAMES or fn is None or (allowed is not None and name not in allowed):
+        if name not in TOOL_NAMES | {SKILL_TOOL} or fn is None or (allowed is not None and name not in allowed):
             return _err("UnknownTool", f"unknown tool {name}")
         if name not in self.FREE:
             with self.lock:  # parallel branches share one budget
@@ -191,3 +222,9 @@ SCHEMAS = [
     _fn("submit_patch", "Capture the current working tree modifications as your submission (free). You can submit multiple times; only the final submission is evaluated.", {}, []),
 ]
 TOOL_NAMES = {s["function"]["name"] for s in SCHEMAS}
+# Offered only to agents with skills (ADK adds the SkillToolset then); same parameters as google-adk 1.36.
+SKILL_TOOL = "run_skill_script"
+SKILL_SCHEMA = _fn(SKILL_TOOL, "Executes a script from a skill's scripts/ directory.",
+                   {"skill_name": S, "file_path": S, "args": {"anyOf": [{"type": "object"}, {"type": "array", "items": S}]},
+                    "short_options": {"type": "object"}, "positional_args": {"type": "array", "items": S}},
+                   ["skill_name", "file_path"])

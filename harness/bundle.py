@@ -30,6 +30,7 @@ def load_agent(path: Path, root: Path) -> dict:
     if d["agent_class"] not in WORKFLOW | {"LlmAgent"}:
         raise ValueError(f"{path}: unsupported agent_class {d['agent_class']}")
     d["sub_agents"] = [load_agent(path.parent / ref["config_path"], root) for ref in d.get("sub_agents") or []]
+    d["skills"] = [str(root / s) for s in d.get("skills") or []]  # official: relative to the bundle root
     if d["agent_class"] == "LlmAgent" and d["sub_agents"]:
         raise ValueError(f"{path}: LlmAgent sub_agents (transfer) are not supported locally")
     return d
