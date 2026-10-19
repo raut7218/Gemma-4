@@ -19,6 +19,7 @@ import statistics
 from pathlib import Path
 
 EDIT_TOOLS = {'edit_file', 'write_file'}
+COMPACTION_THRESHOLD = 14336  # EventsCompactionConfig.token_threshold in the scorer (HARNESS_README 7.2)
 
 
 def jsonl(path: Path) -> list[dict]:
@@ -135,7 +136,10 @@ def main(argv=None) -> int:
         cs = calls.get(iid, [])
         llm_lat = sum(c.get('latency') or 0 for c in cs)
         comp = sum(c.get('completion_tokens') or 0 for c in cs) or ts['completion']
-        prompts = [c.get('prompt_tokens') or 0 for c in cs]
+        prompts = [c.get('prompt_tokens') or 0 for c in sorted(cs, key=lambda c: c.get('start') or 0)]
+        # swegemma's trace has no compaction events; ADK's token-threshold compaction shows as the prompt falling from
+        # >= ~14,336 tokens to a summary-sized one on the next call
+        compactions = sum(1 for a, b in zip(prompts, prompts[1:]) if a >= 0.95 * COMPACTION_THRESHOLD and b < 0.6 * a)
         new_prefill = sum(max(0, b - a) for a, b in zip([0, *prompts], prompts))  # prefix-cached growth only
         agent_s = ph.get('agent_seconds')
         tool_s = max(0.0, (agent_s or 0) - llm_lat) if agent_s is not None else None
@@ -150,7 +154,7 @@ def main(argv=None) -> int:
             'max_prompt_tokens': max([ts['max_prompt'], *prompts]) if prompts or ts['max_prompt'] else None,
             'completion_tokens': comp, 'reasoning_tokens': sum(c.get('reasoning_tokens') or 0 for c in cs),
             'truncated_outputs': sum(1 for c in cs if c.get('finish_reason') == 'length'),
-            'llm_errors': sum(1 for c in cs if not c.get('ok')), 'compactions': ts['compactions'],
+            'llm_errors': sum(1 for c in cs if not c.get('ok')), 'compactions': compactions or ts['compactions'],
             'empty_turns': ts['empty_turns'], 'first_edit_call': ts['first_edit_call'], 'submits': ts['submits'],
             'budget_warnings': ts['budget_warnings'], 'tools': dict(ts['tools']), 'scripts': dict(ts['scripts']),
             'tool_errors': dict(ts['tool_errors']), 'agent_seconds': agent_s and round(agent_s, 1),'llm_seconds': round(llm_lat, 1),
@@ -218,7 +222,8 @@ def render(rows: list[dict], args, meta: dict) -> str:
         dist(key, label)
     L.append('')
     flags = {
-        'peak prompt > 14,336 (compaction threshold)': lambda r: (r['max_prompt_tokens'] or 0) > 14336,
+        'compacted at least once': lambda r: r['compactions'] > 0,
+        'compacted 2+ times': lambda r: r['compactions'] > 1,
         'peak prompt > 28,000 (near 32k window)': lambda r: (r['max_prompt_tokens'] or 0) > 28000,
         'any output cut at max_tokens': lambda r: r['truncated_outputs'] > 0,
         'any LLM error': lambda r: r['llm_errors'] > 0,
