@@ -215,6 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument('--no-netns', action='store_true')
     ap.add_argument('--display', default='quiet', choices=['auto', 'dashboard', 'single', 'quiet'])
     ap.add_argument('--resume', action='store_true', help='skip tasks already in <results>/task_results.jsonl')
+    ap.add_argument('--shard', help='K/M: run only every M-th task starting at K (one process per shard)')
     args = ap.parse_args(argv)
 
     os.environ['LOCAL_INFERENCE_URL'] = args.base_url
@@ -243,6 +244,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.max_time_minutes:
         budget['max_time_minutes'] = args.max_time_minutes
     ids = args.task_ids or (args.ids_file.read_text().split() if args.ids_file else None)
+    if args.shard:
+        # swegemma's tools are synchronous, so tasks sharing one event loop stall while any of them runs a command.
+        # Separate processes (one shard each, run with --concurrency 1 like the scorer) keep the GPU busy instead.
+        k, m = map(int, args.shard.split('/'))
+        if ids is None:
+            ids = [json.loads(l)['instance_id'] for l in (data / 'tasks.jsonl').read_text().splitlines() if l.strip()]
+        ids = [i for n, i in enumerate(ids) if n % m == k]
     earlier: list[str] = []  # the Evaluator starts task_results.jsonl afresh, so a resumed run merges these back
     if args.resume and (results / 'task_results.jsonl').exists():
         earlier = [l for l in (results / 'task_results.jsonl').read_text().splitlines() if l.strip()]
