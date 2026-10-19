@@ -29,11 +29,13 @@ R=/content/Gemma-4/colab_eval
          sz=$(stat -c %s $G/model/model.safetensors); ch=$(( sz / 16 / 67108864 + 1 )); truncate -s $sz /content/model/model.safetensors
          for i in $(seq 0 15); do dd if=$G/model/model.safetensors of=/content/model/model.safetensors bs=64M skip=$(( i * ch )) \
            seek=$(( i * ch )) count=$ch conv=notrunc status=none & done; wait; }
-  [ "$(stat -c %s /content/model/model.safetensors)" = "$(stat -c %s $G/model/model.safetensors)" ] && el "model ready" || el "MODEL SIZE MISMATCH" ) &
+  [ "$(stat -c %s /content/model/model.safetensors)" = "$(stat -c %s $G/model/model.safetensors)" ] && el "model ready" || el "MODEL SIZE MISMATCH"
+  # start serving as soon as weights and vLLM are in place; the snapshot copy from Drive can take longer
+  until /content/vllm-env/bin/python -c "import vllm" 2>/dev/null; do sleep 5; done
+  [ "${SKIP_SERVE:-0}" = 1 ] || nohup bash $R/colab/serve_vllm.sh > /content/work/serve_wrapper.log 2>&1 & ) &
 wait
 el "restore finished"
 if [ "${SKIP_SERVE:-0}" = 1 ]; then echo "(SKIP_SERVE=1: vLLM not started)"; exit 0; fi
 nvidia-smi --query-gpu=name,memory.total --format=csv
-nohup bash $R/colab/serve_vllm.sh > /content/work/serve_wrapper.log 2>&1 &
 for i in $(seq 1 120); do curl -sf http://127.0.0.1:8000/v1/models >/dev/null && { el "vLLM ready"; break; }; sleep 5; done
 grep -E "KV cache|Maximum concurrency|model weights took" /content/work/vllm.log | tail -4
