@@ -1,0 +1,10 @@
+# Investigate in parallel, then fix in one agent.
+# Three read-only investigators share the GPU (vLLM batches their requests) and each gets its own
+# context window. Their final answers land in session state through output_key; the fixer is the
+# only agent that edits /workspace and the only one that can call submit_patch.
+agent_class: SequentialAgent
+name: swe_pipeline
+description: Investigates the issue with three parallel read-only agents, then one agent fixes it and submits.
+sub_agents:
+  - config_path: sub_agents/investigate.yaml
+  - config_path: sub_agents/fixer.yaml

@@ -1,0 +1,8 @@
+# Time stays at 4.5 min: 5.5 min ran past the 12 h cap, so wall time per task is fixed.
+# Parallel branches share these per-task counters, so calls and turns are raised; time is the real limit.
+# timeout_seconds also bounds the hidden-test run, so keep it >= 180. Prompts wrap commands in `timeout`.
+evaluation:
+  timeout_seconds: 180
+  max_tool_calls: 50
+  max_time_minutes: 4.5
+  max_turns: 100
