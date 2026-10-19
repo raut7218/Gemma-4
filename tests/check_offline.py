@@ -112,16 +112,20 @@ def units(tmp: Path):
     check("submission: thinking on, thoughts kept", thinking_body(tc)["chat_template_kwargs"]["enable_thinking"] and tc["include_thoughts"] is True, tc)
     check("submission: output cap leaves room after thinking", g["max_output_tokens"] >= tc["thinking_budget"] + 2048, g)
     ev = sub["eval"]
-    # 7 min x 120 tasks = 14 h if every task burned the clock, so the 12 h total rests on the call cap ending stuck runs
-    check("submission: call cap is small enough to end stuck runs early", ev["max_tool_calls"] <= 36, ev)
+    # 7 min x 120 tasks = 14 h if every task burned the clock, so the 12 h total rests on the call cap ending stuck runs;
+    # 45 calls of the 12B take about as long as 35 of the 31B did (it decodes about twice as fast)
+    check("submission: call cap is small enough to end stuck runs early", ev["max_tool_calls"] <= 46, ev)
     eq("submission: budget fields", {k: ev[k] for k in ("max_tool_calls", "max_time_minutes", "max_turns", "timeout_seconds")},
-       {"max_tool_calls": 35, "max_time_minutes": 7.0, "max_turns": 80, "timeout_seconds": 240})
+       {"max_tool_calls": 45, "max_time_minutes": 7.0, "max_turns": 80, "timeout_seconds": 240})
     text = sub["root"]["instruction"]
     check("submission: no stray braces in the prompt", "{" not in text and "}" not in text)
     check("submission: prompt no longer caps reasoning or claims nothing is dropped",
           "few sentences per step" not in text and "nothing in it is dropped" not in text)
     check("submission: prompt plans an edit by call 12 and a cleanup before submit",
-          "By call 12" in text and "--clean" in text and "docs_src/" in text and "35 tool calls" in text)
+          "By call 12" in text and "--clean" in text and "docs_src/" in text and "45 tool calls" in text
+          and "call 20 without an edit" in text)
+    check("submission: prompt asks for short old_strings and the issue's exact names",
+          "1 to 3 lines" in text and "single-line old_string" in text and "use exactly that name and signature" in text)
     check("submission: prompt has the contract step, a /tmp heredoc repro and the two scripts",
           "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text
           and "call locate.py" in text and "call check.py" in text and "Do not call load_skill" in text)

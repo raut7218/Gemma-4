@@ -7,18 +7,20 @@
 #   cache/sbx.tar    sandbox site (/content/sbx, built by colab_eval.build_sandbox_env)
 #   cache/vllm-env.tar  fallback copy of /content/vllm-env (the G4 installs it from PyPI with requirements-vllm.txt)
 #   model/           google/gemma-4-31B-it-qat-w4a16-ct (fallback; the G4 downloads from Hugging Face)
+#   models/<name>/   the other checkpoints, e.g. gemma-4-12b-it-qat-w4a16-ct (the one $BUNDLE declares, see models.sh)
 #   results/gold     reference patches through the official grader: which tasks this environment can solve at all
 set -euo pipefail
 G=/content/drive/MyDrive/gemma4-eval
 C=/content/comp
 PY=3.13.15
-BRANCH=${BRANCH:-gemma-run-colab}
+BRANCH=${BRANCH:-v9-12b}
 mkdir -p $G/cache $G/comp $G/results /content/work
 t0=$(date +%s); el() { echo "[$(( $(date +%s) - t0 ))s] $*"; }
 cd /content
 [ -d Gemma-4 ] || git clone -q -b $BRANCH https://github.com/raut7218/Gemma-4.git
-(cd Gemma-4 && git pull -q)
+(cd Gemma-4 && git fetch -q origin $BRANCH && git checkout -q -B $BRANCH FETCH_HEAD)
 R=/content/Gemma-4/colab_eval
+source $R/colab/models.sh; M=$G/$MODEL_DRIVE
 command -v uv >/dev/null || pip install -q uv
 pip install -q kaggle
 uv python install -q $PY
@@ -72,12 +74,22 @@ fi
 el "vllm env cached"
 
 # 5. model weights on Drive (fallback; the G4 pulls from Hugging Face first)
-if [ ! -s $G/model/model.safetensors ]; then
-  /content/vllm-env/bin/hf download google/gemma-4-31B-it-qat-w4a16-ct --local-dir /content/model > /content/work/hf.log 2>&1 \
-    || { [ -x /content/vllm-env/bin/hf ] || tar -xf $G/cache/vllm-env.tar -C /content; /content/vllm-env/bin/hf download google/gemma-4-31B-it-qat-w4a16-ct --local-dir /content/model; }
-  mkdir -p $G/model && cp /content/model/*.json /content/model/*.jinja $G/model/ && cp /content/model/model.safetensors $G/model/
+[ -x /content/vllm-env/bin/hf ] || tar -xf $G/cache/vllm-env.tar -C /content
+if [ ! -s $M/model.safetensors ]; then
+  /content/vllm-env/bin/hf download $HF_REPO --local-dir /content/model > /content/work/hf.log 2>&1
+  mkdir -p $M && cp /content/model/*.json /content/model/*.jinja $M/ && cp /content/model/model.safetensors $M/
 fi
-el "model on Drive: $(du -sh $G/model | cut -f1)"
+el "model on Drive: $MODEL_NAME $(du -sh $M | cut -f1)"
+# the scorer's vLLM must know the architecture it is told to load (the 12B is served with --hf-overrides)
+/content/vllm-env/bin/python - "$M" "${MODEL_ARGS[@]}" <<'PY'
+import json, sys
+from vllm.model_executor.models.registry import ModelRegistry
+cfg = json.load(open(sys.argv[1] + '/config.json'))
+over = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
+arch = (over.get('architectures') or cfg['architectures'])[0]
+assert arch in ModelRegistry.get_supported_archs(), f'vLLM has no {arch}'
+print('vLLM supports', arch, '| checkpoint', cfg['architectures'][0], cfg.get('model_type'), '| overrides', over or None)
+PY
 
 # 6. gold validation through the official grader (resumable)
 if [ ! -s $G/results/gold/summary.json ]; then

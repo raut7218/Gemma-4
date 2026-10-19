@@ -1,8 +1,9 @@
 # colab_eval: the official scorer on a Colab G4
 
 Runs a submission bundle through the unmodified official `swegemma` 0.2.11 / `adk_submission` 0.2.13 / google-adk 1.36.1
-against the competition's own checkpoint (`google/gemma-4-31B-it-qat-w4a16-ct`) served by the scorer's vLLM 0.19.1
-stack, on all 129 public tasks, and reports where tasks are lost: tool calls, turns, context, compaction, truncated
+against the competition checkpoint the bundle declares (`gemma-4-31b-it-qat-w4a16-ct` or `gemma-4-12b-it-qat-w4a16-ct`;
+`colab/models.sh` maps it to the HF repo and the scorer's extra vLLM args) served by the scorer's vLLM 0.19.1 stack,
+on all 129 public tasks, and reports where tasks are lost: tool calls, turns, context, compaction, truncated
 outputs, submits, time. The local `harness/` re-implements the loop; this runs the real one.
 
 Kaggle scores on **4x NVIDIA L4** (24 GB each, vLLM TP=4, `gpu_memory_utilization` 0.90, `max_model_len` 32768;
@@ -22,19 +23,23 @@ time does not transfer: runs lift the time budget to 30 min and `analyze` estima
 | `colab/cpu_prepare.sh` | CPU runtime: data, envs, model, gold validation -> Drive `MyDrive/gemma4-eval/` |
 | `colab/gpu_start.sh` | G4 runtime: restore from Drive/PyPI/HF in parallel, start vLLM |
 | `colab/gpu_run.sh` | `smoke` (3 tasks) or `full` run, Drive sync, analysis |
+| `colab/models.sh` | model declared by `$BUNDLE` -> HF repo, vLLM extra args (12B: `--hf-overrides`), Drive cache dir, L4 speed estimate |
+| `findings_v8.md` | what the first v8 run (31B) showed |
 
 ## Runbook
 
 ```bash
 # CPU runtime (free): notebook cell mounts Drive and exports KAGGLE_USERNAME/KAGGLE_KEY from Colab secrets, then
-git clone -b gemma-run-colab https://github.com/raut7218/Gemma-4.git /content/Gemma-4
+git clone -b v9-12b https://github.com/raut7218/Gemma-4.git /content/Gemma-4
 bash /content/Gemma-4/colab_eval/colab/cpu_prepare.sh      # ~1.5 h, resumable; ends with the gold verdict per repo
 cp /content/Gemma-4/colab_eval/colab/gpu_start.sh /content/drive/MyDrive/gemma4-eval/
 
 # switch to the G4 runtime (wipes /content), mount Drive again, then
-bash /content/drive/MyDrive/gemma4-eval/gpu_start.sh       # restore + vLLM up
+bash /content/drive/MyDrive/gemma4-eval/gpu_start.sh       # restore + vLLM up with the model submission/ declares
 bash /content/Gemma-4/colab_eval/colab/gpu_run.sh smoke    # 3 tasks; check report + vllm_stats before going on
-RUN=v8 nohup bash /content/Gemma-4/colab_eval/colab/gpu_run.sh full 12 &
+RUN=v9-12b nohup bash /content/Gemma-4/colab_eval/colab/gpu_run.sh full &
+# another bundle on the same model reuses the server; a bundle on another model needs serve_vllm.sh restarted
+RUN=v8-12b BUNDLE=bundles/v8-12b nohup bash /content/Gemma-4/colab_eval/colab/gpu_run.sh full &
 /content/hvenv/bin/python -m colab_eval.vllm_stats --every 60
 ```
 

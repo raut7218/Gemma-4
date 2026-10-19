@@ -42,7 +42,9 @@ def tool(name):
 TOOLS = {n: tool(n) for n in ("run_command", "read_file", "write_file", "edit_file", "submit_patch", "get_status",
                               "get_code_neighbors", "search_similar_code", "get_code_subgraph")}
 models = ModelRegistry()
-models.register("gemma-4-31b-it-qat-w4a16-ct", LiteLlm(model="openai/gemma-4-31b-it-qat-w4a16-ct", api_base="http://127.0.0.1:8000/v1", num_retries=5))
+for m in ("31b", "12b", "e4b", "e2b"):  # the four models allowed in submissions (ALLOWED_MODEL_NAMES)
+    name = f"gemma-4-{m}-it-qat-w4a16-ct"
+    models.register(name, LiteLlm(model=f"openai/{name}", api_base="http://127.0.0.1:8000/v1", num_retries=5))
 
 
 def walk(a, depth=0):

@@ -4,8 +4,10 @@
 # In v8, check.py re-runs only failing node IDs on baseline (with 15s per-test timeout, --maxfail=10, and auto /tmp/repro.py),
 # max_time_minutes is 7.0 to cap slow/stuck tasks, and max_tool_calls is 35 so fast multi-file fixes are not cut off at 28.
 # timeout_seconds also bounds the hidden-test run in the shipped source, so it stays at 240.
+# v9 runs gemma-4-12b, which decodes about twice as fast on 4x L4, and v8 on the official scorer used all 35 calls in
+# most unresolved tasks (exploration), so the extra speed buys 10 more calls inside the same 7 minutes.
 evaluation:
   timeout_seconds: 240
-  max_tool_calls: 35
+  max_tool_calls: 45
   max_time_minutes: 7.0
   max_turns: 80

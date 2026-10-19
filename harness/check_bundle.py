@@ -18,7 +18,8 @@ import yaml
 EXTENSIONS = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
 TOOLS = {"run_command", "read_file", "write_file", "edit_file", "submit_patch", "get_status",
          "get_code_neighbors", "search_similar_code", "get_code_subgraph"}
-MODELS = {"gemma-4-31b-it-qat-w4a16-ct", "gemma-4-31b-it", "gemma-4-27b-it", "gemma-4-26b-a4b-it", "gemma-4-12b-it",
+MODELS = {"gemma-4-31b-it-qat-w4a16-ct", "gemma-4-12b-it-qat-w4a16-ct", "gemma-4-e4b-it-qat-w4a16-ct",
+          "gemma-4-e2b-it-qat-w4a16-ct", "gemma-4-31b-it", "gemma-4-27b-it", "gemma-4-26b-a4b-it", "gemma-4-12b-it",
           "gemma-4-9b-it", "gemma-4-e4b-it", "gemma-4-e2b-it", "gemma-4-31b", "gemma-4-27b", "gemma-4-26b-a4b",
           "gemma-4-12b", "gemma-4-9b", "gemma-4-e4b", "gemma-4-e2b", "diffusiongemma-26b-a4b-it"}
 BASE = {"name", "description", "agent_class", "before_agent_callbacks", "after_agent_callbacks"}
