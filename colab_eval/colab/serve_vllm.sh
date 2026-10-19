@@ -10,6 +10,11 @@ set -euo pipefail
 source "$(dirname "$0")/models.sh"
 MODEL="${MODEL:-/content/model}"
 mkdir -p /content/work
+if [ -n "${SKIP_WEIGHTS:-}" ]; then  # add the prefix to Gemma4ForCausalLM.load_weights' skip list (idempotent)
+  G4PY=$(/content/vllm-env/bin/python -c "import vllm.model_executor.models.gemma4 as m; print(m.__file__)")
+  grep -q "\"$SKIP_WEIGHTS\"," "$G4PY" || sed -i "s/^\( *\)\"embed_vision\.\",$/&\n\1\"$SKIP_WEIGHTS\",/" "$G4PY"
+  grep -q "\"$SKIP_WEIGHTS\"," "$G4PY" || { echo "could not add $SKIP_WEIGHTS to the skip list in $G4PY"; exit 1; }
+fi
 exec /content/vllm-env/bin/vllm serve "$MODEL" --served-model-name "$MODEL_NAME" "${MODEL_ARGS[@]}" \
   --max-model-len 32768 --gpu-memory-utilization "${GPU_UTIL:-0.92}" --max-num-seqs "${SEQS:-48}" \
   --enable-auto-tool-choice --tool-call-parser gemma4 --reasoning-parser gemma4 \

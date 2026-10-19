@@ -52,7 +52,11 @@ Locally (no GPU): `python -m colab_eval.run_official --agent gold ...` checks th
   pytest/pytest-timeout kept), the scorer's `sandbox/setup.py --fast-path` runs per task, git identity as in the image,
   commands run in a private network namespace (`unshare -n -r`) with loopback up and 10.255.255.0/24 black-holed
   (requests' connect-timeout tests). No 4 GB / 2 vCPU limit per sandbox.
-  swegemma rewrites `/workspace` only inside commands, so skill scripts get the real path from `SWE_WORKSPACE`. The
+- **12B weights**: the HF export of `gemma-4-12b-it-qat-w4a16-ct` (`gemma4_unified`, 10,264,229,896 bytes) is not
+  the file Kaggle Models serves to the scorer (a 10,278,821,003-byte export), and vLLM 0.19.1's text-only loader does
+  not know its `model.vision_embedder.*` tensors. `serve_vllm.sh` adds that prefix to the loader's skip list (it
+  already skips `vision_tower.`/`embed_vision.`), so the same text weights load; vision weights are unused anyway.
+- swegemma rewrites `/workspace` only inside commands, so skill scripts get the real path from `SWE_WORKSPACE`. The
   first v8 run (2026-10-19) predates this: locate.py and check.py crashed on every call (`analyze` now flags it).
 - **Packages**: the scorer's real wheel set is private (`gemma-4-developer-agent-metric-data`). The public wheels lack
   some test deps (dirty-equals, inline-snapshot, pytest-httpbin, typing-inspection, ...), which are added from PyPI under
