@@ -48,6 +48,8 @@ Locally (no GPU): `python -m colab_eval.run_official --agent gold ...` checks th
   pytest/pytest-timeout kept), the scorer's `sandbox/setup.py --fast-path` runs per task, git identity as in the image,
   commands run in a private network namespace (`unshare -n -r`) with loopback up and 10.255.255.0/24 black-holed
   (requests' connect-timeout tests). No 4 GB / 2 vCPU limit per sandbox.
+  swegemma rewrites `/workspace` only inside commands, so skill scripts get the real path from `SWE_WORKSPACE`. The
+  first v8 run (2026-10-19) predates this: locate.py and check.py crashed on every call (`analyze` now flags it).
 - **Packages**: the scorer's real wheel set is private (`gemma-4-developer-agent-metric-data`). The public wheels lack
   some test deps (dirty-equals, inline-snapshot, pytest-httpbin, typing-inspection, ...), which are added from PyPI under
   the competition pins, and give every task the newest version of everything, so `sandbox_deps.py` installs what each

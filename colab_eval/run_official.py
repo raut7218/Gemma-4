@@ -99,6 +99,9 @@ def patch_subprocess_sandbox(sandbox_site: Path, setup_py: Path, wheels_dir: Pat
     def build_env(*a, **kw):
         env = orig_env(*a, **kw)
         env['GIT_CONFIG_GLOBAL'] = str(gitconfig)
+        # swegemma rewrites /workspace inside commands, not inside Python, so skill scripts that open the absolute
+        # /workspace (as they must in the scorer's container) get the real path from SWE_WORKSPACE
+        env['SWE_WORKSPACE'] = str(kw.get('work_dir') or a[0])
         env['PATH'] = env['PATH'].replace(str(Path(sys.executable).parent), str(sandbox_python.parent))
         return env
 

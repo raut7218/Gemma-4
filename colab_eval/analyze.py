@@ -62,7 +62,8 @@ def outcome(r: dict, env_bad: bool) -> str:
 def trace_stats(path: Path) -> dict:
     s = {'turns': 0, 'max_prompt': 0, 'completion': 0, 'tools': collections.Counter(), 'scripts': collections.Counter(),
          'tool_errors': collections.Counter(), 'first_edit_call': None, 'submits': 0, 'compactions': 0,
-         'budget_warnings': 0, 'event_types': collections.Counter(), 'empty_turns': 0, 'thought_chars': 0}
+         'budget_warnings': 0, 'event_types': collections.Counter(), 'empty_turns': 0, 'thought_chars': 0,
+         'script_crashes': 0, 'malformed_calls': 0}
     if not path.exists():
         return s
     t = json.loads(path.read_text())
@@ -95,6 +96,12 @@ def trace_stats(path: Path) -> dict:
             if name == 'run_skill_script':
                 args = c.get('arguments') or {}
                 s['scripts'][str(args.get('script_path') or args.get('file_path') or args.get('script') or '?').split('/')[-1]] += 1
+                # a crash here is the sandbox's fault (e.g. /workspace missing), not the model's
+                if 'Traceback (most recent call last)' in obs or 'internal error:' in obs:
+                    s['script_crashes'] += 1
+            # the tool-call parser split the arguments wrongly (e.g. at a ':' inside old_string)
+            if 'mandatory input parameters are not present' in obs:
+                s['malformed_calls'] += 1
             if name in EDIT_TOOLS and s['first_edit_call'] is None:
                 s['first_edit_call'] = n_calls
         if '"status": "error"' in obs or "'status': 'error'" in obs or 'BudgetExhausted' in obs:
@@ -157,6 +164,8 @@ def main(argv=None) -> int:
             'llm_errors': sum(1 for c in cs if not c.get('ok')), 'compactions': compactions or ts['compactions'],
             'empty_turns': ts['empty_turns'], 'first_edit_call': ts['first_edit_call'], 'submits': ts['submits'],
             'budget_warnings': ts['budget_warnings'], 'tools': dict(ts['tools']), 'scripts': dict(ts['scripts']),
+            'thought_chars': ts['thought_chars'], 'script_crashes': ts['script_crashes'],
+            'malformed_calls': ts['malformed_calls'],
             'tool_errors': dict(ts['tool_errors']), 'agent_seconds': agent_s and round(agent_s, 1),'llm_seconds': round(llm_lat, 1),
             'tool_seconds': tool_s and round(tool_s, 1), 'est_l4_seconds': l4_s and round(l4_s, 1),
             'est_l4_over_budget': bool(l4_s and l4_s > args.time_budget_min * 60),
@@ -216,7 +225,8 @@ def render(rows: list[dict], args, meta: dict) -> str:
 
     L.extend(['## Resource use', '', '| metric | group | p50 | p90 | max | mean |', '|---|---|---:|---:|---:|---:|'])
     for key, label in (('tool_calls', 'tool calls'), ('turns', 'LLM turns'), ('max_prompt_tokens', 'peak prompt tokens'),
-                       ('completion_tokens', 'completion tokens'), ('reasoning_tokens', 'reasoning tokens'),
+                       # vLLM reports no reasoning_tokens; thoughts are counted in completion tokens
+                       ('completion_tokens', 'completion tokens'), ('thought_chars', 'thinking text chars'),
                        ('first_edit_call', 'first edit at call #'), ('compactions', 'compactions'),
                        ('agent_seconds', 'agent wall s (G4)'), ('est_l4_seconds', 'est. agent s on 4xL4')):
         dist(key, label)
@@ -230,6 +240,8 @@ def render(rows: list[dict], args, meta: dict) -> str:
         'submitted more than once': lambda r: r['submits'] > 1,
         'never edited a file': lambda r: r['first_edit_call'] is None,
         'got budget warnings': lambda r: r['budget_warnings'] > 0,
+        'skill script crashed (sandbox problem)': lambda r: r['script_crashes'] > 0,
+        'malformed tool call (parser split args)': lambda r: r['malformed_calls'] > 0,
         f'est. 4xL4 agent time > {args.time_budget_min} min': lambda r: r['est_l4_over_budget'],
     }
     L.extend(['## Flags', '', '| flag | tasks | of which unresolved (env-solvable) |', '|---|---:|---:|'])
