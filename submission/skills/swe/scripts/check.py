@@ -1,11 +1,12 @@
-"""check.py [TEST_FILE_OR_NODE...] : what does my change do to the existing tests?
+"""check.py [TEST_FILE_OR_NODE...] : verify changes, repro script, syntax, and baseline vs new test failures.
 
-Lists changed and untracked files, compiles the changed .py files, runs the whole test files that cover the
-changed modules (plus any given as args), and re-runs every failing test on a pristine copy of the baseline
-commit to label it NEW (your change broke it) or PRE-EXISTING (fails without your change too). The grader
-runs whole test files and needs every required test to pass, so a NEW failure is a failed task.
-Never stashes or resets the workspace: the baseline copy is a git archive under the temp dir, and the files
-with failures are rerun there whole (passing node ids back to pytest breaks on ids with spaces).
+1. Auto-removes untracked root scratch files (repro*.py, .adk_exec_*) and lists any remaining untracked files.
+2. Compiles changed .py files and warns if debug breakpoints/pdb were left in the diff.
+3. If /tmp/repro.py exists, runs it and reports pass/fail.
+4. Maps changed modules (including docs_src/ tutorials and diff symbols) to their test files, runs pytest with
+   per-test timeout and --maxfail=10, and re-runs only the failing node IDs on a cached baseline copy to label
+   each failure NEW (fix it) or PRE-EXISTING (ignore it), falling back to whole-file baseline rerun only if a
+   node ID is missing at baseline.
 """
 import io
 import os
@@ -18,7 +19,9 @@ import tempfile
 WS = os.environ.get("SWE_WORKSPACE") or "/workspace"
 TEST = re.compile(r"(^|/)(tests?|testing)/|(^|/)(test_[^/]*|[^/]*_test|conftest)\.py$")
 DROPPED = re.compile(r"(^|/)(conftest\.py|pytest\.ini|pyproject\.toml|tox\.ini|setup\.cfg)$")
-CAP, MAX_FILES, T_RUN, T_BASE = 1500, 4, 110, 90
+SCRATCH = re.compile(r"^(\.adk_exec_.*|(repro|test_repro|scratch|debug)_?[^/]*\.py)$")
+GENERIC_STEMS = {"utils", "models", "base", "main", "common", "compat", "types", "exceptions", "helpers", "core", "config"}
+CAP, MAX_FILES, T_RUN, T_BASE = 1500, 3, 60, 35
 out = []
 
 
@@ -33,10 +36,12 @@ def git(*args):
 def pytest(targets, cwd, env, timeout):
     """-> (counts text, {node id: short message}) or (error text, None)."""
     try:
-        p = sh([sys.executable, "-m", "pytest", *targets, "-q", "-rfE", "--tb=line", "-p", "no:cacheprovider"],
+        p = sh([sys.executable, "-m", "pytest", *targets, "-q", "-rfE", "--tb=line", "--maxfail=10",
+                "-o", "timeout=15", "-p", "no:cacheprovider"],
                cwd=cwd, timeout=timeout, env=env)
-    except subprocess.TimeoutExpired:
-        return f"timed out after {timeout}s", None
+    except subprocess.TimeoutExpired as e:
+        part = (e.stdout.decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")).strip()[-250:]
+        return f"timed out after {timeout}s" + (f" ({part})" if part else ""), None
     fails = {}
     for l in p.stdout.splitlines():  # node ids can contain spaces (parametrize ids); " - " starts the message
         m = re.match(r"(FAILED|ERROR) (.+?)(?: - (.*))?$", l)
@@ -58,40 +63,147 @@ def baseline_copy(base):
     return d
 
 
-def test_targets(changed, extra):
+def diff_symbols(base, f):
+    """Extract defined/modified symbol names from git diff and module top-level definitions."""
+    syms = []
+    diff = git("diff", "-U0", base, "--", f)
+    for m in re.finditer(r"@@ .*? @@\s*(?:async\s+)?(?:def|class)\s+([A-Za-z_]\w*)", diff):
+        if m.group(1) not in syms:
+            syms.append(m.group(1))
+    for m in re.finditer(r"^[+-]\s*(?:async\s+)?(?:def|class)\s+([A-Za-z_]\w*)", diff, re.M):
+        if m.group(1) not in syms:
+            syms.append(m.group(1))
+    try:
+        src = open(os.path.join(WS, f), encoding="utf-8", errors="replace").read()
+        for m in re.finditer(r"^(?:def|class)\s+([A-Za-z_]\w*)|^([A-Za-z_]\w*)\s*=", src, re.M):
+            s = m.group(1) or m.group(2)
+            if s and len(s) >= 4 and not s.startswith("__") and s not in syms:
+                syms.append(s)
+    except OSError:
+        pass
+    return syms[:8]
+
+
+def test_targets(changed, extra, base):
     tracked = git("ls-files", "*.py").split()
     tests = [f for f in tracked if re.search(r"(^|/)(test_[^/]*|[^/]*_test)\.py$", f)]  # not helpers like tests/utils.py
+    test_contents = {}
+
+    def read_test(t):
+        if t not in test_contents:
+            try:
+                test_contents[t] = open(os.path.join(WS, t), encoding="utf-8", errors="replace").read()
+            except OSError:
+                test_contents[t] = ""
+        return test_contents[t]
+
     picked = [a for a in extra if os.path.exists(os.path.join(WS, a.split("::")[0]))]
     for f in changed:
         if not f.endswith(".py") or TEST.search(f):
             continue
+        parts = f.split("/")
+        stem = parts[-1][:-3]
+        # Tier 1: FastAPI docs_src/<topic>/<tutorial>.py -> tests/test_tutorial/test_<topic>/test_<base_tutorial>.py
+        if parts[0] == "docs_src" and len(parts) >= 3:
+            topic = parts[1]
+            base_tut = re.sub(r"(_an)?(_py3\d+)?$", "", stem)
+            tut_matches = [t for t in tests if topic in t and base_tut in t.split("/")[-1]]
+            if not tut_matches:
+                tut_matches = [t for t in tests if topic in read_test(t) and stem in read_test(t)]
+            for t in sorted(tut_matches):
+                if t not in picked:
+                    picked.append(t)
+            continue
+
         mod = f[:-3].removeprefix("src/").replace("/", ".")
-        stem = f.split("/")[-1][:-3]
         if stem == "__init__":
-            mod, stem = mod.rsplit(".", 1)[0], f.split("/")[-2] if "/" in f else stem
+            mod, stem = mod.rsplit(".", 1)[0], parts[-2] if len(parts) > 1 else stem
+
         def named(t):  # tests/test_cells.py for cells.py, tests/test_status.py for status_codes.py
-            n = t.split("/")[-1].removeprefix("test_").removesuffix(".py")
-            return n == stem or (min(len(n), len(stem)) >= 4 and (n in stem or stem in n))
+            if "test_tutorial/" in t:
+                return False
+            n = t.split("/")[-1].removeprefix("test_").removesuffix("_test.py").removesuffix(".py")
+            if n == stem:
+                return True
+            if stem in GENERIC_STEMS or n in GENERIC_STEMS:
+                return False
+            return min(len(n), len(stem)) >= 4 and (n in stem or stem in n)
+
         by_name = sorted((t for t in tests if named(t)), key=lambda t: t.split("/")[-1] != f"test_{stem}.py")
         by_use = []
         for t in tests:
-            try:
-                n = open(os.path.join(WS, t), encoding="utf-8", errors="replace").read().count(mod)
-            except OSError:
-                n = 0
+            if "test_tutorial/" in t:
+                continue
+            txt = read_test(t)
+            n = txt.count(mod)
+            if not n and "." in mod:
+                pkg = mod.rsplit(".", 1)[0]
+                if re.search(rf"from\s+{re.escape(pkg)}\s+import\s+[^\n]*\b{re.escape(stem)}\b", txt):
+                    n = 1
             if n:
                 by_use.append((-n, t))
-        for t in by_name + [t for _, t in sorted(by_use)]:
+        cands = by_name + [t for _, t in sorted(by_use)]
+        # Tier 3: If no test matched the module name/import, match tests referencing symbols modified/defined in f
+        if not cands:
+            syms = diff_symbols(base, f)
+            if syms:
+                by_sym = []
+                for t in tests:
+                    if "test_tutorial/" in t:
+                        continue
+                    txt = read_test(t)
+                    hits = sum(1 for s in syms if s in txt)
+                    if hits:
+                        by_sym.append((-hits, len(txt), t))
+                cands = [t for _, _, t in sorted(by_sym)[:2]]
+        # Tier 4: Fallback to tests/test_<top_pkg>.py (e.g. tests/test_requests.py)
+        if not cands:
+            top_pkg = f.removeprefix("src/").split("/")[0]
+            cands = [t for t in tests if t.split("/")[-1] == f"test_{top_pkg}.py"]
+        for t in cands:
             if t not in picked:
                 picked.append(t)
     return picked[:MAX_FILES]
 
 
+def run_repro():
+    for d in dict.fromkeys([tempfile.gettempdir(), "/tmp"]):
+        rp = os.path.join(d, "repro.py")
+        if os.path.isfile(rp):
+            try:
+                p = sh([sys.executable, rp], cwd=WS, timeout=25)
+                tail = (p.stdout + p.stderr).strip().splitlines()
+                last = tail[-1][:120] if tail else ""
+                if p.returncode == 0:
+                    out.append(f"repro (/tmp/repro.py): PASS" + (f" ({last})" if last else ""))
+                else:
+                    msg = " | ".join(l.strip() for l in tail[-3:])[:220]
+                    out.append(f"repro (/tmp/repro.py): FAIL (exit {p.returncode}) -> {msg}")
+            except subprocess.TimeoutExpired:
+                out.append("repro (/tmp/repro.py): timed out after 25s")
+            break
+
+
 def main():
     base = "_swegemma_baseline" if git("tag", "-l", "_swegemma_baseline").strip() else "HEAD"
+    raw_untracked = [f for f in git("ls-files", "--others", "--exclude-standard").split() if not f.split("/")[-1].startswith(".adk_exec_")]
+    # Auto-clean obvious root-level scratch files (repro.py, test_repro.py, etc.) when --clean is passed
+    clean_flag = any(a in ("--clean", "clean") for a in sys.argv[1:])
+    cleaned = []
+    if clean_flag:
+        for f in list(raw_untracked):
+            if SCRATCH.match(f) and os.path.isfile(os.path.join(WS, f)):
+                try:
+                    os.remove(os.path.join(WS, f))
+                    raw_untracked.remove(f)
+                    cleaned.append(f)
+                except OSError:
+                    pass
     changed = [f for f in git("diff", "--name-only", base).split() if f]
-    untracked = [f for f in git("ls-files", "--others", "--exclude-standard").split() if not f.split("/")[-1].startswith(".adk_exec_")]
+    untracked = raw_untracked
     out.append("changed: " + (", ".join(changed) or "nothing (no tracked file differs from the baseline)"))
+    if cleaned:
+        out.append("removed untracked scratch: " + ", ".join(cleaned))
     if untracked:
         out.append("untracked, will be IN your patch: " + ", ".join(untracked[:8]) + "  -> rm -f the scratch ones")
     dropped = [f for f in changed + untracked if TEST.search(f) or DROPPED.search(f)]
@@ -107,7 +219,14 @@ def main():
             except (UnicodeDecodeError, ValueError) as e:
                 bad.append(f"{f}: {e}")
     out.append("compile: " + ("; ".join(bad) if bad else "ok"))
-    targets = test_targets(changed + untracked, [a for a in sys.argv[1:] if not a.startswith("-")])
+    lib_changed = [f for f in changed if f.endswith(".py") and not TEST.search(f) and not DROPPED.search(f)]
+    if lib_changed:
+        diff_text = git("diff", "-U0", base, "--", *lib_changed)
+        if re.search(r"^\+[^+].*\b(breakpoint\s*\(|pdb\.set_trace\s*\()", diff_text, re.M):
+            out.append("warning: debug breakpoint/pdb found in your diff -> remove it")
+    run_repro()
+    extra_args = [a for a in sys.argv[1:] if not a.startswith("-") and a != "clean"]
+    targets = test_targets(changed + untracked, extra_args, base)
     if not targets:
         out.append("no test file covers the changed modules; pass one as an arg, e.g. tests/test_x.py")
         return
@@ -131,9 +250,12 @@ def main():
                 where = sh([sys.executable, "-c", f"import {top},os;print(os.path.realpath({top}.__file__))"], cwd=d, env=env).stdout
                 if not where.startswith(os.path.realpath(d)):
                     why = f"baseline copy imports {top} from {where.strip() or '?'}, comparison skipped"
-            if not why:  # rerun the whole failing files: ids parsed the same way in both runs compare exactly
-                files = sorted({i.split("::")[0] for i in old})
-                bcounts, bfails = pytest(files, d, env, T_BASE)
+            if not why:
+                # Fast path: re-run only the failing node IDs (works with spaces via list argv); fall back to whole files if a node ID is new
+                bcounts, bfails = pytest(old, d, env, T_BASE)
+                if bfails is None and "passed" not in bcounts:
+                    files = sorted({i.split("::")[0] for i in old})
+                    bcounts, bfails = pytest(files, d, env, T_BASE)
                 if bfails is None and "passed" not in bcounts:
                     why = "baseline run failed: " + bcounts
                 else:

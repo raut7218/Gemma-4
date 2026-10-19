@@ -112,22 +112,22 @@ def units(tmp: Path):
     check("submission: thinking on, thoughts kept", thinking_body(tc)["chat_template_kwargs"]["enable_thinking"] and tc["include_thoughts"] is True, tc)
     check("submission: output cap leaves room after thinking", g["max_output_tokens"] >= tc["thinking_budget"] + 2048, g)
     ev = sub["eval"]
-    # 8 min x 120 tasks = 16 h if every task burned the clock, so the 12 h total rests on the call cap ending stuck runs
-    check("submission: call cap is small enough to end stuck runs early", ev["max_tool_calls"] <= 30, ev)
-    eq("submission: budget fields", {k: ev[k] for k in ("max_tool_calls", "max_turns", "timeout_seconds")},
-       {"max_tool_calls": 28, "max_turns": 80, "timeout_seconds": 240})
+    # 7 min x 120 tasks = 14 h if every task burned the clock, so the 12 h total rests on the call cap ending stuck runs
+    check("submission: call cap is small enough to end stuck runs early", ev["max_tool_calls"] <= 36, ev)
+    eq("submission: budget fields", {k: ev[k] for k in ("max_tool_calls", "max_time_minutes", "max_turns", "timeout_seconds")},
+       {"max_tool_calls": 35, "max_time_minutes": 7.0, "max_turns": 80, "timeout_seconds": 240})
     text = sub["root"]["instruction"]
     check("submission: no stray braces in the prompt", "{" not in text and "}" not in text)
     check("submission: prompt no longer caps reasoning or claims nothing is dropped",
           "few sentences per step" not in text and "nothing in it is dropped" not in text)
     check("submission: prompt plans an edit by call 12 and a cleanup before submit",
-          "By call 12" in text and "rm -f every scratch file check.py lists" in text and "docs_src/" in text and "28 tool calls" in text)
+          "By call 12" in text and "--clean" in text and "docs_src/" in text and "35 tool calls" in text)
     check("submission: prompt has the contract step, a /tmp heredoc repro and the two scripts",
           "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text
-          and "call locate.py" in text and "Then call check.py" in text and "Do not call load_skill" in text)
+          and "call locate.py" in text and "call check.py" in text and "Do not call load_skill" in text)
     check("submission: prompt covers title-only issues, rereads and unchanged repros",
-          "the title is the specification" in text and "Never read the same lines twice" in text
-          and "same result after an edit" in text and "State: FILE FUNCTION" in text and "at most two repros before your first edit" in text)
+          "do not guess function signatures or asserts from memory" in text and "Never read the same lines twice in a row" in text
+          and "same result after an edit" in text and "at most two repros before your first edit" in text)
     eq("submission: the root agent declares the swe skill", [Path(p).name for p in sub["root"]["skills"]], ["swe"])
     for name, md in (("Swe", "---\nname: Swe\ndescription: d\n---\n"), ("swe", "---\nname: other\ndescription: d\n---\n"),
                      ("nodesc", "---\nname: nodesc\n---\n")):
@@ -206,7 +206,17 @@ def skill_checks(data: Path):
               "src/requests/status_codes.py  [unordered]" in out and "at module level" in out and "not found in source: no_such_name_xyz" in out, out)
         out = run("locate.py", {"terms": "_Codes|setattr"})
         check("locate: dict args and enclosing class", "in _Codes (L7-8)" in out and "[_Codes, setattr]" in out, out)
-        eq("skills: each script run is one tool call", ctx.calls, 2)
+        # Verify locate.py prioritizes def/class over top-of-file imports and prints 1-hop callees
+        (sb.ws / "src" / "requests" / "helper_mod.py").write_text(
+            "# mention target_fn in comment 1\n# mention target_fn in comment 2\n# mention target_fn in comment 3\n"
+            "# mention target_fn in comment 4\n# mention target_fn in comment 5\n"
+            "def inner_helper():\n    return 42\n\ndef target_fn():\n    return inner_helper()\n"
+        )
+        sb.git("add", "src/requests/helper_mod.py"); sb.git("commit", "-qm", "add helper_mod"); sb.git("tag", "-f", "_swegemma_baseline")
+        out_loc = run("locate.py", ["target_fn"])
+        check("locate: prioritizes def line over earlier comment lines and resolves 1-hop callee",
+              "in target_fn (L9-10): def target_fn():" in out_loc and "calls: inner_helper (L6)" in out_loc, out_loc)
+        eq("skills: each script run is one tool call", ctx.calls, 3)
         out = run("check.py", [])
         check("check: clean tree", "changed: nothing" in out and "no test file covers" in out, out)
         sc = sb.ws / "src" / "requests" / "status_codes.py"
@@ -219,10 +229,16 @@ def skill_checks(data: Path):
               and "PRE-EXISTING (fails without your change too, ignore): tests/test_status.py::test_broken_before" in out
               and "PRE-EXISTING (fails without your change too, ignore): tests/test_status.py::test_param_with_space[a b]" in out, out)
         check("check: lists the untracked scratch file", "untracked, will be IN your patch: repro.py" in out, out)
+        (sb.tmp / "repro.py").write_text("assert 1 + 1 == 2\nprint('repro_ok')\n")
+        out_clean = run("check.py", ["--clean"])
+        check("check: --clean removes root scratch repro.py and runs /tmp/repro.py",
+              "removed untracked scratch: repro.py" in out_clean and "repro (/tmp/repro.py): PASS" in out_clean
+              and not (sb.ws / "repro.py").exists(), out_clean)
+        (sb.ws / "repro.py").write_text("print(1)\n")
         sc.write_text("def broken(:\n")
         out = run("check.py", ["tests/test_status.py"])
         check("check: reports a syntax error", "compile: src/requests/status_codes.py:1:" in out, out)
-        check("check: never touched the working tree", sc.read_text() == "def broken(:\n" and (sb.ws / "repro.py").exists())
+        check("check: never touched the working tree without --clean", sc.read_text() == "def broken(:\n" and (sb.ws / "repro.py").exists())
     finally:
         sb.cleanup()
 
