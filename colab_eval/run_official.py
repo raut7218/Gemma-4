@@ -243,8 +243,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.max_time_minutes:
         budget['max_time_minutes'] = args.max_time_minutes
     ids = args.task_ids or (args.ids_file.read_text().split() if args.ids_file else None)
+    earlier: list[str] = []  # the Evaluator starts task_results.jsonl afresh, so a resumed run merges these back
     if args.resume and (results / 'task_results.jsonl').exists():
-        done = {json.loads(l)['instance_id'] for l in (results / 'task_results.jsonl').read_text().splitlines() if l.strip()}
+        earlier = [l for l in (results / 'task_results.jsonl').read_text().splitlines() if l.strip()]
+        done = {json.loads(l)['instance_id'] for l in earlier}
         if ids is None:
             ids = [json.loads(l)['instance_id'] for l in (data / 'tasks.jsonl').read_text().splitlines() if l.strip()]
         ids = [i for i in ids if i not in done]
@@ -279,6 +281,14 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps(meta))
     result = asyncio.run(make_evaluator(config, args.agent).run())
     print(f'Evaluation complete: {result.resolved}/{result.total} resolved ({result.resolution_rate:.2%})')
+    if earlier:
+        out = results / 'task_results.jsonl'
+        new = [l for l in out.read_text().splitlines() if l.strip()] if out.exists() else []
+        rerun = {json.loads(l)['instance_id'] for l in new}
+        rows = [l for l in earlier if json.loads(l)['instance_id'] not in rerun] + new
+        out.write_text('\n'.join(rows) + '\n')
+        n_res = sum(json.loads(l).get('resolved') is True for l in rows)
+        print(f'with earlier results: {n_res}/{len(rows)} resolved')
     return 0
 
 
