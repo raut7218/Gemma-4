@@ -8,6 +8,7 @@ A local, stdlib-only (plus `pyyaml`) re-implementation of the `swegemma` evaluat
 
 - `submission/`: the ADK agent bundle that gets zipped and submitted to Kaggle (`agent.yaml`, `prompts/system.md`, `eval_config.yaml`, `configs/sampling.yaml`, `skills/swe/`). Most competition work is tuning these files.
 - `harness/`: a local stand-in for the official grader, used to measure a submission before uploading it. It loads the agent tree, budgets and sampling config straight from `submission/` (or whatever `--submission` points to).
+- `colab_eval/`: runs a bundle through the real swegemma 0.2.11 (not `harness/`) without Docker, against the competition checkpoint on a Colab G4, then `analyze.py` reports where tasks are lost. Runbook and every deviation from the Kaggle scorer are in `colab_eval/README.md`.
 - `bundles/`: alternative bundles, run with `--submission bundles/<name>`. `bundles/parallel-investigate/` is a SequentialAgent → ParallelAgent design; its README lists what still has to be verified against the official scorer.
 
 `submission.zip` is gitignored and goes stale; rebuild it with the bundle's files at the zip root (`agent.yaml`, `eval_config.yaml`, `configs/`, `prompts/`, `skills/`, not inside a `submission/` folder), e.g. `cd submission && zip -r ../submission.zip .`, after running `check_bundle`.
