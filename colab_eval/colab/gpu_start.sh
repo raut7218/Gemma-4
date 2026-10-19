@@ -14,7 +14,7 @@ command -v uv >/dev/null || pip install -q uv
 (cd /content/Gemma-4 && git pull -q)
 R=/content/Gemma-4/colab_eval
 
-( uv venv -q --python 3.12 /content/vllm-env && uv pip install -q --python /content/vllm-env/bin/python -r $R/requirements-vllm.txt \
+( uv venv -q --clear --python 3.12 /content/vllm-env && uv pip install -q --no-deps --python /content/vllm-env/bin/python -r $R/requirements-vllm.txt \
     && /content/vllm-env/bin/python -c "import vllm" 2>/dev/null && el "vllm-env installed from PyPI" \
   || { el "PyPI install failed; using the Drive tar"; rm -rf /content/vllm-env; tar -xf $G/cache/vllm-env.tar -C /content && el "vllm-env restored from Drive"; } ) &
 

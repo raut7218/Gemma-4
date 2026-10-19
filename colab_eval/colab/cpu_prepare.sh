@@ -46,7 +46,7 @@ if [ ! -s $G/cache/hvenv.tar ]; then
     [ -f $w-py3-none-any.whl ] || unzip -q -o $w-py3-none-any.whl.zip
   done
   cd /content
-  uv venv -q --python $PY /content/hvenv
+  uv venv -q --clear --python $PY /content/hvenv
   uv pip install -q --python /content/hvenv/bin/python -r $R/requirements-harness.txt
   uv pip install -q --python /content/hvenv/bin/python --no-deps /content/wh/*.whl
   tar -cf $G/cache/hvenv.tar -C /content hvenv
@@ -64,8 +64,8 @@ el "sandbox site ok"
 
 # 4. vLLM env: installed and import-checked here, tar kept on Drive as the fallback for the G4
 if [ ! -s $G/cache/vllm-env.tar ]; then
-  uv venv -q --python 3.12 /content/vllm-env
-  uv pip install -q --python /content/vllm-env/bin/python -r $R/requirements-vllm.txt
+  uv venv -q --clear --python 3.12 /content/vllm-env
+  uv pip install -q --no-deps --python /content/vllm-env/bin/python -r $R/requirements-vllm.txt
   /content/vllm-env/bin/python -c "import vllm, transformers; print('vllm', vllm.__version__, 'transformers', transformers.__version__)"
   tar -cf $G/cache/vllm-env.tar -C /content vllm-env
 fi
