@@ -37,9 +37,8 @@ cp /content/Gemma-4/colab_eval/colab/gpu_start.sh /content/drive/MyDrive/gemma4-
 # switch to the G4 runtime (wipes /content), mount Drive again, then
 bash /content/drive/MyDrive/gemma4-eval/gpu_start.sh       # restore + vLLM up with the model submission/ declares
 bash /content/Gemma-4/colab_eval/colab/gpu_run.sh smoke    # 3 tasks; check report + vllm_stats before going on
-RUN=v9-12b nohup bash /content/Gemma-4/colab_eval/colab/gpu_run.sh full &
-# another bundle on the same model reuses the server; a bundle on another model needs serve_vllm.sh restarted
-RUN=v8-12b BUNDLE=bundles/v8-12b nohup bash /content/Gemma-4/colab_eval/colab/gpu_run.sh full &
+RUN=v9-12b nohup bash /content/Gemma-4/colab_eval/colab/gpu_run.sh full 48 &   # workers: size to nproc and KV
+# BUNDLE=bundles/<name> runs another bundle; one declaring another model needs serve_vllm.sh restarted with it
 /content/hvenv/bin/python -m colab_eval.vllm_stats --every 60
 ```
 
