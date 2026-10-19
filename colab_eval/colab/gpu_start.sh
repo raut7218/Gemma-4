@@ -35,10 +35,13 @@ source $R/colab/models.sh; M=$G/$MODEL_DRIVE
     el "model ready: $MODEL_NAME ($(du -sh /content/model | cut -f1))"; else el "MODEL SIZE MISMATCH"; fi
   # start serving as soon as weights and vLLM are in place; the snapshot copy from Drive can take longer
   until /content/vllm-env/bin/python -c "import vllm" 2>/dev/null; do sleep 5; done
-  [ "${SKIP_SERVE:-0}" = 1 ] || nohup bash $R/colab/serve_vllm.sh > /content/work/serve_wrapper.log 2>&1 & ) &
+  # setsid: vLLM must outlive the notebook cell (an interrupted or closed cell kills its process group)
+  [ "${SKIP_SERVE:-0}" = 1 ] || setsid nohup bash $R/colab/serve_vllm.sh > /content/work/serve_wrapper.log 2>&1 < /dev/null & ) &
 wait
 el "restore finished"
 if [ "${SKIP_SERVE:-0}" = 1 ]; then echo "(SKIP_SERVE=1: vLLM not started)"; exit 0; fi
 nvidia-smi --query-gpu=name,memory.total --format=csv
-for i in $(seq 1 120); do curl -sf http://127.0.0.1:8000/v1/models >/dev/null && { el "vLLM ready"; break; }; sleep 5; done
+# -m: vLLM listens before the engine is up, so a plain curl blocks until it is ready (or forever if it dies)
+for i in $(seq 1 120); do curl -sf -m 3 http://127.0.0.1:8000/v1/models >/dev/null && { el "vLLM ready"; break; }
+  grep -q "initialization failed" /content/work/vllm.log 2>/dev/null && { el "vLLM FAILED, see /content/work/vllm.log"; break; }; sleep 5; done
 grep -E "KV cache|Maximum concurrency|model weights took" /content/work/vllm.log | tail -4

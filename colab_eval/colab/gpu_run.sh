@@ -15,7 +15,7 @@ OUT=/content/results/$RUN
 cd /content/Gemma-4
 source colab_eval/colab/models.sh
 # the bundle's model must be the one vLLM serves, or every request fails
-curl -sf http://127.0.0.1:8000/v1/models | grep -q "\"$MODEL_NAME\"" \
+curl -sf -m 10 http://127.0.0.1:8000/v1/models | grep -q "\"$MODEL_NAME\"" \
   || { echo "vLLM is not serving $MODEL_NAME (declared by ${BUNDLE:-submission}); restart serve_vllm.sh with that bundle"; exit 2; }
 case "$MODE" in
   smoke) W=3; IDS=("${@:-requests_7205 rich_3067 fastapi_14986}"); EXTRA=(--task-ids ${IDS[@]}) ;;
