@@ -1,13 +1,15 @@
 # The scorer runs about 120 tasks one after another inside 12 h, sandbox setup included, and an overrun fails the
 # whole submission instead of scoring the unfinished tasks as zero.
-# v7 at 10.0 min overran the 12 h limit because check.py re-ran full test suites on baseline and tasks could burn 10 min.
-# In v8, check.py re-runs only failing node IDs on baseline (with 15s per-test timeout, --maxfail=10, and auto /tmp/repro.py),
-# max_time_minutes is 7.0 to cap slow/stuck tasks, and max_tool_calls is 35 so fast multi-file fixes are not cut off at 28.
+# Calibration (colab_eval/timing.py on the v8 official-scorer run, 2026-10-20): our thinking-on Kaggle outcomes (v3 5 min /
+# 50 calls finished; v4, v5, v7 8 min / 28 calls finished; v7 10 min / 28 calls overran) leave a narrow band of 4x L4
+# speed and per-task overhead. On every point of it v8's 7 min / 35 calls projects to 12.2-13.0 h, so v8 would have
+# scored nothing; 4.5 min projects to 9.3-11.2 h and 3.75 min fits 10.5 h everywhere. 4.5 min is the probe value; the
+# final cap comes from the probe's measured run time (largest cap that fits 10.5 h). Local solves at a safe cap rise by
+# about 4-8 of 129 for every 10% fewer tokens per task, which is what the v10 prompt and the LoRA aim at.
+# With a 4-5 minute cap, time ends a run before 35 tool calls do; 35 only bounds a fast task that loops.
 # timeout_seconds also bounds the hidden-test run in the shipped source, so it stays at 240.
-# v9 runs gemma-4-12b, which decodes about twice as fast on 4x L4, and v8 on the official scorer used all 35 calls in
-# most unresolved tasks (exploration), so the extra speed buys 10 more calls inside the same 7 minutes.
 evaluation:
   timeout_seconds: 240
-  max_tool_calls: 45
-  max_time_minutes: 7.0
+  max_tool_calls: 35
+  max_time_minutes: 4.5
   max_turns: 80

@@ -2,8 +2,9 @@
 
 Ranks tracked non-test .py files by IDF-weighted term matches (with filename and AST symbol boosts),
 prints the most informative hits (prioritizing def/class definitions and function bodies over imports)
-with their enclosing scope and line range, resolves 1-hop local callees, and always preserves the
-test-file footer within the 1500-char cap.
+with their enclosing scope and line range, resolves 1-hop local callees, then prints up to 30 numbered
+lines of the top hit's enclosing function (so the first edit often needs no read_file), and always
+preserves the test-file footer. The hit list is capped at 1500 chars and the code at 1800.
 """
 import ast
 import math
@@ -18,6 +19,9 @@ AUX = re.compile(r"(^|/)(docs_src|examples|benchmarks)/")
 IMPORT_RE = re.compile(r"^\s*(import |from \S+ import )")
 DEF_SYM_RE = re.compile(r"^[ \t]*(?:async[ \t]+)?(?:def|class)[ \t]+([A-Za-z_]\w*)", re.M)
 CAP = 1500
+CODE_LINES, CODE_CAP = 30, 1800
+USAGE = ('usage: run_skill_script with skill_name "swe", file_path "locate.py", args ["Name", "error message"]: '
+         '2 to 4 names, messages or phrases from the issue, 3+ chars each')
 
 
 def terms_from(argv):
@@ -85,7 +89,7 @@ def enclosing(sc, line):
 def main():
     terms = terms_from(sys.argv[1:])
     if not terms:
-        print("usage: locate.py TERM [TERM...]  (names, messages or phrases from the issue, 3+ chars)")
+        print(USAGE)
         return
     files = subprocess.run(["git", "ls-files", "*.py"], cwd=WS, capture_output=True, text=True).stdout.split()
     hits = {}  # path -> {term: [line numbers]}
@@ -170,6 +174,7 @@ def main():
         footer.append("tests mentioning them: " + ", ".join(f"{f} [{', '.join(tests[f])}]" for f in trank))
 
     body = []
+    top = None  # (file, best line) of the top-ranked file, for the code block
     for f in rank:
         lines = file_lines[f]
         src = "\n".join(lines)
@@ -221,6 +226,8 @@ def main():
                         seen_scopes.add(sc_name)
 
         shown = sorted(chosen[:4])
+        if top is None and shown:
+            top = (f, max(shown, key=line_priority), sc)
         hop_hints = []
         for n in shown:
             body.append(f"  L{n} {enclosing(sc, n)}: {lines[n - 1].strip()[:90]}")
@@ -238,13 +245,35 @@ def main():
     footer_text = "\n".join(footer)
     body_text = "\n".join(body)
     if not footer_text:
-        text = body_text
-        print(text if len(text) <= CAP else text[:CAP] + "\n...(cut)")
+        if len(body_text) > CAP:
+            body_text = body_text[:CAP] + "\n...(cut)"
     else:
         avail = CAP - len(footer_text) - 1
         if len(body_text) > avail:
             body_text = body_text[: max(0, avail - 8)] + "\n...(cut)"
-        print((body_text + "\n" + footer_text).strip())
+    code_text = code_block(top, file_lines) if top else ""
+    print("\n".join(x for x in (body_text, code_text, footer_text) if x).strip())
+
+
+def code_block(top, file_lines):
+    """Numbered lines of the top hit's enclosing function or class around its best line."""
+    f, n, sc = top
+    lines = file_lines[f]
+    info = enclosing_info(sc, n)
+    s, e, name = info if info else (max(1, n - 8), min(len(lines), n + 12), "module level")
+    lo = max(s, n - 10)
+    hi = min(e, lo + CODE_LINES - 1)
+    lo = max(s, min(lo, hi - CODE_LINES + 1))
+    out = [f"code of the top hit, {f} L{lo}-{hi} ({name}, L{s}-{e}):"]
+    size = len(out[0])
+    for i in range(lo, hi + 1):
+        row = f"{i:5d} {lines[i - 1][:110]}"
+        if size + len(row) + 1 > CODE_CAP:
+            out.append("  ...(cut)")
+            break
+        out.append(row)
+        size += len(row) + 1
+    return "\n".join(out)
 
 
 if __name__ == "__main__":

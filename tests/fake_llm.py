@@ -4,8 +4,12 @@ Plays a fixed tool-call script for requests_6592 (and the toy copy from make_toy
 picked from the system prompt: the parallel-investigate bundle's roles ("Your role: LOCALIZER" ...) each
 get their own, anything else gets the single-agent script (grep -> read -> edit -> diff -> submit).
   uv run python tests/fake_llm.py   # serves :8765; GET /requests shows the sampling fields it was sent
+FAKE_COMPLETION_TOKENS sets the completion size it reports (default 50), so a test can drive the modelled L4 clock of
+colab_eval.run_official past a time budget. FAKE_SCRIPT=skills replaces the single-agent script with one that calls the
+swe skill's scripts through run_skill_script (locate -> edit -> check -> submit), for the official loop.
 """
 import json
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 FILE = "src/requests/status_codes.py"
@@ -18,6 +22,13 @@ SCRIPTS = {
         ("read_file", {"filepath": FILE, "start_line": 75, "end_line": 90}),
         ("edit_file", {"filepath": FILE, "old_string": OLD, "new_string": NEW}),
         ("run_command", {"command": "git diff --stat | tail -3"}),
+        ("submit_patch", {}),
+        "Added the alias.",
+    ],
+    "skills": [
+        ("run_skill_script", {"skill_name": "swe", "file_path": "locate.py", "args": ["unordered", "status_codes"]}),
+        ("edit_file", {"filepath": FILE, "old_string": OLD, "new_string": NEW}),
+        ("run_skill_script", {"skill_name": "swe", "file_path": "check.py", "args": ["--clean"]}),
         ("submit_patch", {}),
         "Added the alias.",
     ],
@@ -62,7 +73,7 @@ class H(BaseHTTPRequestHandler):
             "roles": [m["role"] for m in req["messages"]],
             "reasoning_in_history": sum(1 for m in req["messages"] if m.get("reasoning"))})
         system = req["messages"][0].get("content") or ""
-        role = next((r for r in SCRIPTS if f"Your role: {r}" in system), "default")
+        role = next((r for r in SCRIPTS if f"Your role: {r}" in system), os.environ.get("FAKE_SCRIPT", "default"))
         script = SCRIPTS[role]
         step = min(sum(1 for m in req["messages"] if m["role"] == "tool"), len(script) - 1)
         item = script[step]
@@ -75,7 +86,11 @@ class H(BaseHTTPRequestHandler):
             fin = "tool_calls"
         if (req.get("chat_template_kwargs") or {}).get("enable_thinking"):  # vLLM's gemma4 reasoning parser field
             msg["reasoning"] = f"step {step}: thinking"
-        out = {"choices": [{"message": msg, "finish_reason": fin}], "usage": {"prompt_tokens": 1000 + 500 * step, "completion_tokens": 50}}
+        n_prompt, n_out = 1000 + 500 * step, int(os.environ.get("FAKE_COMPLETION_TOKENS", "50"))
+        out = {"choices": [{"message": msg, "finish_reason": fin}], "usage": {"prompt_tokens": n_prompt, "completion_tokens": n_out}}
+        if req.get("return_token_ids"):  # vLLM's extension: exact prompt and completion token ids
+            out["prompt_token_ids"] = list(range(n_prompt))
+            out["choices"][0]["token_ids"] = [7] * n_out
         b = json.dumps(out).encode()
         self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
 

@@ -7,14 +7,28 @@ on all 129 public tasks, and reports where tasks are lost: tool calls, turns, co
 outputs, submits, time. The local `harness/` re-implements the loop; this runs the real one.
 
 Kaggle scores on **4x NVIDIA L4** (24 GB each, vLLM TP=4, `gpu_memory_utilization` 0.90, `max_model_len` 32768;
-HARNESS_README section 3.1), one task after another. A G4 (one RTX PRO 6000, 96 GB) runs many tasks at once, so wall-clock
-time does not transfer: runs lift the time budget to 30 min and `analyze` estimates the L4 time from token counts.
+HARNESS_README section 3.1), one task after another, about 120 tasks in one 12 h job that fails as a whole when it
+overruns. A G4 (one RTX PRO 6000, 96 GB) runs many tasks at once, so wall-clock time does not transfer: `--l4-clock`
+runs the time budget on a modelled L4 clock (each LLM call re-priced from its tokens), so a task stops where the scorer
+would stop it and the prompt shows the bundle's real cap. `timing.py` turns a run into time-adjusted solves per cap
+and a projection of the 12 h job, calibrated on our own Kaggle submissions that finished or overran.
+
+The v10 workflow (harness freeze, trajectory generation, LoRA training, 10 G4-hours) is in `RUNBOOK_v10.md`.
 
 ## Files
 
 | file | what |
 |---|---|
-| `run_official.py` | wrapper around `swegemma.evaluate.Evaluator`: bundle's `eval_config.yaml`, scorer compaction/caching, Docker-like subprocess sandbox, `--agent gold/noop`, per-call LLM log |
+| `run_official.py` | wrapper around `swegemma.evaluate.Evaluator`: bundle's `eval_config.yaml`, scorer compaction/caching, Docker-like subprocess sandbox, `--agent gold/noop`, per-call LLM log; `--l4-clock` (modelled L4 time budget), `--log-requests` (local proxy that logs every request and response with vLLM's token ids), `--queue` (worker of a shared queue), `--phase agent/grade` (grade later on a CPU), `--sandbox-site-map` (per-repo environments) |
+| `taskqueue.py` | shared queue for `run_official --queue`: one file per (arm, task), claimed by atomic rename, longest expected first, several bundles and datasets at once |
+| `timing.py` | Kaggle-time model: time-adjusted solves per cap, the 12 h projection, the (L4 speed, per-task overhead) band our Kaggle outcomes allow, `--measured` from a timed probe |
+| `probe_timer.py` | polls the Kaggle submissions list and bounds a submission's run time |
+| `variants.py` | a bundle with a few settings changed (thinking budget, cap, model, an adapter), so arms never drift from `submission/` |
+| `external.py` | data-external tasks for run_official: hints removed, per-repo environment map, gold/noop validation list |
+| `bench_decode.py` | single-stream and concurrent decode speed of a served model or LoRA (the LoRA preflight) |
+| `lora/adapter.py` | zero adapter for the preflight; checks an adapter against the scorer's vLLM rules and the 31B's shapes (`gemma-4-31b-it-qat-w4a16-ct.shapes.json`) |
+| `lora/build_sft.py` | training sequences from `--log-requests` runs: vLLM's own token ids, segments between compactions, loss on the model's spans |
+| `lora/train_lora.py` | LoRA (r 16) on the decompressed competition checkpoint inside a wall-clock budget; `--tiny` checks it on a CPU |
 | `build_sandbox_env.py` | builds the shared sandbox site (`/content/sbx`) that stands in for the `swebench-sandbox` image |
 | `sandbox_deps.py` | per-task step inside each sandbox: other task repos' wheels + the versions the task's pyproject pins |
 | `analyze.py` | `results/<run>` -> `analysis/report.md`, `tasks.csv`, `tasks.json` |
@@ -22,7 +36,12 @@ time does not transfer: runs lift the time budget to 30 min and `analyze` estima
 | `vllm_stats.py` | live vLLM load (running/waiting, KV %, prefix hits, tok/s) for tuning `--concurrency` |
 | `requirements-harness.txt`, `requirements-vllm.txt` | locks (vLLM side pinned to the scorer wheelhouse; `vllm-requirements.in` + `vllm-overrides.txt` regenerate it) |
 | `colab/cpu_prepare.sh` | CPU runtime: data, envs, model, gold validation -> Drive `MyDrive/gemma4-eval/` |
-| `colab/gpu_start.sh` | G4 runtime: restore from Drive/PyPI/HF in parallel, start vLLM |
+| `colab/cpu_prepare_v10.sh` | CPU runtime: the scorer's patched vLLM wheel, the vLLM + training env, validated data-external tasks, bundle checks |
+| `colab/gpu_start.sh` | G4 runtime: restore from Drive/PyPI/HF in parallel (`EXT=1`: data-external too), start vLLM (`ADAPTERS=`: with LoRA) |
+| `colab/preflight_lora.sh` | LoRA go/no-go: a zero adapter's load, KV cost and decode slowdown |
+| `colab/gpu_queue.sh` | session 1: arms A/B/C on the public tasks and trajectory generation through one queue |
+| `colab/lora_session.sh` | session 2: time-budgeted LoRA training, then the LoRA arm |
+| `colab/restart_vllm.sh`, `colab/wait_vllm.sh` | restart vLLM with or without adapters; wait until it answers |
 | `colab/gpu_run.sh` | `smoke` (3 tasks) or `full` run, Drive sync, analysis |
 | `colab/models.sh` | model declared by `$BUNDLE` -> HF repo, vLLM extra args (12B: `--hf-overrides`), Drive cache dir, L4 speed estimate |
 | `findings_v8.md` | what the first v8 run (31B) showed |
@@ -82,6 +101,12 @@ Locally (no GPU): `python -m colab_eval.run_official --agent gold ...` checks th
   the file Kaggle Models serves to the scorer (a 10,278,821,003-byte export), and vLLM 0.19.1's text-only loader does
   not know its `model.vision_embedder.*` tensors. `serve_vllm.sh` adds that prefix to the loader's skip list (it
   already skips `vision_tower.`/`embed_vision.`), so the same text weights load; vision weights are unused anyway.
+- **vLLM build**: the scorer's wheelhouse ships a patched `vllm-0.19.1` (Gemma 4 LoRA support in
+  `lora/model_manager.py`, `models/gemma4.py`, `gemma4_mm.py`, 2026-10-13); `gpu_start.sh` installs it from Drive
+  (`cpu_prepare_v10.sh` fetches it) and warns when the installed build is not that one. Earlier runs used PyPI's build.
+- **data-external**: tasks of other repos (training data only) run with their own Python 3.9 environments
+  (`--sandbox-site-map`, per-task venvs made by that interpreter), no competition wheels, the scorer's `setup.py`, and
+  `hints_text` emptied (the competition's tasks have no hints).
 - swegemma rewrites `/workspace` only inside commands, so skill scripts get the real path from `SWE_WORKSPACE`. The
   first v8 run (2026-10-19) predates this: locate.py and check.py crashed on every call (`analyze` now flags it).
 - **Packages**: the scorer's real wheel set is private (`gemma-4-developer-agent-metric-data`). The public wheels lack
@@ -91,6 +116,9 @@ Locally (no GPU): `python -m colab_eval.run_official --agent gold ...` checks th
   reference patch still fails here (`results/gold`) are reported as ENV_UNSOLVABLE and left out of the adjusted rate.
 - **Model serving**: same checkpoint, vLLM version, parsers, `reasoning_config` and bf16 KV cache; one GPU instead of
   TP=4, `scheduler_reserve_full_isl` left on (admission only), many tasks in flight (the scorer runs one).
-- **Budgets**: from the bundle's `eval_config.yaml`, except the time budget (30 min); compaction (interval 15, overlap 2,
+- **Budgets**: from the bundle's `eval_config.yaml`, except the time budget, which runs on the modelled L4 clock with
+  `--l4-clock` (or is lifted with `--max-time-minutes`); an LLM call in flight when the cap passes finishes here, where
+  the scorer's `asyncio.timeout` cancels it, but tool calls after the cap fail in both, so the graded diff is the same;
+  compaction (interval 15, overlap 2,
   threshold 14,336 tokens, retention 5) and context caching as in HARNESS_README 7.2; litellm pinned to 1.104.3 (the
   newest that works with google-adk 1.36.1's `mcp<2`; the scorer's own litellm version is not published).

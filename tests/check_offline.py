@@ -112,26 +112,30 @@ def units(tmp: Path):
     check("submission: thinking on, thoughts kept", thinking_body(tc)["chat_template_kwargs"]["enable_thinking"] and tc["include_thoughts"] is True, tc)
     check("submission: output cap leaves room after thinking", g["max_output_tokens"] >= tc["thinking_budget"] + 2048, g)
     ev = sub["eval"]
-    # 7 min x 120 tasks = 14 h if every task burned the clock, so the 12 h total rests on the call cap ending stuck runs;
-    # 45 calls of the 12B take about as long as 35 of the 31B did (it decodes about twice as fast)
-    check("submission: call cap is small enough to end stuck runs early", ev["max_tool_calls"] <= 46, ev)
+    # the 12 h job: colab_eval/timing.py puts v8's 7 min / 35 calls at 12.2-13.0 h on every point our Kaggle history
+    # allows, and 4.5 min at 9.3-11.2 h (the probe value; the final cap comes from the probe's run time)
+    eq("submission: the 31B", sub["root"]["model"], "gemma-4-31b-it-qat-w4a16-ct")
+    check("submission: time cap fits the 12 h job", ev["max_time_minutes"] <= 5.0, ev)
     eq("submission: budget fields", {k: ev[k] for k in ("max_tool_calls", "max_time_minutes", "max_turns", "timeout_seconds")},
-       {"max_tool_calls": 45, "max_time_minutes": 7.0, "max_turns": 80, "timeout_seconds": 240})
+       {"max_tool_calls": 35, "max_time_minutes": 4.5, "max_turns": 80, "timeout_seconds": 240})
     text = sub["root"]["instruction"]
     check("submission: no stray braces in the prompt", "{" not in text and "}" not in text)
     check("submission: prompt no longer caps reasoning or claims nothing is dropped",
           "few sentences per step" not in text and "nothing in it is dropped" not in text)
-    check("submission: prompt plans an edit by call 12 and a cleanup before submit",
-          "By call 12" in text and "--clean" in text and "docs_src/" in text and "45 tool calls" in text
-          and "call 20 without an edit" in text)
+    check("submission: prompt plans by time, an edit by call 8 and a cleanup before submit",
+          "4 calls per minute" in text and "By call 8" in text and "--clean" in text and "docs_src/" in text
+          and "35 tool calls" in text and "call 10 without an edit" in text and "diff you have at that moment is graded" in text)
+    check("submission: prompt shows a literal skill call and the top-hit code",
+          'args ["ResponseValidationError", "missing field"]' in text and "Never call locate.py without args" in text
+          and "30 numbered lines of the top hit" in text and "Verify right after the first edit" in text)
     check("submission: prompt asks for short old_strings and the issue's exact names",
           "1 to 3 lines" in text and "single-line old_string" in text and "use exactly that name and signature" in text)
     check("submission: prompt has the contract step, a /tmp heredoc repro and the two scripts",
           "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text
-          and "call locate.py" in text and "call check.py" in text and "Do not call load_skill" in text)
+          and "call locate.py" in text and "call check.py" in text and "do not call load_skill" in text)
     check("submission: prompt covers title-only issues, rereads and unchanged repros",
           "do not guess function signatures or asserts from memory" in text and "Never read the same lines twice in a row" in text
-          and "same result after an edit" in text and "at most two repros before your first edit" in text)
+          and "same result after an edit" in text and "at most one repro before your first edit" in text)
     eq("submission: the root agent declares the swe skill", [Path(p).name for p in sub["root"]["skills"]], ["swe"])
     for name, md in (("Swe", "---\nname: Swe\ndescription: d\n---\n"), ("swe", "---\nname: other\ndescription: d\n---\n"),
                      ("nodesc", "---\nname: nodesc\n---\n")):
@@ -155,6 +159,105 @@ def units(tmp: Path):
     finally:
         agent_mod.chat = real_chat
     eq("budget defaults follow the submission", (Budget().max_time_minutes, Budget().max_tool_calls), (ev["max_time_minutes"], ev["max_tool_calls"]))
+
+
+def colab_checks(tmp: Path):
+    """colab_eval's pure-Python parts: the Kaggle-time model, the task queue, adapters, training data, bundle variants."""
+    import gzip
+
+    from colab_eval import taskqueue, timing, variants
+    from colab_eval.lora import adapter, build_sft
+
+    tmp.mkdir(parents=True, exist_ok=True)
+
+    # timing: one call re-priced on a single stream with prefix caching
+    eq("timing: call cost", round(timing.call_cost(1000, 1600, 200, 20, 1500), 2), round(600 / 1500 + 200 / 20, 2))
+    eq("timing: compaction makes the whole prompt new", round(timing.call_cost(9000, 4000, 0, 20, 1500), 2), round(4000 / 1500, 2))
+    t = timing.Task("x", resolved=True, calls=[(0.0, 1.0, 1000, 200), (5.0, 1.0, 1500, 200)],
+                    events=[(1.5, "tool"), (6.5, "edit"), (6.6, "free")])
+    at, end = t.clock(20, 1500)
+    eq("timing: clock at the end = LLM time x m + real tool time",
+       round(at(end, 1.0), 2), round(timing.call_cost(0, 1000, 200, 20, 1500) + timing.call_cost(1000, 1500, 200, 20, 1500) + 4.0, 2))
+    eq("timing: a solve counts within a cap when its last edit is inside it",
+       (timing.solves_within([t], (20, 1500), 1.0, 30), timing.solves_within([t], (20, 1500), 1.0, 20)), (1, 0))
+    # the v8 official-scorer run, if this checkout (or the main one, for a worktree) has it; results/ is gitignored
+    v8 = next((d for d in (ROOT / "results" / "colab", ROOT.parents[2] / "results" / "colab") if (d / "v8" / "llm_calls.jsonl").exists()), None)
+    if v8:
+        tasks = timing.load_run(v8 / "v8", v8 / "gold")
+        band = timing.calibrated_region(tasks, (20, 1500), timing.frange(0.5, 0.9, 0.01), [30, 60, 90])
+        hours = [timing.project_hours(tasks, (20, 1500), m, ov, 420, 35) for m, ov in band]
+        check("timing: v8's 7 min / 35 calls overruns 12 h wherever our Kaggle outcomes allow", band and min(hours) > 12.0, hours)
+
+    # task queue: priority first, longest expected first, atomic claims, requeue after a crash
+    q = tmp / "queue"
+    (tmp / "prior").mkdir()
+    (tmp / "prior" / "agent_phase.jsonl").write_text('{"task": "b", "agent_seconds": 900}\n{"task": "a", "agent_seconds": 100}\n')
+    arms = [{"name": "A", "bundle": "submission", "data": "d", "results": str(tmp / "rA"), "sandbox_site": "s", "ids": ["a", "b"]},
+            {"name": "G", "bundle": "submission", "data": "d", "results": str(tmp / "rG"), "sandbox_site": "s", "ids": ["c"], "priority": 1}]
+    eq("queue: build counts", taskqueue.build(q, arms, [tmp / "prior"]), {"A": 2, "G": 1})
+    first = taskqueue.claim(q, "w1")
+    eq("queue: longest expected task of the first priority comes first", json.loads(first.read_text())["task"], "b")
+    second = taskqueue.claim(q, "w2")
+    taskqueue.finish(q, first)
+    eq("queue: requeue puts a crashed worker's item back", taskqueue.requeue(q), 1)
+    eq("queue: rebuild skips done items", taskqueue.build(q, arms, []), {"A": 0, "G": 0})
+    order = [json.loads(taskqueue.claim(q, "w3").read_text())["task"] for _ in range(2)]
+    eq("queue: then the rest, priority order", order, ["a", "c"])
+    check("queue: empty at the end", taskqueue.claim(q, "w3") is None)
+    eq("queue: status", taskqueue.status(q)["A"]["done"], 1)
+
+    # adapters: a zero adapter loads; vision-tower tensors or wrong shapes do not
+    shapes = {"model.language_model.layers.0.self_attn.q_proj": (32, 16), "model.language_model.layers.0.mlp.down_proj": (16, 48)}
+    adapter.write_null(tmp / "null", rank=4, shapes=shapes)
+    eq("adapter: zero adapter passes the vLLM rules", adapter.check(tmp / "null", shapes), [])
+    errs = adapter.check(tmp / "null", {"model.language_model.layers.0.self_attn.q_proj": (32, 8),
+                                       "model.language_model.layers.0.mlp.down_proj": (16, 48)})
+    check("adapter: a shape mismatch is reported", any("shape" in e for e in errs), errs)
+    check("adapter: bundled 31B shapes", len(adapter.load_shapes()) == 410)
+
+    # build_sft: prompts that grow form one segment; a compaction starts another; spans end at stop tokens
+    run = tmp / "gen"
+    (run / "requests").mkdir(parents=True)
+    tools = [{"type": "function", "function": {"name": "run_command"}}]
+
+    def row(task, start, p, c, names, kind="agent"):
+        msg = {"role": "assistant", "tool_calls": [{"function": {"name": n, "arguments": "{}"}} for n in names]}
+        return {"task": task, "start": start, "kind": kind, "request": {"messages": [], "tools": tools if kind == "agent" else None},
+                "response": {"prompt_token_ids": p, "usage": {"completion_tokens": len(c)},
+                             "choices": [{"finish_reason": "stop", "token_ids": c, "message": msg}]}}
+    p1, c1 = [2, 10, 11], [100, 5, 101, 48, 7, 49, 50]
+    p2 = p1 + c1 + [60, 61, 62, 100]
+    c2 = [6, 101, 48, 8, 49, 50]
+    p3 = [2, 10, 70, 71]  # compaction: the history was replaced by a summary
+    c3 = [9, 101, 48, 3, 49, 50]
+    rows = [row("t1", 1, p1, c1, ["run_command"]), row("t1", 2, [2, 99], [5, 106], [], "summary"),
+            row("t1", 3, p2, c2, ["edit_file"]), row("t1", 4, p3, c3, ["submit_patch"]),
+            row("t2", 1, p1, c1, ["run_command"])]
+    with gzip.open(run / "requests" / "w.jsonl.gz", "wt") as f:
+        f.write("".join(json.dumps(r) + "\n" for r in rows))
+    (run / "task_results.jsonl").write_text('{"instance_id": "t1", "resolved": true}\n{"instance_id": "t2", "resolved": false}\n')
+    build_sft.main(["--runs", str(run), "--out", str(tmp / "sft")])
+    seqs = [json.loads(l) for l in (tmp / "sft" / "sft.jsonl").read_text().splitlines()]
+    eq("sft: one task, two segments (compaction)", [(s["task"], s["calls"]) for s in seqs], [("t1", 2), ("t1", 1)])
+    eq("sft: spans are the sampled replies through their stop token", seqs[0]["label_spans"],
+       [[len(p1), len(p1) + len(c1)], [len(p2), len(p2) + len(c2)]])
+    eq("sft: replies match the history token for token", (seqs[0]["exact"], seqs[0]["input_ids"]), (2, p2 + c2))
+    eq("sft: thinking length up to <channel|>", (build_sft.thinking_tokens([100, 1, 2, 3, 101, 48]),
+                                                 build_sft.thinking_tokens([7, 8, 101, 48]), build_sft.thinking_tokens([48, 49])), (3, 2, 0))
+    build_sft.main(["--runs", str(run), "--out", str(tmp / "sft1"), "--max-thinking-tokens", "1"])
+    eq("sft: --max-thinking-tokens drops runs that thought that long", json.loads((tmp / "sft1" / "manifest.json").read_text())["tasks"], 0)
+
+    # variants: settings change in the included files; an adapter is copied and declared
+    (tmp / "ad").mkdir()
+    (tmp / "ad" / "adapter_config.json").write_text("{}")
+    (tmp / "ad" / "adapter_model.safetensors").write_bytes(b"x")
+    out = variants.make(ROOT / "submission", tmp / "var", thinking_budget=1024, max_time_minutes=4.25, adapter=f"main_lora={tmp / 'ad'}")
+    vsub = load_submission(out)
+    eq("variants: thinking budget, cap and adapter",
+       (vsub["root"]["generate_content_config"]["thinking_config"]["thinking_budget"], vsub["eval"]["max_time_minutes"],
+        vsub["root"].get("adapter"), (out / "adapters" / "main_lora" / "adapter_model.safetensors").exists()),
+       (1024, 4.25, "main_lora", True))
+    eq("variants: prompt unchanged", vsub["root"]["instruction"], load_submission(ROOT / "submission")["root"]["instruction"])
 
 
 def sandbox_checks(data: Path):
@@ -220,6 +323,8 @@ def skill_checks(data: Path):
         out_loc = run("locate.py", ["target_fn"])
         check("locate: prioritizes def line over earlier comment lines and resolves 1-hop callee",
               "in target_fn (L9-10): def target_fn():" in out_loc and "calls: inner_helper (L6)" in out_loc, out_loc)
+        check("locate: prints the top hit's code with line numbers",
+              "code of the top hit," in out_loc and "    9 def target_fn():" in out_loc, out_loc)
         eq("skills: each script run is one tool call", ctx.calls, 3)
         out = run("check.py", [])
         check("check: clean tree", "changed: nothing" in out and "no test file covers" in out, out)
@@ -290,6 +395,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as t:
         tmp = Path(t)
         units(tmp)
+        colab_checks(tmp / "colab")
         data = tmp / "data-toy"
         subprocess.run([sys.executable, str(ROOT / "tests" / "make_toy_task.py"), str(data)], check=True, capture_output=True)
         sandbox_checks(data)

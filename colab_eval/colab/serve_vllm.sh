@@ -5,6 +5,9 @@
 # (the 12B needs --hf-overrides). Differences: one RTX PRO 6000 (96 GB) instead of 4x L4 with TP=4 (same weights,
 # different kernels), and scheduler_reserve_full_isl left at vLLM's default (True), which only changes admission under
 # concurrency (the scorer runs one task at a time) and avoids KV thrashing.
+# LoRA: ADAPTERS="name=dir[,name=dir]" serves each adapter under its name, which is what swegemma sends for an agent
+# with `adapter: name` (openai/<name>), with the scorer's sizing: max_loras = number of adapters, max_lora_rank = the
+# largest r in their adapter_config.json. Only the wheelhouse vLLM (gpu_start.sh) has the Gemma 4 LoRA patches.
 #   bash serve_vllm.sh        logs to /content/work/vllm.log; BUNDLE or MODEL_NAME pick the model; GPU_UTIL, SEQS override
 set -euo pipefail
 source "$(dirname "$0")/models.sh"
@@ -15,8 +18,15 @@ if [ -n "${SKIP_WEIGHTS:-}" ]; then  # add the prefix to Gemma4ForCausalLM.load_
   grep -q "\"$SKIP_WEIGHTS\"," "$G4PY" || sed -i "s/^\( *\)\"embed_vision\.\",$/&\n\1\"$SKIP_WEIGHTS\",/" "$G4PY"
   grep -q "\"$SKIP_WEIGHTS\"," "$G4PY" || { echo "could not add $SKIP_WEIGHTS to the skip list in $G4PY"; exit 1; }
 fi
+LORA_ARGS=()
+if [ -n "${ADAPTERS:-}" ]; then
+  IFS=',' read -ra PAIRS <<< "$ADAPTERS"
+  RANK=$(for p in "${PAIRS[@]}"; do python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['r'])" "${p#*=}/adapter_config.json"; done | sort -n | tail -1)
+  LORA_ARGS=(--enable-lora --max-loras "${#PAIRS[@]}" --max-lora-rank "$RANK" --lora-modules "${PAIRS[@]}")
+  echo "LoRA: ${PAIRS[*]} (max rank $RANK)"
+fi
 exec /content/vllm-env/bin/vllm serve "$MODEL" --served-model-name "$MODEL_NAME" "${MODEL_ARGS[@]}" \
   --max-model-len 32768 --gpu-memory-utilization "${GPU_UTIL:-0.92}" --max-num-seqs "${SEQS:-48}" \
   --enable-auto-tool-choice --tool-call-parser gemma4 --reasoning-parser gemma4 \
   --reasoning-config '{"reasoning_start_str": "<|channel>", "reasoning_end_str": "<channel|>"}' \
-  --host 127.0.0.1 --port 8000 > /content/work/vllm.log 2>&1
+  "${LORA_ARGS[@]}" --host 127.0.0.1 --port 8000 > /content/work/vllm.log 2>&1
