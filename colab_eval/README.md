@@ -18,6 +18,7 @@ time does not transfer: runs lift the time budget to 30 min and `analyze` estima
 | `build_sandbox_env.py` | builds the shared sandbox site (`/content/sbx`) that stands in for the `swebench-sandbox` image |
 | `sandbox_deps.py` | per-task step inside each sandbox: other task repos' wheels + the versions the task's pyproject pins |
 | `analyze.py` | `results/<run>` -> `analysis/report.md`, `tasks.csv`, `tasks.json` |
+| `progress.py` | live view of a run: done/resolved/ETA, in-flight tasks, stalled workers, warnings |
 | `vllm_stats.py` | live vLLM load (running/waiting, KV %, prefix hits, tok/s) for tuning `--concurrency` |
 | `requirements-harness.txt`, `requirements-vllm.txt` | locks (vLLM side pinned to the scorer wheelhouse; `vllm-requirements.in` + `vllm-overrides.txt` regenerate it) |
 | `colab/cpu_prepare.sh` | CPU runtime: data, envs, model, gold validation -> Drive `MyDrive/gemma4-eval/` |
@@ -37,10 +38,35 @@ cp /content/Gemma-4/colab_eval/colab/gpu_start.sh /content/drive/MyDrive/gemma4-
 # switch to the G4 runtime (wipes /content), mount Drive again, then
 bash /content/drive/MyDrive/gemma4-eval/gpu_start.sh       # restore + vLLM up with the model submission/ declares
 bash /content/Gemma-4/colab_eval/colab/gpu_run.sh smoke    # 3 tasks; check report + vllm_stats before going on
-RUN=v9-12b nohup bash /content/Gemma-4/colab_eval/colab/gpu_run.sh full 48 &   # workers: size to nproc and KV
 # BUNDLE=bundles/<name> runs another bundle; one declaring another model needs serve_vllm.sh restarted with it
+```
+
+Start the full run from a **Python** cell, so the cell returns at once and the notebook stays free for watching it
+(a `!... &` shell line keeps the cell, and with it the kernel, busy until the job exits):
+
+```python
+import subprocess
+subprocess.Popen('cd /content/Gemma-4 && RUN=v9-12b bash colab_eval/colab/gpu_run.sh full 16 > /content/work/gpu_run_v9-12b.log 2>&1',
+                 shell=True, start_new_session=True, stdin=subprocess.DEVNULL)   # workers: size to KV (16 for the 12B)
+```
+
+### Watching a run
+
+```bash
+cd /content/Gemma-4
+/content/hvenv/bin/python -m colab_eval.progress /content/results/v9-12b               # snapshot (cell or Terminal)
+/content/hvenv/bin/python -m colab_eval.progress /content/results/v9-12b --every 60    # live, in Colab's Terminal
+/content/hvenv/bin/python -m colab_eval.progress /content/results/v9-12b --task <id>   # last 40 lines of one task
+tail -f /content/results/v9-12b/shards/*/logs/<id>.log                                 # one task, live
 /content/hvenv/bin/python -m colab_eval.vllm_stats --every 60
 ```
+
+`progress` shows done/resolved/ETA and outcomes so far, each worker's in-flight task (minutes, tool calls, LLM calls,
+prompt tokens, errors, last tool; STALLED after 10 min without log output), and WARN lines for LLM errors, outputs cut
+at max_tokens, skill scripts that keep raising tracebacks, and errors in the worker logs (`/content/work/run_<RUN>_<k>.log`).
+swegemma writes each task's log line by line, so all of this is current. `gpu_run.sh` also writes it to `progress.txt`,
+which reaches `MyDrive/gemma4-eval/results/<RUN>/` every 2 minutes with the shards' logs. Colab's Terminal works while a
+cell is running.
 
 Locally (no GPU): `python -m colab_eval.run_official --agent gold ...` checks the environment, and `tests/fake_llm.py` on
 :8765 with `--base-url http://127.0.0.1:8765/v1` drives the real loop end to end.

@@ -5,7 +5,7 @@
 # Each worker is its own process running its shard one task at a time, as the scorer does: swegemma's tools are
 # synchronous, so tasks sharing one event loop would all stall while any of them runs a command.
 # Results in /content/results/$RUN (shards/K merged at the end), copied to Drive (MyDrive/gemma4-eval/results/$RUN)
-# every 3 minutes and at the end, then colab_eval.analyze writes analysis/report.md. RUN defaults to the mode; BUNDLE
+# with progress.txt every 2 minutes and at the end, then colab_eval.analyze writes analysis/report.md. RUN defaults to the mode; BUNDLE
 # (default submission) and MAX_TIME (default 30 min, lifted from the bundle's 7) can be overridden.
 set -euo pipefail
 G=/content/drive/MyDrive/gemma4-eval
@@ -23,7 +23,9 @@ case "$MODE" in
   *) echo "usage: gpu_run.sh smoke [IDS...] | full [WORKERS]"; exit 2 ;;
 esac
 mkdir -p $OUT/shards $G/results
-( while sleep 180; do rsync -a --exclude '*.lock' $OUT $G/results/ 2>/dev/null; done ) & SYNC=$!
+# progress.txt: colab_eval.progress snapshot (done/resolved/ETA, in-flight tasks, warnings), readable on Drive mid-run
+( while sleep 120; do /content/hvenv/bin/python -m colab_eval.progress $OUT --out $OUT/progress.txt > /dev/null 2>&1
+  rsync -a --exclude '*.lock' $OUT $G/results/ 2>/dev/null; done ) & SYNC=$!
 for k in $(seq 0 $(( W - 1 ))); do
   /content/hvenv/bin/python -m colab_eval.run_official --bundle "${BUNDLE:-submission}" --data /content/comp \
     --sandbox-site /content/sbx --results-dir $OUT/shards/$k --concurrency 1 --shard $k/$W --resume \
