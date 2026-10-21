@@ -314,7 +314,8 @@ def colab_checks(tmp: Path):
         + json.dumps({"instance_id": "t2", "repo": "r", "resolved": False, "agent_patch_size": 9, "error": "Failed to apply test_patch: boom"}) + "\n")
     (hr / "ids.txt").write_text("t1\nt2\nt3\n")
     (hr / "run_meta.json").write_text(json.dumps({"bundle": "submission", "budget": {"max_time_minutes": 8.0}}))
-    (hr / "worker_logs" / "run_0.log").write_text("Traceback (most recent call last):\n  File x\nValueError: bad\n")
+    # stdout is block-buffered into the log, so its lines can land after the traceback
+    (hr / "worker_logs" / "run_0.log").write_text("Traceback (most recent call last):\n  File x\nValueError: bad\nrequest log: http://x\n")
     missing = "Invoking `edit_file()` failed as the following mandatory input parameters are not present:\nold_string"
     (hr / "traces" / "trace_t1.json").write_text(json.dumps({"steps": [
         {"source": "agent", "metrics": {"prompt_tokens": 9, "completion_tokens": 3}, "tool_calls": [{"function_name": "edit_file", "arguments": {}}],
@@ -331,8 +332,8 @@ def colab_checks(tmp: Path):
     eq("health: tool errors from the traces", {k: v["count"] for k, v in h["tool_errors"].items()}, {"MissingParameters": 1, "FileEditError": 1})
     eq("health: nudges", h["nudges"], {"t1": 1})
     errs = " | ".join(h["harness_errors"])
-    check("health: harness errors name the test_patch failure, the worker traceback and the task with no result",
-          "t2" in errs and "Traceback" in errs and "t3" in errs, errs)
+    check("health: harness errors name the test_patch failure, the worker's exception and the task with no result",
+          "t2" in errs and "ValueError: bad" in errs and "request log" not in errs and "t3" in errs, errs)
     out = {r["task"]: r for r in json.loads((hr / "analysis" / "tasks.json").read_text())}
     eq("analyze: harness error outcome and per-task health columns", (out["t2"]["outcome"], out["t1"]["bad_args"]), ("HARNESS_ERROR", 2))
     md = (hr / "analysis" / "health.md").read_text()
@@ -498,6 +499,11 @@ def end_to_end(data: Path, tmp: Path):
     reqs = seen()
     check("request: the tree sends thinking off and no budget",
           bool(reqs) and all(q["chat_template_kwargs"] == {"enable_thinking": False} and "thinking_token_budget" not in q and q["reasoning_in_history"] == 0 for q in reqs), reqs[:1])
+    models = json.load(urllib.request.urlopen("http://127.0.0.1:8765/v1/models"))
+    raw = json.load(urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8765/detokenize", data=json.dumps(
+        {"model": "m", "tokens": [1, 2, 3]}).encode(), headers={"Content-Type": "application/json"})))
+    check("fake server: answers vLLM's model list and /detokenize, as gpu_run.sh and analyze use them",
+          models["data"][0]["id"] == "gemma-4-31b-it-qat-w4a16-ct" and "3 tokens" in raw.get("prompt", ""), (models, raw))
     from colab_eval import model_check
     rc = model_check.main(["--base-url", "http://127.0.0.1:8765/v1", "--n", "2", "--out", str(tmp / "probe.json")])
     probe = json.loads((tmp / "probe.json").read_text())

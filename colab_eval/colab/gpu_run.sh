@@ -49,10 +49,17 @@ case "$MODE" in
     PROBE=0; $H -m colab_eval.model_check --bundle "$B" --out $OUT/probe.json || PROBE=$?
     wait "${GOLDPIDS[@]}" || true
     mkdir -p $OUT/gold && cat $OUT/gold/shards/*/task_results.jsonl > $OUT/gold/task_results.jsonl 2>/dev/null || true
-    echo "gold: $(grep -c '"resolved": true' $OUT/gold/task_results.jsonl || true)/$W reference patches resolve (environment check)"
-    if [ "$PROBE" != 0 ] && [ "${FORCE:-0}" != 1 ]; then echo "model check failed, see above (FORCE=1 runs anyway)"; exit 3; fi ;;
-  smoke) W=3; IDS=("${@:-requests_7205 rich_3067 fastapi_14986}"); EXTRA=(--task-ids ${IDS[@]}) ;;
-  full)  W="${1:-32}"; EXTRA=() ;;
+    NGOLD=$(grep -c '"resolved": true' $OUT/gold/task_results.jsonl 2>/dev/null || true)
+    echo "gold: ${NGOLD:-0}/$W reference patches resolve (environment check)"
+    if [ "${NGOLD:-0}" = 0 ] && [ "${FORCE:-0}" != 1 ]; then
+      echo "no reference patch resolves: the sandbox or the harness env is broken, so the run would be too. Worker errors:"
+      grep -h -E '^[A-Za-z_][A-Za-z_.]*(Error|Exception)' /content/work/gold_${RUN}_*.log 2>/dev/null | sort | uniq -c | head -5 || true
+      echo "(logs: /content/work/gold_${RUN}_*.log; FORCE=1 runs anyway)"; exit 3
+    fi
+    if [ "$PROBE" != 0 ] && [ "${FORCE:-0}" != 1 ]; then echo "model check failed, see above (FORCE=1 runs anyway)"; exit 3; fi
+    EXPECT=$W ;;
+  smoke) W=3; IDS=("${@:-requests_7205 rich_3067 fastapi_14986}"); EXTRA=(--task-ids ${IDS[@]}); EXPECT=$(echo ${IDS[@]} | wc -w) ;;
+  full)  W="${1:-32}"; EXTRA=(); EXPECT=$(grep -c . /content/comp/tasks.jsonl) ;;
   *) echo "usage: gpu_run.sh check [N] | smoke [IDS...] | full [WORKERS]"; exit 2 ;;
 esac
 [ "$W" -gt 0 ] || { echo "no tasks to run"; exit 2; }
@@ -89,7 +96,9 @@ rsync -a --exclude '*.lock' $OUT $G/results/
 tar -czf $G/results/$RUN.tgz --exclude=shards -C /content/results $RUN 2>/dev/null || echo "WARNING: could not write $G/results/$RUN.tgz"
 # vLLM's torch.compile cache makes the next session's start a minute or two faster
 [ -s $G/cache/vllm-compile-cache.tar ] || tar -cf $G/cache/vllm-compile-cache.tar -C /root/.cache vllm 2>/dev/null || true
-echo "$(wc -l < $OUT/task_results.jsonl) tasks, $(grep -c '"resolved": true' $OUT/task_results.jsonl || true) resolved"
+N=$(wc -l < $OUT/task_results.jsonl)
+echo "$N tasks, $(grep -c '"resolved": true' $OUT/task_results.jsonl || true) resolved"
 sed -n 1,40p $OUT/analysis/report.md 2>/dev/null || true
 if [ "$MODE" = check ]; then sed -n 1,30p $OUT/analysis/health.md 2>/dev/null || true; fi
 echo "results: $G/results/$RUN (and $RUN.tgz)"
+if [ "$N" -lt "$EXPECT" ]; then echo "HARNESS ERRORS: $(( EXPECT - N )) of $EXPECT tasks have no result; see analysis/health.md and worker_logs/"; exit 4; fi

@@ -46,6 +46,7 @@ TITLES = {'blank_thinking': 'blank thinking (thinking on, no thought produced)',
           'truncated': 'output cut at max_tokens', 'unknown_tool': 'unknown tool name',
           'bad_args': 'malformed tool arguments'}
 CALL_MARKUP = re.compile(r'<\|tool_call>|\bcall:[\w.-]+\{')  # gemma4's tool-call syntax, parsed or not
+EXCEPTION_LINE = re.compile(r'^[A-Za-z_][\w.]*(?:Error|Exception|Exit|Interrupt)\b.*$', re.M)
 
 
 def jsonl(path: Path) -> list[dict]:
@@ -276,9 +277,10 @@ def health(R: Path, rows: list[dict], gold: Path | None, detok: str | None) -> d
     for p in sorted((R / 'worker_logs').glob('*.log')):
         text = p.read_text(errors='replace')
         if 'Traceback (most recent call last)' in text:
-            tail = text[text.rindex('Traceback (most recent call last)'):].splitlines()
-            last = next((l for l in reversed(tail) if l.strip() and not l.startswith(' ')), '')
-            harness.append(f"{p.name}: {text.count('Traceback (most recent call last)')} Traceback(s), last: {last[:200]}")
+            # the exception line, not just the last line: buffered stdout can land after the traceback
+            exc = EXCEPTION_LINE.search(text, text.rindex('Traceback (most recent call last)'))
+            harness.append(f"{p.name}: {text.count('Traceback (most recent call last)')} Traceback(s), last: "
+                           f"{exc.group(0)[:200] if exc else '?'}")
         harness += [f'{p.name}: {l[:200]}' for l in text.splitlines() if l.startswith('[warn]')]
     harness = list(dict.fromkeys(harness))
     gold_rows = jsonl(gold / 'task_results.jsonl') if gold else []

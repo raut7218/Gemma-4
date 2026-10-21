@@ -7,9 +7,12 @@ get their own, anything else gets the single-agent script (grep -> read -> edit 
 FAKE_COMPLETION_TOKENS sets the completion size it reports (default 50), so a test can drive the modelled L4 clock of
 colab_eval.run_official past a time budget. FAKE_SCRIPT=skills replaces the single-agent script with one that calls the
 swe skill's scripts through run_skill_script (locate -> edit -> check -> submit), for the official loop.
+It also answers vLLM's GET /v1/models (as FAKE_MODEL, default the 31B) and POST /detokenize, so
+`python tests/fake_llm.py 8000` stands in for the server colab_eval/colab/gpu_run.sh expects (tests/g4_shim.sh).
 """
 import json
 import os
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 FILE = "src/requests/status_codes.py"
@@ -62,13 +65,21 @@ SEEN: list = []  # request fields other than messages/tools; GET /requests retur
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
-    def do_GET(self):
-        b = json.dumps(SEEN).encode()
-        SEEN.clear()
+    def send(self, obj):
+        b = json.dumps(obj).encode()
         self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+
+    def do_GET(self):
+        if self.path.startswith("/v1/models"):
+            return self.send({"object": "list", "data": [{"id": os.environ.get("FAKE_MODEL", "gemma-4-31b-it-qat-w4a16-ct"), "object": "model"}]})
+        seen = list(SEEN)
+        SEEN.clear()
+        self.send(seen)
 
     def do_POST(self):
         req = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if self.path.startswith("/detokenize"):
+            return self.send({"prompt": f"<raw text of {len(req.get('tokens') or [])} tokens>"})
         SEEN.append({k: v for k, v in req.items() if k not in ("messages", "tools")} | {
             "roles": [m["role"] for m in req["messages"]],
             "reasoning_in_history": sum(1 for m in req["messages"] if m.get("reasoning"))})
@@ -91,9 +102,8 @@ class H(BaseHTTPRequestHandler):
         if req.get("return_token_ids"):  # vLLM's extension: exact prompt and completion token ids
             out["prompt_token_ids"] = list(range(n_prompt))
             out["choices"][0]["token_ids"] = [7] * n_out
-        b = json.dumps(out).encode()
-        self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+        self.send(out)
 
 
 if __name__ == "__main__":
-    ThreadingHTTPServer(("127.0.0.1", 8765), H).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1]) if len(sys.argv) > 1 else 8765), H).serve_forever()
