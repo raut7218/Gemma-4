@@ -3,6 +3,8 @@ model: gemma-4-31b-it-qat-w4a16-ct
 instruction: !include prompts/system.md
 # The code-graph tools (search_similar_code, get_code_neighbors, get_code_subgraph) are left out: the model never
 # called them in measured runs, and most task snapshots have empty graph or embedding files.
+# No skills: the skill bundles scored lowest on the LB (v7 0.10 at 8 min, v10 0.12 at 4.5 min; v3-v6 without them
+# 0.13-0.18), and check.py's test runs made v7's tasks 1.14-1.31x longer. bundles/v10 keeps them.
 tools:
   - run_command
   - read_file
@@ -10,7 +12,4 @@ tools:
   - write_file
   - get_status
   - submit_patch
-# locate.py and check.py, run with run_skill_script (one tool call each, executed inside the task container)
-skills:
-  - skills/swe
 generate_content_config: !include configs/sampling.yaml

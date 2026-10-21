@@ -1,15 +1,13 @@
 # The scorer runs about 120 tasks one after another inside 12 h, sandbox setup included, and an overrun fails the
 # whole submission instead of scoring the unfinished tasks as zero.
-# Calibration (colab_eval/timing.py on the v8 official-scorer run, 2026-10-20): our thinking-on Kaggle outcomes (v3 5 min /
-# 50 calls finished; v4, v5, v7 8 min / 28 calls finished; v7 10 min / 28 calls overran) leave a narrow band of 4x L4
-# speed and per-task overhead. On every point of it v8's 7 min / 35 calls projects to 12.2-13.0 h, so v8 would have
-# scored nothing; 4.5 min projects to 9.3-11.2 h and 3.75 min fits 10.5 h everywhere. 4.5 min is the probe value; the
-# final cap comes from the probe's measured run time (largest cap that fits 10.5 h). Local solves at a safe cap rise by
-# about 4-8 of 129 for every 10% fewer tokens per task, which is what the v10 prompt and the LoRA aim at.
-# With a 4-5 minute cap, time ends a run before 35 tool calls do; 35 only bounds a fast task that loops.
+# 8 min / 28 calls is the budget with the most finished Kaggle runs: our v4, v5 and v7 (thinking 2048) and the public
+# budget-fit bundles (thinking 4096, many runs). v7 at 10 min / 28 calls overran, and colab_eval/timing.py puts v8's
+# 7 min / 35 calls past 12 h, so neither more minutes nor more calls without a timing check. v10's 4.5-minute cap
+# (0.12 on the LB) was sized for 35 calls and cut late solves.
+# With 28 calls the call budget usually ends a run before the 8 minutes do; time ends the runs that think long.
 # timeout_seconds also bounds the hidden-test run in the shipped source, so it stays at 240.
 evaluation:
   timeout_seconds: 240
-  max_tool_calls: 35
-  max_time_minutes: 4.5
+  max_tool_calls: 28
+  max_time_minutes: 8.0
   max_turns: 80

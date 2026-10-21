@@ -4,3 +4,4 @@ results/
 __pycache__/
 submission.zip
 data-toy/
+.env

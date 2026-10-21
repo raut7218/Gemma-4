@@ -102,7 +102,7 @@ def units(tmp: Path):
     check("checker: v3 thinking config is clean", not c.errors and not c.warnings, c.errors + c.warnings)
     c = bundle(tmp, "b5", "  temperature: 0.4\n", instruction="Use {hints} and {problem_description}")
     check("checker: {hints} must be optional", any("hints" in e for e in c.errors), c.errors)
-    for b in ("submission", "bundles/parallel-investigate"):
+    for b in ("submission", "bundles/v10", "bundles/parallel-investigate"):
         c = Checker(ROOT / b)
         check(f"checker: {b} passes with no warnings", c.run() and not c.warnings, c.errors + c.warnings)
 
@@ -112,31 +112,32 @@ def units(tmp: Path):
     check("submission: thinking on, thoughts kept", thinking_body(tc)["chat_template_kwargs"]["enable_thinking"] and tc["include_thoughts"] is True, tc)
     check("submission: output cap leaves room after thinking", g["max_output_tokens"] >= tc["thinking_budget"] + 2048, g)
     ev = sub["eval"]
-    # the 12 h job: colab_eval/timing.py puts v8's 7 min / 35 calls at 12.2-13.0 h on every point our Kaggle history
-    # allows, and 4.5 min at 9.3-11.2 h (the probe value; the final cap comes from the probe's run time)
+    # the 12 h job: v4, v5 and v7 at 8 min / 28 calls finished on Kaggle, as did the public budget-fit bundles at 8 / 28;
+    # v7 at 10 min / 28 calls overran. More minutes or calls need a timing check (colab_eval/timing.py) first.
     eq("submission: the 31B", sub["root"]["model"], "gemma-4-31b-it-qat-w4a16-ct")
-    check("submission: time cap fits the 12 h job", ev["max_time_minutes"] <= 5.0, ev)
+    check("submission: time cap fits the 12 h job", ev["max_time_minutes"] <= 8.0 and ev["max_tool_calls"] <= 28, ev)
     eq("submission: budget fields", {k: ev[k] for k in ("max_tool_calls", "max_time_minutes", "max_turns", "timeout_seconds")},
-       {"max_tool_calls": 35, "max_time_minutes": 4.5, "max_turns": 80, "timeout_seconds": 240})
+       {"max_tool_calls": 28, "max_time_minutes": 8.0, "max_turns": 80, "timeout_seconds": 240})
     text = sub["root"]["instruction"]
     check("submission: no stray braces in the prompt", "{" not in text and "}" not in text)
-    check("submission: prompt no longer caps reasoning or claims nothing is dropped",
-          "few sentences per step" not in text and "nothing in it is dropped" not in text)
-    check("submission: prompt plans by time, an edit by call 8 and a cleanup before submit",
-          "4 calls per minute" in text and "By call 8" in text and "--clean" in text and "docs_src/" in text
-          and "35 tool calls" in text and "call 10 without an edit" in text and "diff you have at that moment is graded" in text)
-    check("submission: prompt shows a literal skill call and the top-hit code",
-          'args ["ResponseValidationError", "missing field"]' in text and "Never call locate.py without args" in text
-          and "30 numbered lines of the top hit" in text and "Verify right after the first edit" in text)
-    check("submission: prompt asks for short old_strings and the issue's exact names",
-          "1 to 3 lines" in text and "single-line old_string" in text and "use exactly that name and signature" in text)
-    check("submission: prompt has the contract step, a /tmp heredoc repro and the two scripts",
-          "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text
-          and "call locate.py" in text and "call check.py" in text and "do not call load_skill" in text)
+    check("submission: prompt states the bundle's own budget",
+          f"{ev['max_tool_calls']} tool calls" in text and f"{ev['max_time_minutes']:g} minutes" in text)
+    check("submission: no skills, and the prompt does not mention them",
+          not sub["root"].get("skills") and "run_skill_script" not in text and "locate.py" not in text and "check.py" not in text)
+    check("submission: prompt plans an edit by call 12 and grades the diff at the cutoff",
+          "By call 12" in text and "diff you have at that moment is graded" in text and "docs_src/" in text)
+    check("submission: prompt asks for short old_strings and recovers from malformed calls",
+          "1 to 3 lines" in text and "single-line old_string" in text and "mandatory input parameters" in text)
+    check("submission: prompt has the contract step with exact names and exports",
+          "Contract, before your first tool call" in text and "use exactly that name and signature" in text and "__all__" in text)
+    check("submission: prompt verifies with a /tmp heredoc repro and the whole test file",
+          "cat > /tmp/repro.py <<'EOF'" in text and "-x -q" in text and "Never run the whole test suite" in text)
     check("submission: prompt covers title-only issues, rereads and unchanged repros",
-          "do not guess function signatures or asserts from memory" in text and "Never read the same lines twice in a row" in text
+          "only a title" in text and "Never read the same lines twice in a row" in text
           and "same result after an edit" in text and "at most one repro before your first edit" in text)
-    eq("submission: the root agent declares the swe skill", [Path(p).name for p in sub["root"]["skills"]], ["swe"])
+    check("submission: prompt finishes at the budget warning with a cleanup before submit",
+          "budget_warning" in text and "git status --short" in text)
+    eq("bundles/v10: keeps the swe skill", [Path(p).name for p in load_submission(ROOT / "bundles" / "v10")["root"].get("skills") or []], ["swe"])
     for name, md in (("Swe", "---\nname: Swe\ndescription: d\n---\n"), ("swe", "---\nname: other\ndescription: d\n---\n"),
                      ("nodesc", "---\nname: nodesc\n---\n")):
         d = tmp / f"sk_{name}"
@@ -302,7 +303,7 @@ def skill_checks(data: Path):
         (sb.ws / "tests" / "utils.py").write_text("import requests.status_codes\n")  # mentions the module, but is a helper, not a test file
         sb.git("add", "-A"); sb.git("commit", "-qm", "baseline with failing tests"); sb.git("tag", "-f", "_swegemma_baseline")
         ctx = Ctx(sb, Budget())
-        ctx.skills = {"swe": ROOT / "submission" / "skills" / "swe"}
+        ctx.skills = {"swe": ROOT / "bundles" / "v10" / "skills" / "swe"}
 
         def run(script, args):
             r = json.loads(ctx.call("run_skill_script", {"skill_name": "swe", "file_path": script, "args": args}, ["run_skill_script"]))
