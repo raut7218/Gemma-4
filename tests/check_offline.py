@@ -339,6 +339,19 @@ def colab_checks(tmp: Path):
     check("health.md: summary table and an example of each flag", "| malformed tool arguments |" in md and "### bad_args" in md, md[:600])
     check("report: links the health summary", "## Health" in (hr / "analysis" / "report.md").read_text())
 
+    # sample: the check run's tasks, stratified like the public set, evenly spaced, the same every time
+    import collections
+    from colab_eval import sample
+    pool = [f"fastapi_{i}" for i in range(100, 120)] + [f"rich_{i}" for i in range(10)] + [f"requests_{i}" for i in range(3)] + ["httpx_1"]
+    got = sample.pick(pool, 10)
+    eq("sample: the public mix, 5 fastapi / 4 rich / 1 requests", collections.Counter(map(sample.repo_of, got)), {"fastapi": 5, "rich": 4, "requests": 1})
+    eq("sample: the same pool in any order gives the same tasks", got, sample.pick(list(reversed(pool)), 10))
+    eq("sample: evenly spaced within a repo, in PR order", [t for t in got if t.startswith("rich")], ["rich_1", "rich_3", "rich_6", "rich_8"])
+    eq("sample: a repo short of tasks hands its share on", collections.Counter(map(sample.repo_of, sample.pick(["rich_1"] + [f"fastapi_{i}" for i in range(5)], 4))),
+       {"fastapi": 3, "rich": 1})
+    (tmp / "ok.txt").write_text("rich_2\nfastapi_7\n")
+    eq("sample: the first pool file that exists wins", sample.pool([tmp / "missing.txt", tmp / "ok.txt"]), ["rich_2", "fastapi_7"])
+
     # model_check: the server is unusable only for transport, parser or thinking failures; a malformed edit only warns
     from colab_eval import model_check
     clean = analyze.call_flags(req, resp(reasoning="r", calls=[edit]))

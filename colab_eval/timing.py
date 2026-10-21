@@ -27,8 +27,9 @@ WRITE_HINTS = ('sed -i', 'cat >', 'cat <<', 'tee ', '> /workspace', '>> /workspa
                'git apply', 'patch ', 'mv ', 'cp ', 'rm ')
 KAGGLE_LIMIT_H = 12.0
 # (max_time_minutes, max_tool_calls, finished inside 12 h) of our thinking-on Kaggle submissions (kaggle competitions
-# submissions): v3 5 min / 50 calls scored; v4, v5 and v7 at 8 min / 28 calls scored; v7 at 10 min / 28 calls overran.
-KAGGLE_OUTCOMES = [(5.0, 50, True), (8.0, 28, True), (10.0, 28, False)]
+# submissions): v3 5 min / 50 calls scored; v4, v5 and v7 at 8 min / 28 calls scored; v7 at 10 min / 28 calls overran;
+# v10 at 4.5 min / 35 calls scored (2026-10-20).
+KAGGLE_OUTCOMES = [(5.0, 50, True), (8.0, 28, True), (10.0, 28, False), (4.5, 35, True)]
 
 
 def call_cost(prev_prompt: int, prompt: int, completion: int, decode_tps: float, prefill_tps: float) -> float:
