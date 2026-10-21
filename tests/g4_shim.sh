@@ -24,6 +24,8 @@ uv venv -q --seed --python 3.13.15 /content/sbx && uv pip install -q --python /c
 mkdir -p /content/comp/sandbox /content/comp/wheels && cp "$REPO/data/sandbox/setup.py" /content/comp/sandbox/
 /content/hvenv/bin/python /content/Gemma-4/tests/fake_llm.py 8000 > /content/work/fake_llm.log 2>&1 &
 FAKE=$!
-trap 'kill $FAKE' EXIT
+trap 'kill $FAKE 2>/dev/null' EXIT
 sleep 2
-cd /content && IDS=toy_6592 bash /content/Gemma-4/colab_eval/colab/gpu_run.sh check
+rc=0; (cd /content && IDS=toy_6592 bash /content/Gemma-4/colab_eval/colab/gpu_run.sh check) || rc=$?
+echo "gpu_run.sh check exit: $rc"
+exit $rc

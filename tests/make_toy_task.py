@@ -37,6 +37,7 @@ def main(out: Path):
             (ws / f).parent.mkdir(parents=True, exist_ok=True)
             (ws / f).write_text(c)
         git(ws, "init", "-q"); git(ws, "add", "-A"); git(ws, "commit", "-qm", "base")
+        base = git(ws, "rev-parse", "HEAD").strip()
         with tarfile.open(out / "snapshots" / "toy_6592.tgz", "w:gz") as tf:  # snapshots ship with .git
             tf.add(ws, arcname=".")
         sc = ws / "src/requests/status_codes.py"
@@ -46,7 +47,9 @@ def main(out: Path):
         t = ws / "tests/test_status.py"
         t.write_text(t.read_text() + "\n\ndef test_too_early():\n    assert codes.too_early == 425\n")
         test_patch = git(ws, "diff")
-    task = {"instance_id": "toy_6592", "repo": "toy/requests", "problem_statement":
+    # base_commit is required by swegemma's Task (colab_eval runs the toy task through the official loop)
+    task = {"instance_id": "toy_6592", "repo": "toy/requests", "base_commit": base, "created_at": "2026-01-01T00:00:00Z",
+            "problem_statement":
             "Add a `too_early` alias for HTTP status 425 to `requests.codes`.", "hints_text": "",
             "patch": patch, "test_patch": test_patch}
     (out / "tasks.jsonl").write_text(json.dumps(task) + "\n")
