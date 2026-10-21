@@ -13,7 +13,10 @@ runs the time budget on a modelled L4 clock (each LLM call re-priced from its to
 would stop it and the prompt shows the bundle's real cap. `timing.py` turns a run into time-adjusted solves per cap
 and a projection of the 12 h job, calibrated on our own Kaggle submissions that finished or overran.
 
-The v10 workflow (harness freeze, trajectory generation, LoRA training, 10 G4-hours) is in `RUNBOOK_v10.md`.
+`gpu_run.sh check` is the quick test of a bundle before trusting it: 10 tasks as Kaggle runs them, a model check and a
+gold run first, and `analysis/health.md` for what went wrong (blank thinking, malformed tool calls, nudges, harness
+errors). The v11 procedure is in `RUNBOOK_v11.md`; the v10 workflow (harness freeze, trajectory generation, LoRA
+training, 10 G4-hours) is in `RUNBOOK_v10.md`.
 
 ## Files
 
@@ -31,7 +34,9 @@ The v10 workflow (harness freeze, trajectory generation, LoRA training, 10 G4-ho
 | `lora/train_lora.py` | LoRA (r 16) on the decompressed competition checkpoint inside a wall-clock budget; `--tiny` checks it on a CPU |
 | `build_sandbox_env.py` | builds the shared sandbox site (`/content/sbx`) that stands in for the `swebench-sandbox` image |
 | `sandbox_deps.py` | per-task step inside each sandbox: other task repos' wheels + the versions the task's pyproject pins |
-| `analyze.py` | `results/<run>` -> `analysis/report.md`, `tasks.csv`, `tasks.json` |
+| `analyze.py` | `results/<run>` -> `analysis/report.md`, `tasks.csv`, `tasks.json`, and `health.md`/`health.json`: per model call from the raw request log (blank or lost thinking, tool-call markup in the content, malformed arguments, unknown tools, cut outputs, text-only replies before submit), tool errors and nudges from the traces, harness errors (HARNESS_ERROR rows, worker tracebacks, tasks with no result) |
+| `model_check.py` | probes the served model with the bundle's prompt and sampling before a run: thinking present, tool calls parsed, a multi-line edit's arguments intact; exit 1 when the server is unfit |
+| `sample.py` | the tasks of a check run: stratified like the public set, evenly spaced, env-solvable when a gold run is given |
 | `progress.py` | live view of a run: done/resolved/ETA, in-flight tasks, stalled workers, warnings |
 | `vllm_stats.py` | live vLLM load (running/waiting, KV %, prefix hits, tok/s) for tuning `--concurrency` |
 | `requirements-harness.txt`, `requirements-vllm.txt` | locks (vLLM side pinned to the scorer wheelhouse; `vllm-requirements.in` + `vllm-overrides.txt` regenerate it) |
@@ -42,7 +47,7 @@ The v10 workflow (harness freeze, trajectory generation, LoRA training, 10 G4-ho
 | `colab/gpu_queue.sh` | session 1: arms A/B/C on the public tasks and trajectory generation through one queue |
 | `colab/lora_session.sh` | session 2: time-budgeted LoRA training, then the LoRA arm |
 | `colab/restart_vllm.sh`, `colab/wait_vllm.sh` | restart vLLM with or without adapters; wait until it answers |
-| `colab/gpu_run.sh` | `smoke` (3 tasks) or `full` run, Drive sync, analysis |
+| `colab/gpu_run.sh` | `check` (10 tasks as Kaggle runs them, with model and environment checks), `smoke` (3 tasks) or `full` run, Drive sync, analysis |
 | `colab/models.sh` | model declared by `$BUNDLE` -> HF repo, vLLM extra args (12B: `--hf-overrides`), Drive cache dir, L4 speed estimate |
 | `findings_v8.md` | what the first v8 run (31B) showed |
 
@@ -50,13 +55,12 @@ The v10 workflow (harness freeze, trajectory generation, LoRA training, 10 G4-ho
 
 ```bash
 # CPU runtime (free): notebook cell mounts Drive and exports KAGGLE_USERNAME/KAGGLE_KEY from Colab secrets, then
-git clone -b v9-12b https://github.com/raut7218/Gemma-4.git /content/Gemma-4
+git clone -b v11 https://github.com/raut7218/Gemma-4.git /content/Gemma-4
 bash /content/Gemma-4/colab_eval/colab/cpu_prepare.sh      # ~1.5 h, resumable; ends with the gold verdict per repo
-cp /content/Gemma-4/colab_eval/colab/gpu_start.sh /content/drive/MyDrive/gemma4-eval/
 
-# switch to the G4 runtime (wipes /content), mount Drive again, then
-bash /content/drive/MyDrive/gemma4-eval/gpu_start.sh       # restore + vLLM up with the model submission/ declares
-bash /content/Gemma-4/colab_eval/colab/gpu_run.sh smoke    # 3 tasks; check report + vllm_stats before going on
+# switch to the G4 runtime (wipes /content), mount Drive again, clone the branch again, then
+BRANCH=v11 bash /content/Gemma-4/colab_eval/colab/gpu_start.sh   # restore + vLLM up with the model submission/ declares
+bash /content/Gemma-4/colab_eval/colab/gpu_run.sh check    # 10 tasks; read analysis/health.md before going on
 # BUNDLE=bundles/<name> runs another bundle; one declaring another model needs serve_vllm.sh restarted with it
 ```
 
@@ -65,7 +69,7 @@ Start the full run from a **Python** cell, so the cell returns at once and the n
 
 ```python
 import subprocess
-subprocess.Popen('cd /content/Gemma-4 && RUN=v9-12b bash colab_eval/colab/gpu_run.sh full 16 > /content/work/gpu_run_v9-12b.log 2>&1',
+subprocess.Popen('cd /content/Gemma-4 && RUN=v11_full L4_CLOCK=20,1500,0.65 bash colab_eval/colab/gpu_run.sh full 32 > /content/work/gpu_run_v11_full.log 2>&1',
                  shell=True, start_new_session=True, stdin=subprocess.DEVNULL)   # workers: size to KV (16 for the 12B)
 ```
 
