@@ -260,6 +260,85 @@ def colab_checks(tmp: Path):
        (1024, 4.25, "main_lora", True))
     eq("variants: prompt unchanged", vsub["root"]["instruction"], load_submission(ROOT / "submission")["root"]["instruction"])
 
+    # analyze: what went wrong in each model call, from the raw request log (--log-requests), and the health report
+    from colab_eval import analyze
+    schema = [{"type": "function", "function": {"name": "edit_file", "parameters": {"type": "object", "required": ["filepath", "old_string", "new_string"],
+               "properties": {"filepath": {}, "old_string": {}, "new_string": {}, "allow_multiple": {}}}}},
+              {"type": "function", "function": {"name": "submit_patch", "parameters": {"type": "object", "properties": {}, "required": []}}}]
+    req = {"model": "m", "tools": schema, "chat_template_kwargs": {"enable_thinking": True}, "thinking_token_budget": 2048}
+
+    def resp(content=None, reasoning=None, calls=(), finish="tool_calls", ids=None):
+        msg = {"role": "assistant", "content": content, "reasoning": reasoning,
+               "tool_calls": [{"function": {"name": n, "arguments": json.dumps(a)}} for n, a in calls]}
+        return {"choices": [{"finish_reason": finish, "message": msg, **({"token_ids": ids} if ids else {})}]}
+
+    edit = ("edit_file", {"filepath": "a.py", "old_string": "x", "new_string": "y"})
+    split = ("edit_file", {"filepath": "a.py", "async def f(\n    body_fields": "list"})  # the gemma4 parser lost a <|"|>
+    f = analyze.call_flags(req, resp(reasoning="plan", calls=[edit]))
+    check("flags: a clean call has no flags", not any(f[k] for k in analyze.FLAGS), f)
+    f = analyze.call_flags(req, resp(reasoning="plan", calls=[split]))
+    check("flags: a split edit_file is malformed (missing old_string, stray key)", len(f["bad_args"]) == 1 and "old_string" in f["bad_args"][0]
+          and "async def f(" in f["bad_args"][0], f)
+    check("flags: empty reasoning with thinking on is blank thinking", analyze.call_flags(req, resp(reasoning="", calls=[edit]))["blank_thinking"])
+    check("flags: no blank thinking when thinking is off",
+          not analyze.call_flags({**req, "chat_template_kwargs": {"enable_thinking": False}}, resp(calls=[edit]))["blank_thinking"])
+    f = analyze.call_flags(req, resp(reasoning="", calls=[edit], ids=[5, 6, 101, 48, 49]))
+    check("flags: thinking tokens the parser did not return are lost, not blank", f["reasoning_lost"] and not f["blank_thinking"]
+          and f["thinking_tokens"] == 2, f)
+    f = analyze.call_flags(req, resp(content='<|tool_call>call:edit_file{filepath:<|"|>a.py<|"|>}<tool_call|>', reasoning="r", finish="stop"))
+    check("flags: tool-call markup left in content is a text-only reply", f["markup_in_content"] and f["text_only"], f)
+    f = analyze.call_flags(req, resp(content="", reasoning="next: call:edit_file{filepath:a.py}", finish="stop"))
+    check("flags: a call written inside the thinking", f["call_in_thinking"] and f["text_only"], f)
+    f = analyze.call_flags(req, resp(content="<channel|>ok", reasoning="r", calls=[edit]))
+    check("flags: thinking markup in content", f["thought_in_content"], f)
+    f = analyze.call_flags(req, resp(reasoning="r", calls=[("load_skill", {"name": "swe"})], finish="length"))
+    check("flags: unknown tool and output cut at max_tokens", f["unknown_tool"] == ["load_skill"] and f["truncated"], f)
+    eq("outcome: a test_patch failure is the harness's", analyze.outcome({"error": "Failed to apply test_patch: x", "agent_patch_size": 9}, False), "HARNESS_ERROR")
+    eq("outcome: a rejected agent patch is the agent's", analyze.outcome({"error": "Failed to apply agent patch: x", "agent_patch_size": 9}, False), "PATCH_REJECTED")
+
+    hr = tmp / "health"
+    for d in ("requests", "traces", "worker_logs"):
+        (hr / d).mkdir(parents=True)
+
+    def logged(task, start, response):
+        return {"task": task, "start": start, "kind": "agent", "request": req, "response": response}
+    rows = [logged("t1", 1, resp(reasoning="r", calls=[split])), logged("t1", 2, resp(reasoning="r", calls=[split])),
+            logged("t1", 3, resp(content="I think it is done.", reasoning="r", finish="stop")),  # before any submit: costs a nudge
+            logged("t1", 4, resp(reasoning="r", calls=[("submit_patch", {})])),
+            logged("t1", 5, resp(content="Fixed the alias.", reasoning="r", finish="stop")),  # after the submit: the normal end
+            logged("t2", 1, resp(reasoning="", calls=[("submit_patch", {})]))]
+    with gzip.open(hr / "requests" / "w.jsonl.gz", "wt") as fh:
+        fh.write("".join(json.dumps(r) + "\n" for r in rows))
+    (hr / "task_results.jsonl").write_text(
+        json.dumps({"instance_id": "t1", "repo": "r", "resolved": False, "agent_patch_size": 10, "error": None}) + "\n"
+        + json.dumps({"instance_id": "t2", "repo": "r", "resolved": False, "agent_patch_size": 9, "error": "Failed to apply test_patch: boom"}) + "\n")
+    (hr / "ids.txt").write_text("t1\nt2\nt3\n")
+    (hr / "run_meta.json").write_text(json.dumps({"bundle": "submission", "budget": {"max_time_minutes": 8.0}}))
+    (hr / "worker_logs" / "run_0.log").write_text("Traceback (most recent call last):\n  File x\nValueError: bad\n")
+    missing = "Invoking `edit_file()` failed as the following mandatory input parameters are not present:\nold_string"
+    (hr / "traces" / "trace_t1.json").write_text(json.dumps({"steps": [
+        {"source": "agent", "metrics": {"prompt_tokens": 9, "completion_tokens": 3}, "tool_calls": [{"function_name": "edit_file", "arguments": {}}],
+         "observation": {"content": json.dumps({"error": missing})}},
+        {"source": "agent", "metrics": {"prompt_tokens": 9, "completion_tokens": 3}, "tool_calls": [{"function_name": "edit_file", "arguments": {}}],
+         "observation": {"content": json.dumps({"status": "error", "error_type": "FileEditError", "error_message": "no match"})}},
+        {"source": "system", "message": "Please continue your work.", "extra": {"event_type": "continuation_nudge"}}]}))
+    analyze.main([str(hr)])
+    h = json.loads((hr / "analysis" / "health.json").read_text())
+    eq("health: malformed calls counted per call, by task", (h["flags"]["bad_args"]["calls"], h["flags"]["bad_args"]["tasks"]), (2, ["t1"]))
+    eq("health: text-only replies count only before the submit", h["flags"]["text_only_before_submit"]["calls"], 1)
+    eq("health: blank thinking by task", h["flags"]["blank_thinking"]["tasks"], ["t2"])
+    eq("health: the same broken call repeated", h["repeated_calls"], {"t1": 1})
+    eq("health: tool errors from the traces", {k: v["count"] for k, v in h["tool_errors"].items()}, {"MissingParameters": 1, "FileEditError": 1})
+    eq("health: nudges", h["nudges"], {"t1": 1})
+    errs = " | ".join(h["harness_errors"])
+    check("health: harness errors name the test_patch failure, the worker traceback and the task with no result",
+          "t2" in errs and "Traceback" in errs and "t3" in errs, errs)
+    out = {r["task"]: r for r in json.loads((hr / "analysis" / "tasks.json").read_text())}
+    eq("analyze: harness error outcome and per-task health columns", (out["t2"]["outcome"], out["t1"]["bad_args"]), ("HARNESS_ERROR", 2))
+    md = (hr / "analysis" / "health.md").read_text()
+    check("health.md: summary table and an example of each flag", "| malformed tool arguments |" in md and "### bad_args" in md, md[:600])
+    check("report: links the health summary", "## Health" in (hr / "analysis" / "report.md").read_text())
+
 
 def sandbox_checks(data: Path):
     sb = Sandbox(data / "snapshots" / "toy_6592.tgz", ROOT / ".venv-sandbox", prefix="check")
