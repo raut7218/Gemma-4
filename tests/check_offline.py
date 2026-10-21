@@ -339,6 +339,22 @@ def colab_checks(tmp: Path):
     check("health.md: summary table and an example of each flag", "| malformed tool arguments |" in md and "### bad_args" in md, md[:600])
     check("report: links the health summary", "## Health" in (hr / "analysis" / "report.md").read_text())
 
+    # model_check: the server is unusable only for transport, parser or thinking failures; a malformed edit only warns
+    from colab_eval import model_check
+    clean = analyze.call_flags(req, resp(reasoning="r", calls=[edit]))
+    eq("model_check: clean responses pass", model_check.verdict([("first", clean), ("edit", clean)], thinking=True)[:2], (True, []))
+    ok, why, _ = model_check.verdict([("first", analyze.call_flags(req, resp(content='<|tool_call>call:edit_file{}<tool_call|>', reasoning="r",
+                                                                               finish="stop")))], thinking=True)
+    check("model_check: tool-call markup in the content fails", not ok and any("markup" in w for w in why), why)
+    blank = analyze.call_flags(req, resp(reasoning="", calls=[edit]))
+    check("model_check: no thinking in any response fails", not model_check.verdict([("first", blank)] * 2, thinking=True)[0])
+    check("model_check: thinking off needs no thoughts", model_check.verdict([("first", blank)], thinking=False)[0])
+    check("model_check: an HTTP error fails", not model_check.verdict([("first", clean), ("edit", "HTTP 500: boom")], thinking=True)[0])
+    check("model_check: no tool call in any response fails", not model_check.verdict(
+        [("first", analyze.call_flags(req, resp(content="Let me think.", reasoning="r", finish="stop")))], thinking=True)[0])
+    ok, why, warn = model_check.verdict([("edit", analyze.call_flags(req, resp(reasoning="r", calls=[split]))), ("first", clean)], thinking=True)
+    check("model_check: a malformed edit only warns", ok and any("malformed" in w for w in warn), (why, warn))
+
 
 def sandbox_checks(data: Path):
     sb = Sandbox(data / "snapshots" / "toy_6592.tgz", ROOT / ".venv-sandbox", prefix="check")
@@ -469,6 +485,11 @@ def end_to_end(data: Path, tmp: Path):
     reqs = seen()
     check("request: the tree sends thinking off and no budget",
           bool(reqs) and all(q["chat_template_kwargs"] == {"enable_thinking": False} and "thinking_token_budget" not in q and q["reasoning_in_history"] == 0 for q in reqs), reqs[:1])
+    from colab_eval import model_check
+    rc = model_check.main(["--base-url", "http://127.0.0.1:8765/v1", "--n", "2", "--out", str(tmp / "probe.json")])
+    probe = json.loads((tmp / "probe.json").read_text())
+    check("model_check: passes against the fake server with the bundle's sampling", rc == 0 and probe["verdict"].startswith("OK")
+          and all((q.get("thinking_token_budget"), q.get("top_k")) == (2048, 40) for q in seen()), probe.get("verdict"))
 
 
 def main() -> int:
