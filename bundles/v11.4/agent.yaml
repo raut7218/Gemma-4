@@ -1,0 +1,19 @@
+# v11.4 = v11 (3253402) plus two changes measured in the v11-v13 G4 checks, both free unless triggered: after a
+# malformed edit_file the prompt gives the exact python3 heredoc that edited with 0 malformed calls in v12/v13 (as the
+# main edit path it tripled the thinking per edit, so edit_file stays first), and git checkout/stash/reset/restore are
+# forbidden (v11.2's rich_3471 threw away a working fix with git checkout).
+name: swe_baseline_agent
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include prompts/system.md
+# The code-graph tools (search_similar_code, get_code_neighbors, get_code_subgraph) are left out: the model never
+# called them in measured runs, and most task snapshots have empty graph or embedding files.
+# No skills: the skill bundles scored lowest on the LB (v7 0.10 at 8 min, v10 0.12 at 4.5 min; v3-v6 without them
+# 0.13-0.18), and check.py's test runs made v7's tasks 1.14-1.31x longer. bundles/v10 keeps them.
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+generate_content_config: !include configs/sampling.yaml

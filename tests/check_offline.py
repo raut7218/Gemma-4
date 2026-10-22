@@ -574,6 +574,20 @@ def candidate_checks(tmp: Path):
     check("bundles/v13: the editor's instruction carries the issue and the report, braces in it included",
           "ISSUE TEXT" in ed and "CURRENT CODE: x = {1: 2}" in ed)
     check("bundles/v13: the scout renders before any report exists", "{" not in render(scout["instruction"], {"problem_description": "P"}))
+    # v11.4: v11 with the shell edit only as the fallback after a malformed edit_file, and the git revert ban
+    c = Checker(ROOT / "bundles" / "v11.4")
+    check("checker: bundles/v11.4 passes with no warnings", c.run() and not c.warnings, c.errors + c.warnings)
+    v114 = load_submission(ROOT / "bundles" / "v11.4")
+    a, text = v114["root"], v114["root"]["instruction"]
+    eq("bundles/v11.4: v11's tools, edit_file first", a["tools"], ["run_command", "read_file", "edit_file", "write_file", "get_status", "submit_patch"])
+    eq("bundles/v11.4: v11's budget", {k: v114["eval"][k] for k in ("max_tool_calls", "max_time_minutes", "max_turns", "timeout_seconds")},
+       {"max_tool_calls": 28, "max_time_minutes": 8.0, "max_turns": 80, "timeout_seconds": 240})
+    check("bundles/v11.4: v11's workflow kept, no braces", "{" not in text and "}" not in text and all(s in text for s in (
+        "Contract, before your first tool call", "By call 12", "1 to 3 lines", "cat > /tmp/repro.py <<'EOF'", "budget_warning")))
+    out = run_recipe(tmp, "v11_4", text)
+    check("bundles/v11.4: after a malformed edit_file, the fallback recipe as printed edits once",
+          "mandatory input parameters are not present" in text and "pkg/module.py matches: 1" in out and "return value.strip()" in out, out)
+    check("bundles/v11.4: forbids git commands that throw away edits", "Never run git checkout, git stash, git reset or git restore" in text)
 
 
 def run(data: Path, out: Path, *args: str) -> dict:
@@ -613,6 +627,9 @@ def end_to_end(data: Path, tmp: Path):
     reqs = seen()
     check("request: the tree sends thinking off and no budget",
           bool(reqs) and all(q["chat_template_kwargs"] == {"enable_thinking": False} and "thinking_token_budget" not in q and q["reasoning_in_history"] == 0 for q in reqs), reqs[:1])
+    r = run(data, tmp / "v11_4", *llm, "--submission", "bundles/v11.4")
+    eq("toy: v11.4 resolves with the fake model", (r.get("category"), r.get("end_reason")), ("RESOLVED", "submitted"))
+    seen()
     r = run(data, tmp / "v12", *llm, "--submission", "bundles/v12")
     eq("toy: v12 resolves with the fake model, editing through run_command", (r.get("category"), r.get("end_reason")), ("RESOLVED", "submitted"))
     reqs = seen()
