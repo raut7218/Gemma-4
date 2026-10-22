@@ -1,0 +1,11 @@
+# v13, Scout -> Editor. In v11-v11.3 the first edit came at call 16-18 although the prompt asked for call 12, and the
+# model ignored call-count rules, so here the hand-off is structural: a read-only scout finds the code, its existing
+# test and a failing repro, then reports with a text reply (output_key scout_report). The editor starts from that
+# report in a fresh context (include_contents: none, ~3k tokens instead of ~14k), edits in its first calls, verifies
+# and submits. Both share the task's 28 calls and 8 minutes. Edits go through run_command, as in v12.
+agent_class: SequentialAgent
+name: swe_pipeline
+description: A read-only scout locates the change and reports it; an editor makes the change, verifies it and submits.
+sub_agents:
+  - config_path: sub_agents/scout.yaml
+  - config_path: sub_agents/editor.yaml

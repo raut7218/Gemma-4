@@ -1,0 +1,15 @@
+# v12 keeps v11's budget, so its 10-task G4 check compares directly with v11-v11.3 on the same tasks. The cap to submit
+# comes from colab_eval.timing on a full run: v11.3's token use put 8 min at 11.5-12.0 h.
+# The scorer runs about 120 tasks one after another inside 12 h, sandbox setup included, and an overrun fails the
+# whole submission instead of scoring the unfinished tasks as zero.
+# 8 min / 28 calls is the budget with the most finished Kaggle runs: our v4, v5 and v7 (thinking 2048) and the public
+# budget-fit bundles (thinking 4096, many runs). v7 at 10 min / 28 calls overran, and colab_eval/timing.py puts v8's
+# 7 min / 35 calls past 12 h, so neither more minutes nor more calls without a timing check. v10's 4.5-minute cap
+# (0.12 on the LB) was sized for 35 calls and cut late solves.
+# With 28 calls the call budget usually ends a run before the 8 minutes do; time ends the runs that think long.
+# timeout_seconds also bounds the hidden-test run in the shipped source, so it stays at 240.
+evaluation:
+  timeout_seconds: 240
+  max_tool_calls: 28
+  max_time_minutes: 8.0
+  max_turns: 80

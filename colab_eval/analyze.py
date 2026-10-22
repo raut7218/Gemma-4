@@ -30,6 +30,9 @@ from pathlib import Path
 from colab_eval.lora.build_sft import load_requests, thinking_tokens
 
 EDIT_TOOLS = {'edit_file', 'write_file'}
+# a run_command that changes a file outside /tmp: the shell-edit recipe of bundles without edit_file (a python3 heredoc
+# ending in write_text), sed -i, cat > path, or open(path, 'w') in an inline script
+SHELL_EDIT = re.compile(r"write_text\(|\bsed -i|\bcat >>? *(?!/tmp/|/dev/)[\w./]|open\((?![^)]*/tmp/)[^)]*,\s*['\"][wa]")
 COMPACTION_THRESHOLD = 14336  # EventsCompactionConfig.token_threshold in the scorer (HARNESS_README 7.2)
 # swegemma errors that are the harness's or the data's, not the agent's (evaluate.py, agent_runner.py, verification.py)
 HARNESS_ERRORS = ('Unexpected evaluation worker error', 'Sandbox execution error', 'Failed to apply test_patch',
@@ -74,6 +77,10 @@ def termination(err: str | None, submitted: bool) -> str:
     return 'other_error'
 
 
+def is_edit(name: str, args) -> bool:
+    return name in EDIT_TOOLS or (name == 'run_command' and bool(SHELL_EDIT.search(str((args or {}).get('command') or ''))))
+
+
 def outcome(r: dict, env_bad: bool) -> str:
     if r.get('resolved'):
         return 'RESOLVED'
@@ -92,7 +99,10 @@ def trace_stats(path: Path) -> dict:
     s = {'turns': 0, 'max_prompt': 0, 'completion': 0, 'tools': collections.Counter(), 'scripts': collections.Counter(),
          'tool_errors': collections.Counter(), 'first_edit_call': None, 'submits': 0, 'compactions': 0,
          'budget_warnings': 0, 'event_types': collections.Counter(), 'empty_turns': 0, 'thought_chars': 0,
-         'script_crashes': 0, 'malformed_calls': 0}
+         'script_crashes': 0, 'malformed_calls': 0,
+         # per agent of a tree, in order of appearance: budgeted calls, its first edit (agent-local call #), the length
+         # of its last text reply (a scout's report)
+         'agents': {}}
     if not path.exists():
         return s
     t = json.loads(path.read_text())
@@ -104,6 +114,10 @@ def trace_stats(path: Path) -> dict:
             s['compactions'] += 1
         if st.get('source') != 'agent':
             continue
+        agent = s['agents'].setdefault((st.get('extra') or {}).get('author') or '?',
+                                       {'calls': 0, 'first_edit': None, 'reply_chars': 0})
+        if ev == 'final' and st.get('message'):
+            agent['reply_chars'] = len(st['message'])
         m = st.get('metrics') or {}
         if m:
             s['turns'] += 1
@@ -122,6 +136,7 @@ def trace_stats(path: Path) -> dict:
                 s['submits'] += 1
             elif name != 'get_status':
                 n_calls += 1
+                agent['calls'] += 1
             if name == 'run_skill_script':
                 args = c.get('arguments') or {}
                 s['scripts'][str(args.get('script_path') or args.get('file_path') or args.get('script') or '?').split('/')[-1]] += 1
@@ -131,8 +146,11 @@ def trace_stats(path: Path) -> dict:
             # the tool-call parser split the arguments wrongly (e.g. at a ':' inside old_string)
             if 'mandatory input parameters are not present' in obs:
                 s['malformed_calls'] += 1
-            if name in EDIT_TOOLS and s['first_edit_call'] is None:
-                s['first_edit_call'] = n_calls
+            if is_edit(name, c.get('arguments')):
+                if s['first_edit_call'] is None:
+                    s['first_edit_call'] = n_calls
+                if agent['first_edit'] is None:
+                    agent['first_edit'] = agent['calls']
         if '"status": "error"' in obs or "'status': 'error'" in obs or 'BudgetExhausted' in obs:
             for c in calls:
                 s['tool_errors'][c.get('function_name', '?')] += 1
@@ -391,7 +409,7 @@ def main(argv=None) -> int:
             'empty_turns': ts['empty_turns'], 'first_edit_call': ts['first_edit_call'], 'submits': ts['submits'],
             'budget_warnings': ts['budget_warnings'], 'tools': dict(ts['tools']), 'scripts': dict(ts['scripts']),
             'thought_chars': ts['thought_chars'], 'script_crashes': ts['script_crashes'],
-            'malformed_calls': ts['malformed_calls'],
+            'malformed_calls': ts['malformed_calls'], 'agents': ts['agents'],
             'tool_errors': dict(ts['tool_errors']), 'agent_seconds': agent_s and round(agent_s, 1),'llm_seconds': round(llm_lat, 1),
             'tool_seconds': tool_s and round(tool_s, 1), 'est_l4_seconds': l4_s and round(l4_s, 1),
             'est_l4_over_budget': bool(l4_s and l4_s > args.time_budget_min * 60),
@@ -489,6 +507,7 @@ def render(rows: list[dict], args, meta: dict, h: dict | None = None) -> str:
         L.append(f'| {k} | {sum(1 for r in rows if f(r))} | {sum(1 for r in failed if f(r))} |')
     L.append('')
 
+    L.extend(render_agents(rows))
     tools, terr, scripts = collections.Counter(), collections.Counter(), collections.Counter()
     for r in rows:
         tools.update(r['tools']); terr.update(r['tool_errors']); scripts.update(r['scripts'])
@@ -507,6 +526,34 @@ def render(rows: list[dict], args, meta: dict, h: dict | None = None) -> str:
     L.append(f'L4 estimate: decode {args.l4_decode_tps} tok/s, uncached prefill {args.l4_prefill_tps} tok/s, plus the '
              f'tool time measured here (G4 runtime under concurrency, so tool time is an upper bound).')
     return '\n'.join(L) + '\n'
+
+
+def render_agents(rows: list[dict]) -> list[str]:
+    """For a tree bundle (more than one agent made tool calls or replied): calls, edits and replies per agent, and
+    whether the hand-off worked: the first agent reports within its share and the last one gets calls and edits."""
+    names = list(dict.fromkeys(a for r in rows for a in r['agents']))
+    if len(names) < 2:
+        return []
+    L = ['## Agents', '', '| agent | tasks | calls p50 | calls max | edited in | first edit p50 (own call #) | replied in |',
+         '|---|---:|---:|---:|---:|---:|---:|']
+    for a in names:
+        st = [r['agents'][a] for r in rows if a in r['agents']]
+        edits = [s['first_edit'] for s in st if s['first_edit'] is not None]
+        L.append(f"| {a} | {len(st)} | {pct([s['calls'] for s in st], .5)} | {max(s['calls'] for s in st)} | {len(edits)} | "
+                 f"{pct(edits, .5) if edits else '-'} | {sum(s['reply_chars'] > 0 for s in st)} |")
+    first, last = names[0], names[-1]
+    checks = {
+        f'{first} over 14 calls': lambda ag: ag.get(first, {}).get('calls', 0) > 14,
+        f'{first} gave no text reply (no report)': lambda ag: first in ag and not ag[first]['reply_chars'],
+        f'{last} under 6 calls': lambda ag: ag.get(last, {}).get('calls', 0) < 6,
+        f'{last} never edited': lambda ag: ag.get(last, {}).get('first_edit') is None,
+        f'{last} first edit after its 3rd call': lambda ag: (ag.get(last, {}).get('first_edit') or 0) > 3,
+    }
+    L += ['', '| hand-off check | tasks | which |', '|---|---:|---|']
+    for k, f in checks.items():
+        hit = [r['task'] for r in rows if f(r['agents'])]
+        L.append(f"| {k} | {len(hit)} | {', '.join(hit)} |")
+    return L + ['']
 
 
 if __name__ == '__main__':

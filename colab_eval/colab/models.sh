@@ -6,8 +6,13 @@
 #   MODEL_DRIVE  Drive cache of the weights (the 31B predates models/ and stays at model/)
 #   L4_TPS       analyze.py's single-request 4x L4 estimate: "decode prefill" tok/s (rough, not measured)
 #   SKIP_WEIGHTS extra checkpoint prefix vLLM's text-only Gemma4ForCausalLM must skip (serve_vllm.sh adds it)
-_bundle_yaml="${REPO_DIR:-/content/Gemma-4}/${BUNDLE:-submission}/agent.yaml"
-MODEL_NAME="${MODEL_NAME:-$(sed -n 's/^model: *//p' "$_bundle_yaml" 2>/dev/null | head -1)}"
+# BUNDLE may be absolute or relative to the repo; a tree bundle declares its model in sub_agents/*.yaml, not agent.yaml.
+# The || true keeps a missing file from ending callers that run with set -eo pipefail (it used to exit 2 silently).
+case "${BUNDLE:-submission}" in
+  /*) _bundle_dir="$BUNDLE" ;;
+  *) _bundle_dir="${REPO_DIR:-/content/Gemma-4}/${BUNDLE:-submission}" ;;
+esac
+MODEL_NAME="${MODEL_NAME:-$( { grep -rh '^model:' "$_bundle_dir" --include='*.yaml' 2>/dev/null || true; } | head -1 | sed 's/^model: *//')}"
 MODEL_NAME="${MODEL_NAME:-gemma-4-31b-it-qat-w4a16-ct}"
 case "$MODEL_NAME" in
   gemma-4-31b-it-qat-w4a16-ct)

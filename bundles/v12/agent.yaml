@@ -1,0 +1,13 @@
+name: swe_agent
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include prompts/system.md
+# v12, the lean single agent. Edits go through run_command (a python3 heredoc, see the prompt): in the v11-v11.3 G4
+# checks 19 of 143 edit_file calls arrived malformed (the gemma4 tool parser splits multi-line old_string/new_string)
+# and the model repeated them up to 9 times, while 0 of 518 run_command calls did, multi-line heredocs included.
+# write_file takes multi-line content the same way, so it goes too; new files are written with cat > path <<'EOF'.
+# get_status went unused (2 calls in 40 runs). No graph tools and no skills, as in v11.
+tools:
+  - run_command
+  - read_file
+  - submit_patch
+generate_content_config: !include configs/sampling.yaml

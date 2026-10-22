@@ -42,6 +42,17 @@ def probes(instruction: str) -> dict[str, list[dict]]:
     return {'first': first, 'edit': edit}
 
 
+def first_llm_agent(node: dict) -> dict:
+    """The agent that sends a bundle's first request: the node itself when it has a model, else the first LlmAgent
+    of its sub_agents in config order."""
+    if node.get('model'):
+        return node
+    for child in node.get('sub_agents') or []:
+        if found := first_llm_agent(child):
+            return found
+    return {}
+
+
 def verdict(results: list[tuple[str, dict | str]], thinking: bool) -> tuple[bool, list[str], list[str]]:
     """(probe name, call_flags or an error string) per response -> (fit for a run, fatal reasons, warnings)."""
     errors = [r for _, r in results if isinstance(r, str)]
@@ -68,8 +79,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument('--out', type=Path)
     args = ap.parse_args(argv)
     sub = load_submission(args.bundle)
-    root = sub['root']
-    sampling = effective_sampling(root.get('generate_content_config'))
+    root = first_llm_agent(sub['root'])  # a tree's root (SequentialAgent...) has no model: its first request is this agent's
+    sampling = effective_sampling(root.get('generate_content_config') or sub['sampling'])
     instruction = render(root.get('instruction') or '', {'problem_description': ISSUE})
     req = {'model': root['model'], 'tools': SCHEMAS, **thinking_body(sampling.get('thinking_config'))}
     jobs = [(name, msgs) for name, msgs in probes(instruction).items() for _ in range(args.n)]

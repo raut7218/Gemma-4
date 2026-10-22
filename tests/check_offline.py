@@ -6,9 +6,11 @@ Needs .venv-sandbox with pytest and nothing else: no Kaggle data, GPU or network
 itself on :8765, so stop any copy that is already running.
 """
 import json
+import re
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -144,6 +146,7 @@ def units(tmp: Path):
           "Never run git checkout, git stash, git reset or git restore" in text)
     check("submission: prompt reads the existing test before the repro and writes edits with real line breaks",
           "read the existing test of the code you will change" in text and "never with \\n escapes" in text)
+    candidate_checks(tmp)
     eq("bundles/v10: keeps the swe skill", [Path(p).name for p in load_submission(ROOT / "bundles" / "v10")["root"].get("skills") or []], ["swe"])
     for name, md in (("Swe", "---\nname: Swe\ndescription: d\n---\n"), ("swe", "---\nname: other\ndescription: d\n---\n"),
                      ("nodesc", "---\nname: nodesc\n---\n")):
@@ -347,6 +350,44 @@ def colab_checks(tmp: Path):
     check("health.md: summary table and an example of each flag", "| malformed tool arguments |" in md and "### bad_args" in md, md[:600])
     check("report: links the health summary", "## Health" in (hr / "analysis" / "report.md").read_text())
 
+    # edits through run_command (v12, v13) count as edits; scratch files in /tmp and reads do not
+    check("analyze: the shell-edit recipe, sed -i, cat > path and open(path, 'w') are edits",
+          all(analyze.is_edit("run_command", {"command": c}) for c in (
+              fake_llm.SHELL_EDIT, "sed -i 's/a/b/' pkg/x.py", "cd /workspace && cat > pkg/new.py <<'EOF'\nx = 1\nEOF",
+              "python3 -c 'open(\"rich/console.py\", \"w\").write(s)'")))
+    check("analyze: repro scripts in /tmp, searches and tests are not edits", not any(analyze.is_edit("run_command", {"command": c}) for c in (
+        "cd /workspace && cat > /tmp/repro.py <<'EOF'\nprint(1)\nEOF", "grep -rn 'x' src | head", "timeout 150 python -m pytest tests -x -q",
+        "python3 -c 'open(\"/tmp/out.txt\", \"w\")'")))
+    tr = tmp / "tree_run"
+    for d in ("traces",):
+        (tr / d).mkdir(parents=True)
+
+    def step(author, calls, ev="thinking", message="m"):
+        return {"source": "agent", "message": message, "extra": {"event_type": ev, "author": author},
+                "metrics": {"prompt_tokens": 9, "completion_tokens": 3},
+                "tool_calls": [{"function_name": n, "arguments": a, "extra": {"author": author}} for n, a in calls],
+                "observation": {"content": json.dumps({"status": "ok"})}}
+    (tr / "traces" / "trace_t1.json").write_text(json.dumps({"steps": [
+        step("scout", [("run_command", {"command": "grep -rn x src | head"})]), step("scout", [("read_file", {"filepath": "a.py"})]),
+        step("scout", [], ev="final", message="CONTRACT: x\nCURRENT CODE: a.py\n    x = 1"),
+        step("editor", [("run_command", {"command": fake_llm.SHELL_EDIT})]), step("editor", [("submit_patch", {})]),
+        step("editor", [], ev="final", message="Done.")]}))
+    (tr / "traces" / "trace_t2.json").write_text(json.dumps({"steps": [  # a runaway scout: the editor never edits
+        *[step("scout", [("run_command", {"command": f"grep -rn x{i} src"})]) for i in range(16)],
+        step("editor", [("read_file", {"filepath": "a.py"})])]}))
+    (tr / "task_results.jsonl").write_text("".join(json.dumps({"instance_id": t, "repo": "r", "resolved": False, "agent_patch_size": 5,
+                                                              "error": None}) + "\n" for t in ("t1", "t2")))
+    analyze.main([str(tr)])
+    out = {r["task"]: r for r in json.loads((tr / "analysis" / "tasks.json").read_text())}
+    eq("analyze: calls, first edit and report per agent", out["t1"]["agents"],
+       {"scout": {"calls": 2, "first_edit": None, "reply_chars": len("CONTRACT: x\nCURRENT CODE: a.py\n    x = 1")},
+        "editor": {"calls": 1, "first_edit": 1, "reply_chars": len("Done.")}})
+    eq("analyze: a shell edit sets the task's first edit", (out["t1"]["first_edit_call"], out["t2"]["first_edit_call"]), (3, None))
+    rep = (tr / "analysis" / "report.md").read_text()
+    check("report: hand-off checks name the runaway scout and the editor that never edited",
+          "## Agents" in rep and "| scout over 14 calls | 1 | t2 |" in rep and "| editor never edited | 1 | t2 |" in rep
+          and "| scout gave no text reply (no report) | 1 | t2 |" in rep, rep[rep.find("## Agents"):][:900])
+
     # sample: the check run's tasks, stratified like the public set, evenly spaced, the same every time
     import collections
     from colab_eval import sample
@@ -469,6 +510,72 @@ def skill_checks(data: Path):
         sb.cleanup()
 
 
+def llm_agents(node: dict) -> list[dict]:
+    return ([node] if node.get("model") else []) + [a for c in node.get("sub_agents") or [] for a in llm_agents(c)]
+
+
+def run_recipe(tmp: Path, name: str, text: str) -> str:
+    """Runs the edit recipe exactly as the prompt prints it (the indented block from the python3 heredoc to EOF) on a
+    file with the example's old text, from a directory standing in for /workspace."""
+    lines = text.splitlines()
+    start = next(i for i, l in enumerate(lines) if "python3 - <<'EOF'" in l)
+    end = next(i for i in range(start + 1, len(lines)) if lines[i].strip() == "EOF")
+    script = textwrap.dedent("\n".join(lines[start + 1:end])) + "\n"
+    ws = tmp / f"recipe_{name}"
+    (ws / "pkg").mkdir(parents=True)
+    (ws / "pkg" / "module.py").write_text("def f(value):\n    return value\n")
+    out = subprocess.run([sys.executable, "-"], input=script, cwd=ws, capture_output=True, text=True)
+    return out.stdout + out.stderr + (ws / "pkg" / "module.py").read_text()
+
+
+def candidate_checks(tmp: Path):
+    # v12 (one agent) and v13 (scout -> editor) edit through run_command: in the v11-v11.3 G4 checks 19 of 143 edit_file
+    # calls arrived malformed and 0 of 518 run_command calls did. Same budget and sampling as v11, thinking on.
+    for b in ("bundles/v12", "bundles/v13"):
+        c = Checker(ROOT / b)
+        check(f"checker: {b} passes with no warnings", c.run() and not c.warnings, c.errors + c.warnings)
+        s = load_submission(ROOT / b)
+        eq(f"{b}: budget fields", {k: s["eval"][k] for k in ("max_tool_calls", "max_time_minutes", "max_turns", "timeout_seconds")},
+           {"max_tool_calls": 28, "max_time_minutes": 8.0, "max_turns": 80, "timeout_seconds": 240})
+        for a in llm_agents(s["root"]):
+            n, text = f"{b} {a['name']}", a["instruction"]
+            g = effective_sampling(a.get("generate_content_config") or s["sampling"])
+            check(f"{n}: no edit_file or write_file", not {"edit_file", "write_file"} & set(a["tools"]), a["tools"])
+            check(f"{n}: thinking on at 2048, thoughts kept, room for the call",
+                  g["thinking_config"] == {"thinking_budget": 2048, "include_thoughts": True} and g["max_output_tokens"] == 4096
+                  and (g["temperature"], g["top_p"], g["top_k"]) == (0.4, 0.95, 40), g)
+            check(f"{n}: braces only in state placeholders", not re.sub(r"\{[A-Za-z_]\w*\??\}", "", text).count("{")
+                  and not re.sub(r"\{[A-Za-z_]\w*\??\}", "", text).count("}"))
+            check(f"{n}: states the budget and forbids git reverts", "28 tool calls and 8 minutes" in text
+                  and "a call past the 28th is refused" in text.lower()
+                  and "Never run git checkout, git stash, git reset or git restore" in text)
+            if "submit_patch" in a["tools"]:
+                out = run_recipe(tmp, a["name"], text)
+                check(f"{n}: the edit recipe as printed edits once and says so", "pkg/module.py matches: 1" in out
+                      and "return value.strip()" in out, out)
+                check(f"{n}: verifies with the whole test file and cleans up before submit",
+                      "-x -q" in text and "git status --short" in text and "budget_warning" in text)
+    v12 = load_submission(ROOT / "bundles" / "v12")["root"]
+    eq("bundles/v12: one agent, three tools", v12["tools"], ["run_command", "read_file", "submit_patch"])
+    check("bundles/v12: reads the existing test before the repro, edits by call 10",
+          "grep -rn 'function_name' tests/" in v12["instruction"] and "Edit by call 10" in v12["instruction"])
+    v13 = load_submission(ROOT / "bundles" / "v13")["root"]
+    scout, editor = llm_agents(v13)
+    eq("bundles/v13: SequentialAgent of scout then editor", (v13.get("agent_class"), scout["name"], editor["name"]),
+       ("SequentialAgent", "scout", "editor"))
+    check("bundles/v13: the scout only reads and reports into state",
+          scout["tools"] == ["run_command", "read_file"] and scout.get("output_key") == "scout_report"
+          and "{scout_report?}" in scout["instruction"] and "CURRENT CODE:" in scout["instruction"]
+          and "grep -rn 'function_name' tests/" in scout["instruction"], scout["tools"])
+    check("bundles/v13: the editor starts fresh from the issue and the report",
+          editor.get("include_contents") == "none" and "submit_patch" in editor["tools"]
+          and "{problem_description}" in editor["instruction"] and "{scout_report?}" in editor["instruction"])
+    ed = render(editor["instruction"], {"problem_description": "ISSUE TEXT", "scout_report": "CURRENT CODE: x = {1: 2}"})
+    check("bundles/v13: the editor's instruction carries the issue and the report, braces in it included",
+          "ISSUE TEXT" in ed and "CURRENT CODE: x = {1: 2}" in ed)
+    check("bundles/v13: the scout renders before any report exists", "{" not in render(scout["instruction"], {"problem_description": "P"}))
+
+
 def run(data: Path, out: Path, *args: str) -> dict:
     p = subprocess.run([sys.executable, "-m", "harness.run", "--data", str(data), "--task-ids", "toy_6592", "--results-dir", str(out), *args],
                        cwd=ROOT, capture_output=True, text=True)
@@ -506,6 +613,17 @@ def end_to_end(data: Path, tmp: Path):
     reqs = seen()
     check("request: the tree sends thinking off and no budget",
           bool(reqs) and all(q["chat_template_kwargs"] == {"enable_thinking": False} and "thinking_token_budget" not in q and q["reasoning_in_history"] == 0 for q in reqs), reqs[:1])
+    r = run(data, tmp / "v12", *llm, "--submission", "bundles/v12")
+    eq("toy: v12 resolves with the fake model, editing through run_command", (r.get("category"), r.get("end_reason")), ("RESOLVED", "submitted"))
+    reqs = seen()
+    check("request: v12 sends thinking on at 2048", bool(reqs) and all(q.get("thinking_token_budget") == 2048 for q in reqs), reqs[:1])
+    r = run(data, tmp / "v13", *llm, "--submission", "bundles/v13")
+    eq("toy: v13 resolves with the fake model", (r.get("category"), r.get("end_reason")), ("RESOLVED", "submitted"))
+    check("tree: v13's scout reported in 2 calls, then the editor edited and submitted",
+          r.get("calls_by_agent", {}).get("scout") == 2 and r.get("calls_by_agent", {}).get("editor", 0) >= 2, r.get("calls_by_agent"))
+    reqs = seen()
+    check("request: both v13 agents think at 2048, the editor without the scout's history",
+          len(reqs) >= 5 and all(q.get("thinking_token_budget") == 2048 for q in reqs) and reqs[-1]["reasoning_in_history"] < len(reqs) - 1, reqs[-1:])
     models = json.load(urllib.request.urlopen("http://127.0.0.1:8765/v1/models"))
     raw = json.load(urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8765/detokenize", data=json.dumps(
         {"model": "m", "tokens": [1, 2, 3]}).encode(), headers={"Content-Type": "application/json"})))

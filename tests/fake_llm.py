@@ -1,8 +1,9 @@
 """Scripted OpenAI-compatible server for testing the agent loop without a GPU/API key.
 
 Plays a fixed tool-call script for requests_6592 (and the toy copy from make_toy_task.py). The script is
-picked from the system prompt: the parallel-investigate bundle's roles ("Your role: LOCALIZER" ...) each
-get their own, anything else gets the single-agent script (grep -> read -> edit -> diff -> submit).
+picked from the system prompt: the parallel-investigate bundle's roles ("Your role: LOCALIZER" ...) and v13's
+(SCOUT, EDITOR) each get their own, anything else gets the single-agent script (grep -> read -> edit -> diff -> submit),
+with the edit made by a python3 heredoc through run_command when the request offers no edit_file (bundles/v12).
   uv run python tests/fake_llm.py   # serves :8765; GET /requests shows the sampling fields it was sent
 FAKE_COMPLETION_TOKENS sets the completion size it reports (default 50), so a test can drive the modelled L4 clock of
 colab_eval.run_official past a time budget. FAKE_SCRIPT=skills replaces the single-agent script with one that calls the
@@ -19,6 +20,10 @@ FILE = "src/requests/status_codes.py"
 OLD = '    425: ("unordered_collection", "unordered"),'
 NEW = '    425: ("unordered_collection", "unordered", "too_early"),'
 REPRO = "import requests\nassert requests.codes.too_early == 425, 'missing alias'\nprint('ok')\n"
+# the edit recipe of bundles/v12 and v13, which have no edit_file: a python3 heredoc that replaces the old text once
+SHELL_EDIT = ("cd /workspace && python3 - <<'EOF'\nfrom pathlib import Path\ndef edit(path, old, new):\n"
+              "    p = Path(path); s = p.read_text(); n = s.count(old)\n    print(path, 'matches:', n)\n    if n == 1:\n"
+              f"        p.write_text(s.replace(old, new))\nedit({FILE!r}, {OLD!r}, {NEW!r})\nEOF\ngit diff --stat")
 SCRIPTS = {
     "default": [
         ("run_command", {"command": "grep -n 'unordered' -r src | head"}),
@@ -27,6 +32,25 @@ SCRIPTS = {
         ("run_command", {"command": "git diff --stat | tail -3"}),
         ("submit_patch", {}),
         "Added the alias.",
+    ],
+    "shell": [  # the single-agent script for a request that offers no edit_file (bundles/v12)
+        ("run_command", {"command": "grep -n 'unordered' -r src | head"}),
+        ("read_file", {"filepath": FILE, "start_line": 75, "end_line": 90}),
+        ("run_command", {"command": SHELL_EDIT}),
+        ("submit_patch", {}),
+        "Added the alias.",
+    ],
+    "SCOUT": [  # bundles/v13: reports without editing; the editor reads the report from state
+        ("run_command", {"command": "cd /workspace && grep -rn 'unordered' src | head -20"}),
+        ("read_file", {"filepath": FILE, "start_line": 75, "end_line": 90}),
+        f"CONTRACT: requests.codes.too_early == 425\nWHERE: {FILE}:79\nCURRENT CODE: {FILE}\n{OLD}\n"
+        "CHANGE: add the too_early alias to 425\nTEST FILE: tests/test_requests.py\nREPRO: none",
+    ],
+    "EDITOR": [
+        ("run_command", {"command": SHELL_EDIT}),
+        ("run_command", {"command": "cd /workspace && git status --short"}),
+        ("submit_patch", {}),
+        "Added the too_early alias.",
     ],
     "skills": [
         ("run_skill_script", {"skill_name": "swe", "file_path": "locate.py", "args": ["unordered", "status_codes"]}),
@@ -84,7 +108,9 @@ class H(BaseHTTPRequestHandler):
             "roles": [m["role"] for m in req["messages"]],
             "reasoning_in_history": sum(1 for m in req["messages"] if m.get("reasoning"))})
         system = req["messages"][0].get("content") or ""
-        role = next((r for r in SCRIPTS if f"Your role: {r}" in system), os.environ.get("FAKE_SCRIPT", "default"))
+        offered = {(t.get("function") or {}).get("name") for t in req.get("tools") or []}
+        fallback = os.environ.get("FAKE_SCRIPT") or ("default" if "edit_file" in offered else "shell")
+        role = next((r for r in SCRIPTS if f"Your role: {r}" in system), fallback)
         script = SCRIPTS[role]
         step = min(sum(1 for m in req["messages"] if m["role"] == "tool"), len(script) - 1)
         item = script[step]
