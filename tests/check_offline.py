@@ -137,6 +137,10 @@ def units(tmp: Path):
           and "same result after an edit" in text and "at most one repro before your first edit" in text)
     check("submission: prompt finishes at the budget warning with a cleanup before submit",
           "budget_warning" in text and "git status --short" in text)
+    check("submission: prompt has the model count its calls against the bundle's budget",
+          f"Call N/{ev['max_tool_calls']}." in text and f"Call {ev['max_tool_calls'] + 1} is refused" in text)
+    check("submission: prompt reads the existing test before the repro and writes edits with real line breaks",
+          "read the existing test of the code you will change" in text and "never with \\n escapes" in text)
     eq("bundles/v10: keeps the swe skill", [Path(p).name for p in load_submission(ROOT / "bundles" / "v10")["root"].get("skills") or []], ["swe"])
     for name, md in (("Swe", "---\nname: Swe\ndescription: d\n---\n"), ("swe", "---\nname: other\ndescription: d\n---\n"),
                      ("nodesc", "---\nname: nodesc\n---\n")):
