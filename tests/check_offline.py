@@ -160,7 +160,8 @@ def sandbox_checks(data: Path):
         task = {"repo": "psf/requests", "problem_statement": "P", "hints_text": ""}
         p = build_prompt(task, ctx, {"run_command", "read_file"})
         check("prompt: official instruction block", "## Instructions:\n0. All source code is under `/workspace`." in p and "5. As your final action" in p)
-        check("prompt: budget from the bundle", "- Time allowance: 5.0 minutes\n- Tool calls allowance: 50 calls" in p, p[:400])
+        b = Budget()
+        check("prompt: budget from the bundle", f"- Time allowance: {b.max_time_minutes} minutes\n- Tool calls allowance: {b.max_tool_calls} calls" in p, p[:400])
         check("prompt: read_file limits listed", "File view limit: 150 lines" in p)
         check("prompt: read_file limits dropped without the tool", "File view limit" not in build_prompt(task, ctx, {"run_command"}))
         check("prompt: workspace layout", "## Workspace Layout" in p and "status_codes.py" in p)
