@@ -9,6 +9,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -124,6 +125,19 @@ def units(tmp: Path):
           "By call 12" in text and "git status --short | grep '^??'" in text and "docs_src/" in text and "28 tool calls" in text)
     check("submission: prompt has the contract step, a /tmp heredoc repro and tail on test output",
           "Contract, before your first tool call" in text and "cat > /tmp/repro.py <<'EOF'" in text and "-k KEYWORD 2>&1 | tail -20" in text)
+    check("submission: prompt forbids git commands that discard edits and edits at the first budget_warning",
+          "Never run git checkout, git stash, git reset or git restore" in text and "your next call is your best-guess edit_file" in text)
+    # the malformed-edit fallback, run exactly as the prompt prints it (the indented block between the heredoc and EOF)
+    lines = text.splitlines()
+    start = next(i for i, l in enumerate(lines) if "python3 - <<'EOF'" in l)
+    end = next(i for i in range(start + 1, len(lines)) if lines[i].strip() == "EOF")
+    ws = tmp / "recipe"
+    (ws / "pkg").mkdir(parents=True)
+    (ws / "pkg" / "module.py").write_text("def f(value):\n    return value\n")
+    out = subprocess.run([sys.executable, "-"], input=textwrap.dedent("\n".join(lines[start + 1:end])) + "\n",
+                         cwd=ws, capture_output=True, text=True)
+    eq("submission: edit recipe runs as printed", (out.stdout, (ws / "pkg" / "module.py").read_text()),
+       ("pkg/module.py matches: 1\n", "def f(value):\n    return value.strip()\n"))
     # call budget spent: the first text-only reply ends the run, with no nudge (swegemma agent_runner)
     sent = []
     real_chat = agent_mod.chat
