@@ -176,10 +176,16 @@ def colab_checks(tmp: Path):
     """colab_eval's pure-Python parts: the Kaggle-time model, the task queue, adapters, training data, bundle variants."""
     import gzip
 
-    from colab_eval import taskqueue, timing, variants
+    from colab_eval import compare, taskqueue, timing, variants
     from colab_eval.lora import adapter, build_sft
 
     tmp.mkdir(parents=True, exist_ok=True)
+
+    # compare: only tasks every run has and gold resolves; wins/losses against the base; exact sign test
+    rows = compare.compare({"A": {"a": True, "b": False, "c": True, "g": False}, "B": {"a": True, "b": True, "c": False, "g": True}},
+                           {"a", "b", "c"}, "A")
+    eq("compare: paired rows", [(r["resolved"], r["wins"], r["losses"]) for r in rows], [(2, 0, 0), (2, 1, 1)])
+    eq("compare: sign test", (compare.sign_p(1, 1), round(compare.sign_p(0, 6), 4), round(compare.sign_p(9, 2), 4)), (1.0, 0.0312, 0.0654))
 
     # timing: one call re-priced on a single stream with prefix caching
     eq("timing: call cost", round(timing.call_cost(1000, 1600, 200, 20, 1500), 2), round(600 / 1500 + 200 / 20, 2))
