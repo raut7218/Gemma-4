@@ -33,7 +33,10 @@ render() {
 }
 export -f render
 export RES FPS MEDIA
-printf '%s\n' "${SCENES[@]}" | xargs -P "$JOBS" -I{} bash -c 'render "{}"'
+# ONLY="Ch06Toolkit Ch08Dqi" re-renders just those chapters; ONLY=none skips straight to assembly
+printf '%s\n' "${SCENES[@]}" | while read -r f c; do
+  if [ -z "${ONLY:-}" ] || [[ " $ONLY " == *" $c "* ]]; then echo "$f $c"; fi
+done | xargs -P "$JOBS" -I{} bash -c 'render "{}"'
 
 H=${RES#*,}
 : > build/concat.txt
