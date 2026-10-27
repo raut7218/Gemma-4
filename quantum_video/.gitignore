@@ -1,0 +1,5 @@
+build/
+.tts
+.tts/
+__pycache__/
+*.pyc
