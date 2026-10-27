@@ -4,9 +4,9 @@ A 3Blue1Brown-style explainer video (about 40 minutes, Manim + a neural narrator
 [Google Quantum AI: Verifiable Quantum Circuit Compilation](https://www.kaggle.com/competitions/google-verifiable-quantum-circuit-compilation)
 and is written for someone who knows ML and only the very basics of quantum computing.
 
-The finished video is `build/out/verifiable_quantum_circuit_compilation_explained.mp4` (with embedded English
-subtitles and chapter markers), and each chapter is also a separate file in `build/out/chapters/`. These files are
-committed to the branch in `video/` (see below).
+**Watch:** [`video/verifiable_quantum_circuit_compilation_explained.mp4`](video/verifiable_quantum_circuit_compilation_explained.mp4)
+(47.6 min, 1080p, embedded English subtitles and chapter markers). Alongside it: `video/subtitles.srt`,
+`video/transcript.md` (the full narration) and `video/chapters.txt` (timestamps).
 
 ## Chapters
 

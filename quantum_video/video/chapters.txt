@@ -1,0 +1,11 @@
+00:00 Introduction: the competition in one picture
+03:14 1. Bits, qubits and amplitudes
+06:40 2. Gates, circuits and reversible logic
+11:16 3. Why Toffolis are expensive
+14:23 4. kickmix circuits and measurement-based uncomputation
+18:20 5. How circuits are verified
+21:49 6. The toolkit: AND, adders, multipliers, lookups
+25:46 7. Benchmark I: phasing by 1/sqrt(x)
+31:14 8. Benchmark II: Reed-Solomon decoding for DQI
+37:58 9. Benchmark III: FeMoCo lookups and rotations
+43:39 10. Scoring, submitting, and a plan
