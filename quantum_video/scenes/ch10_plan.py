@@ -19,9 +19,11 @@ class Ch10Plan(VScene):
         table.add(VGroup(*[T(h, 22, MUTED) for h in hdr]))
         for r, c in zip(rows, cols):
             table.add(VGroup(T(r[0], 24, c, weight=BOLD), T(r[1], 24, INK), T(r[2], 24, INK), T(r[3], 22, MUTED)))
-        xs = [-6.4, -3.1, 0.9, 3.4]
+        xs = [-6.6, -3.6, 0.5, 3.0]
+        widths = [2.8, 3.9, 2.3, 3.7]
         for i, row in enumerate(table):
             for j, cell in enumerate(row):
+                fit(cell, widths[j])
                 cell.move_to([xs[j], 1.6 - i * 0.85, 0], aligned_edge=LEFT)
         line = Line([-6.5, 1.2, 0], [6.6, 1.2, 0], color=MUTED, stroke_width=1.5)
         sc = M(r"\text{score} = \Big(\prod_{k=1}^{3} \frac{\text{cost}_{\text{ref},k}}{\text{cost}_k}\Big)^{1/3}", 46, QYELLOW).shift(DOWN * 2.3)
@@ -39,12 +41,13 @@ class Ch10Plan(VScene):
         self.clear_all()
 
         # -- submission layout
+        mono = lambda txt, sz, col: T(txt.replace(" ", "\u00a0"), sz, col, font="DejaVu Sans Mono")
         tree = VGroup(T("submission.zip", 30, QYELLOW, font="DejaVu Sans Mono"),
-                      T("├── invsqrt.kmb            Benchmark I circuit", 26, INK, font="DejaVu Sans Mono"),
-                      T("├── dqi.kmb                Benchmark II circuit", 26, INK, font="DejaVu Sans Mono"),
-                      T("└── dfthcsos/", 26, INK, font="DejaVu Sans Mono"),
-                      T("    ├── angle_k_0.kmb …      the ANGLE_k circuits", 26, INK, font="DejaVu Sans Mono"),
-                      T("    └── submission.npz       factorization + tree", 26, INK, font="DejaVu Sans Mono")).arrange(DOWN, aligned_edge=LEFT, buff=0.18)
+                      mono("├── invsqrt.kmb            Benchmark I circuit", 26, INK),
+                      mono("├── dqi.kmb                Benchmark II circuit", 26, INK),
+                      mono("└── dfthcsos/", 26, INK),
+                      mono("    ├── angle_k_0.kmb …      the ANGLE_k circuits", 26, INK),
+                      mono("    └── submission.npz       factorization + tree", 26, INK)).arrange(DOWN, aligned_edge=LEFT, buff=0.18)
         fit(tree, 12).shift(UP * 0.9)
         note = VGroup(T("mirrors the sample_submission folder in the competition data", 24, MUTED),
                       T("check the Evaluation page for the exact rules · a few submissions per day", 24, MUTED)).arrange(DOWN, buff=0.15).shift(DOWN * 2)
@@ -163,7 +166,7 @@ class Ch10Plan(VScene):
             self.play(LaggedStart(*[FadeIn(m, scale=0.7) for m in cloud], lag_ratio=0.08), run_time=b.rt(0.8))
         self.play(FadeOut(cloud), run_time=0.8)
 
-        final = T("Could we get more from a quantum computer\nby asking it to do less?", 40, INK, weight=BOLD)
+        final = fit(T("Could we get more from a quantum computer\nby asking it to do less?", 40, INK, weight=BOLD), 12.5)
         sub = T("Every Toffoli you remove is a little less a future quantum computer has to do.", 26, QBLUE).next_to(final, DOWN, 0.6)
         fit(sub, 13)
         with self.say("So: could we get more from a quantum computer, by asking it to do less? Every Toffoli "

@@ -124,7 +124,7 @@ class Ch07Invsqrt(VScene):
         self.clear_all()
 
         # -- Quake fast inverse square root
-        code = VGroup(*[T(l, 22, INK, font="DejaVu Sans Mono") for l in [
+        code = VGroup(*[T(l.replace(" ", "\u00a0"), 22, INK, font="DejaVu Sans Mono") for l in [
             "float Q_rsqrt(float number) {",
             "  long i; float x2, y;",
             "  x2 = number * 0.5F;  y = number;",

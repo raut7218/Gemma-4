@@ -33,7 +33,8 @@ class Ch09Femoco(VScene):
                      T("heart of nitrogenase, the enzyme bacteria use", 24, INK),
                      T("to turn N₂ from the air into ammonia", 24, INK),
                      T("industry: the Haber–Bosch process,", 24, MUTED),
-                     T("roughly 1–2% of the world's energy", 24, MUTED)).arrange(DOWN, aligned_edge=LEFT, buff=0.2).move_to(RIGHT * 3)
+                     T("roughly 1–2% of the world's energy", 24, MUTED)).arrange(DOWN, aligned_edge=LEFT, buff=0.2)
+        fit(txt, 6.2).move_to(RIGHT * 3.4)
         with self.say("Benchmark three is quantum chemistry. The target is FeMoCo, the iron molybdenum "
                       "cofactor at the heart of nitrogenase. That's the enzyme bacteria use to turn "
                       "nitrogen from the air into ammonia, at room temperature. Industry does the same "
@@ -63,9 +64,9 @@ class Ch09Femoco(VScene):
         bl = M(r"H/\lambda", 46, QYELLOW).move_to(blk)
         rest = M(r"\ast", 50, MUTED).move_to(big.get_center() + DR * 1)
         ul = T("a bigger unitary U", 24, MUTED).next_to(big, DOWN, 0.2)
-        right = VGroup(T("block encoding: H hidden in a corner of a unitary", 28, INK),
-                       T("phase estimation calls U  ∝ λ / (target accuracy)  times", 28, INK),
-                       T("smaller λ  →  fewer calls  →  faster algorithm", 28, QGREEN)).arrange(DOWN, aligned_edge=LEFT, buff=0.4)
+        right = VGroup(T("block encoding:\nH hidden in a corner of a unitary", 30, INK),
+                       T("phase estimation calls U\n∝ λ / (target accuracy) times", 30, INK),
+                       T("smaller λ → fewer calls\n→ faster algorithm", 30, QGREEN)).arrange(DOWN, aligned_edge=LEFT, buff=0.5)
         fit(right, 7).move_to(RIGHT * 3.3)
         with self.say("Energies are estimated with quantum phase estimation, applied to a block encoding "
                       "of H. That's a unitary circuit that holds H, divided by a normalization lambda, in "

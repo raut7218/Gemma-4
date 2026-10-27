@@ -115,7 +115,7 @@ def chapter_card(scene, number, title, subtitle=""):
 
 
 def title_bar(text, color=INK):
-    t = T(text, 34, color, weight=BOLD).to_edge(UP, buff=0.35)
+    t = fit(T(text, 34, color, weight=BOLD), 13).to_edge(UP, buff=0.35)
     return t
 
 
@@ -253,6 +253,7 @@ def stat_card(title, value, color=QBLUE, width=3.4):
     box.set_fill(color, 0.08)
     v = T(value, 34, color, weight=BOLD)
     t = T(title, 20, MUTED)
+    fit(v, width - 0.3), fit(t, width - 0.3)
     VGroup(v, t).arrange(DOWN, buff=0.12).move_to(box)
     return VGroup(box, v, t)
 

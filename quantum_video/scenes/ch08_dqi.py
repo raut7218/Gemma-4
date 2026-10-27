@@ -243,7 +243,7 @@ class Ch08Dqi(VScene):
         # -- repetition penalty curve
         ax = Axes(x_range=[-5, -1, 1], y_range=[1, 2.2, 0.5], x_length=7, y_length=3.8,
                   axis_config={"color": MUTED, "font_size": 22}, tips=False).shift(LEFT * 2.3 + DOWN * 0.4)
-        ax.add_coordinates({-5: r"10^{-5}", -4: r"10^{-4}", -3: r"10^{-3}", -2: r"10^{-2}", -1: r"10^{-1}"}, {1: "1", 1.5: "1.5", 2: "2"})
+        ax.add_coordinates({-5: r"$10^{-5}$", -4: r"$10^{-4}$", -3: r"$10^{-3}$", -2: r"$10^{-2}$", -1: r"$10^{-1}$"}, {1: "1", 1.5: "1.5", 2: "2"})
         Rf = lambda le: math.log(2) / (-math.log(0.5 + 2 * math.sqrt(10 ** le)))
         curve = ax.plot(Rf, x_range=[-5, math.log10(1 / 16) - 0.08, 0.01], color=QYELLOW, stroke_width=4)
         lab = T("repetition penalty R(ε₊)", 24, QYELLOW).next_to(ax, UP, 0.15)
