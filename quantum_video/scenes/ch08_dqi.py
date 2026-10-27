@@ -54,7 +54,7 @@ class Ch08Dqi(VScene):
         for i, v in enumerate(poly_vals):
             ok = v in allowed[i]
             hits.add(Dot([ox + i * dx, oy + v * dy, 0], radius=0.11, color=QGREEN if ok else QRED))
-        path = VMobject(color=QYELLOW, stroke_width=2).set_points_smoothly([h.get_center() for h in hits])
+        path = VMobject(color=QYELLOW, stroke_width=2).set_points_as_corners([h.get_center() for h in hits])
         score = T(f"f(x) = {sum(v in allowed[i] for i, v in enumerate(poly_vals))} of {npts} constraints satisfied", 28, QGREEN)
         score.move_to(RIGHT * 3.6 + UP * 1.2)
         note = T("(in a finite field the 'curve' is just\na list of values — the picture is a cartoon)", 20, MUTED).next_to(score, DOWN, 0.3)
@@ -121,11 +121,10 @@ class Ch08Dqi(VScene):
             e_vec[i].set_fill(QRED, 0.8).set_stroke(QRED)
         el = T("error e: long and sparse  (m = 4095 symbols, at most 35 nonzero)", 24, QRED).next_to(e_vec, DOWN, 0.2)
         s_vec = VGroup(*[Square(0.42, color=QYELLOW, stroke_width=2).set_fill(QYELLOW, 0.3) for _ in range(6)]).arrange(RIGHT, buff=0.06)
-        s_vec.shift(DOWN * 2.5 + RIGHT * 2)
+        s_vec.shift(DOWN * 2.3 + RIGHT * 2)
         arr = Arrow(e_vec.get_bottom() + DOWN * 0.45 + LEFT * 2, s_vec.get_left(), color=INK, buff=0.1)
         bt = M(r"s = B^{T} e", 38, QYELLOW).next_to(arr, LEFT, 0.2)
-        sl = T("syndrome: short  (70 symbols = 840 bits)", 24, QYELLOW).next_to(s_vec, RIGHT, 0.2)
-        fit(sl, 4)
+        sl = T("syndrome: short  (70 symbols = 840 bits)", 24, QYELLOW).next_to(s_vec, DOWN, 0.2)
         with self.say("The tool for that is the syndrome: a short fingerprint of the error, computed from "
                       "the received word by a fixed linear map. It's zero exactly when there are no "
                       "errors, and different small error patterns give different syndromes. Decoding "
@@ -241,20 +240,22 @@ class Ch08Dqi(VScene):
         self.clear_all()
 
         # -- repetition penalty curve
-        ax = Axes(x_range=[-5, -1, 1], y_range=[1, 2.2, 0.5], x_length=7, y_length=3.8,
-                  axis_config={"color": MUTED, "font_size": 22}, tips=False).shift(LEFT * 2.3 + DOWN * 0.4)
-        ax.add_coordinates({-5: r"$10^{-5}$", -4: r"$10^{-4}$", -3: r"$10^{-3}$", -2: r"$10^{-2}$", -1: r"$10^{-1}$"}, {1: "1", 1.5: "1.5", 2: "2"})
-        Rf = lambda le: math.log(2) / (-math.log(0.5 + 2 * math.sqrt(10 ** le)))
-        curve = ax.plot(Rf, x_range=[-5, math.log10(1 / 16) - 0.08, 0.01], color=QYELLOW, stroke_width=4)
+        # x axis is log10(eps) + 5, so it starts at 0 and the y axis sits on the left
+        ax = Axes(x_range=[0, 4, 1], y_range=[1, 2.2, 0.5], x_length=6.8, y_length=3.8,
+                  axis_config={"color": MUTED, "font_size": 22}, tips=False).shift(LEFT * 2.9 + DOWN * 0.4)
+        ax.add_coordinates({0: r"$10^{-5}$", 1: r"$10^{-4}$", 2: r"$10^{-3}$", 3: r"$10^{-2}$", 4: r"$10^{-1}$"}, {1.5: "1.5", 2: "2"})
+        Rf = lambda x: math.log(2) / (-math.log(0.5 + 2 * math.sqrt(10 ** (x - 5))))
+        curve = ax.plot(Rf, x_range=[0, 3.1, 0.01], color=QYELLOW, stroke_width=4)
         lab = T("repetition penalty R(ε₊)", 24, QYELLOW).next_to(ax, UP, 0.15)
         xl = T("certified failure rate ε₊", 22, MUTED).next_to(ax, DOWN, 0.4)
-        floor = Dot(ax.c2p(math.log10(8.66e-4), Rf(math.log10(8.66e-4))), color=QGREEN, radius=0.1)
+        floor = Dot(ax.c2p(math.log10(8.66e-4) + 5, Rf(math.log10(8.66e-4) + 5)), color=QGREEN, radius=0.1)
         expl = VGroup(T("102,400 test syndromes", 26, INK),
                       T("errors drawn as DQI would draw them", 22, MUTED),
                       T("(average weight ≈ 31; weight 35 ≈ 2.8%)", 22, MUTED),
                       T("perfect decoder: R ≈ 1.19", 26, QGREEN),
                       T("1% failures: R ≈ 1.94", 26, QORANGE),
-                      T("≥ 1/16 failures: no score", 26, QRED)).arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to(RIGHT * 4.3)
+                      T("≥ 1/16 failures: no score", 26, QRED)).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        fit(expl, 5.2).move_to(RIGHT * 4.0)
         with self.say("R is a repetition penalty. Approximate decoders are allowed: if your decoder fails "
                       "sometimes, D Q I just has to be run more times. The verifier tests one hundred and "
                       "two thousand four hundred syndromes, with errors drawn the way D Q I would actually "
