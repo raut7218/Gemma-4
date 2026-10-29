@@ -6,5 +6,6 @@ G=/content/drive/MyDrive/gemma4-eval
 C=/content/comp
 mkdir -p $C/snapshots
 cp -r $G/comp/tasks.jsonl $G/comp/wheels $G/comp/sandbox $G/comp/docker $C/
+[ -d $G/comp/era_wheels ] && cp -r $G/comp/era_wheels $C/
 ls -S -r $G/comp/snapshots | xargs -P ${STREAMS:-16} -I{} sh -c '[ -s "$1/{}" ] && [ "$(stat -c %s "$1/{}")" = "$(stat -c %s "$2/{}")" ] || cp "$2/{}" "$1/{}"' _ $C/snapshots $G/comp/snapshots
 echo "comp restored: $(ls $C/snapshots | wc -l) snapshots, $(du -sh $C | cut -f1)"

@@ -13,14 +13,28 @@ environment are left out. Run them with
   run_official --data <out> --sandbox-site-map <out>/site_map.json --sandbox-site <any env> --no-deps \
       --setup-py <comp>/sandbox/setup.py
 validate keeps the tasks whose reference patch resolves and whose empty patch does not, under this exact setup.
+
+Trajectory generation (colab/gpu_gen.sh) runs every task without a hint (arm G), then once more with a path hint the
+tasks that left no usable training trajectory:
+  python -m colab_eval.external hints --tasks /content/ext/tasks.jsonl --out /content/ext/tasks_hint.jsonl
+  python -m colab_eval.external triage --base /content/results/G --retry /content/results/R \
+      --retry-ids R_ids.txt --hint-ids H_ids.txt
+hints writes a copy of the tasks with hints_text naming the files the reference patch changes (not its tests); swegemma
+renders it as a "## Hints:" section of the user prompt, and build_sft cuts that section out of the training tokens.
+triage reads the finished rows: a task with a usable attempt (build_sft's filters) is done, a harness or LLM error
+gets one unhinted retry (arm R), anything else gets one hinted attempt (arm H). It appends new ids to the two files.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
+
+HINT_MAX_FILES = 8
+TEST_PATH = re.compile(r'(^|/)(tests?|testing)/|(^|/)test_[^/]*\.py$|_tests?\.py$|(^|/)conftest\.py$')
 
 
 def prepare(data: Path, venvs: Path, out: Path) -> dict:
@@ -59,6 +73,89 @@ def validate(gold: Path, noop: Path) -> tuple[list[str], dict]:
     return ok, why
 
 
+def hint_paths(patch: str) -> list[str]:
+    """Files the reference patch changes, Python sources first (docs and changelogs only when there is no source),
+    tests never; the most-changed first, at most HINT_MAX_FILES."""
+    changed: dict[str, int] = {}
+    cur = None
+    for line in patch.splitlines():
+        m = re.match(r'diff --git a/(\S+) b/(\S+)', line)
+        if m:
+            cur = m.group(2)
+            changed[cur] = 0
+        elif cur and line[:1] in '+-' and not line.startswith(('+++', '---')):
+            changed[cur] += 1
+    files = [f for f in changed if not TEST_PATH.search(f)]
+    py = [f for f in files if f.endswith('.py')]
+    return sorted(py or files, key=lambda f: -changed[f])[:HINT_MAX_FILES]
+
+
+def hint_text(paths: list[str]) -> str:
+    if len(paths) == 1:
+        return f'The fix belongs in `{paths[0]}`.'
+    return 'The fix belongs in these files:\n' + '\n'.join(f'- `{p}`' for p in paths)
+
+
+def write_hinted(tasks: Path, out: Path) -> dict:
+    rows, empty = [], []
+    for line in tasks.read_text().splitlines():
+        if not line.strip():
+            continue
+        t = json.loads(line)
+        paths = hint_paths(t.get('patch') or '')
+        if not paths:
+            empty.append(t['instance_id'])
+        t['hints_text'] = hint_text(paths) if paths else ''
+        rows.append(json.dumps(t))
+    out.write_text('\n'.join(rows) + '\n')
+    return {'tasks': len(rows), 'without_hint': empty}
+
+
+def triage(base: Path, retry: Path | None) -> dict[str, str]:
+    """task -> 'done' | 'retry' | 'hint' for every task with a finished row in base (arm G) or retry (arm R)."""
+    from colab_eval.analyze import HARNESS_ERRORS, termination
+    from colab_eval.lora import build_sft as B
+
+    def verdicts(run: Path) -> dict[str, str]:
+        rows = {}
+        f = run / 'task_results.jsonl'
+        for l in (f.read_text().splitlines() if f.exists() else []):
+            if l.strip():
+                r = json.loads(l)
+                rows[r['instance_id']] = r
+        reqs = B.load_requests(run, {t for t, r in rows.items() if r.get('resolved')}) if rows else {}
+        out = {}
+        for task, r in rows.items():
+            err = r.get('error') or ''
+            if any(h in err for h in HARNESS_ERRORS) or termination(err, False) == 'llm_error':
+                out[task] = 'infra'
+                continue
+            calls = B.calls_of(reqs.get(task, []))
+            out[task] = 'done' if B.reject_reason(r, calls, B.stats(calls)) is None else 'failed'
+        return out
+
+    g = verdicts(base)
+    r = verdicts(retry) if retry else {}
+    out = {}
+    for task, v in g.items():
+        if v == 'done' or r.get(task) == 'done':
+            out[task] = 'done'
+        elif v == 'infra' and retry and task not in r:
+            out[task] = 'retry'
+        else:
+            out[task] = 'hint'
+    return out
+
+
+def append_ids(path: Path, ids: list[str]) -> list[str]:
+    have = set(path.read_text().split()) if path.exists() else set()
+    new = [i for i in ids if i not in have]
+    if new:
+        with path.open('a') as f:
+            f.write(''.join(i + '\n' for i in new))
+    return new
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -70,9 +167,25 @@ def main(argv=None) -> int:
     v.add_argument('--gold', type=Path, required=True)
     v.add_argument('--noop', type=Path, required=True)
     v.add_argument('--out', type=Path, required=True)
+    h = sub.add_parser('hints')
+    h.add_argument('--tasks', type=Path, required=True)
+    h.add_argument('--out', type=Path, required=True)
+    t = sub.add_parser('triage')
+    t.add_argument('--base', type=Path, required=True, help='results of the unhinted arm')
+    t.add_argument('--retry', type=Path, help='results of the unhinted retry arm')
+    t.add_argument('--retry-ids', type=Path, required=True)
+    t.add_argument('--hint-ids', type=Path, required=True)
     a = ap.parse_args(argv)
     if a.cmd == 'prepare':
         print(json.dumps(prepare(a.data, a.venvs, a.out), indent=1))
+    elif a.cmd == 'hints':
+        print(json.dumps(write_hinted(a.tasks, a.out)))
+    elif a.cmd == 'triage':
+        v = triage(a.base, a.retry)
+        retry = append_ids(a.retry_ids, sorted(t for t, x in v.items() if x == 'retry'))
+        hint = append_ids(a.hint_ids, sorted(t for t, x in v.items() if x == 'hint'))
+        counts = {x: sum(1 for y in v.values() if y == x) for x in ('done', 'retry', 'hint')}
+        print(json.dumps({**counts, 'new_retry': len(retry), 'new_hint': len(hint)}))
     else:
         ok, why = validate(a.gold, a.noop)
         a.out.write_text('\n'.join(ok) + '\n')

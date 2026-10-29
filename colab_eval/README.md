@@ -118,6 +118,15 @@ Locally (no GPU): `python -m colab_eval.run_official --agent gold ...` checks th
   the competition pins, and give every task the newest version of everything, so `sandbox_deps.py` installs what each
   task's pyproject requires (e.g. starlette for older fastapi commits) and never the task's own repo. Tasks whose
   reference patch still fails here (`results/gold`) are reported as ENV_UNSOLVABLE and left out of the adjusted rate.
+- **Era pins** (`era_pins.json`, `era_pins.py`): the newest-of-everything site made the reference patch fail on 18 of the
+  129 tasks. For 12 of them the cause is a package version (rich: Pygments' colours, pinned to the task's `poetry.lock`;
+  requests: werkzeug/flask 3.0.x and urllib3 2.2.2 for older snapshots; fastapi: pydantic 2.12 + starlette 0.50, and
+  pydantic 1.10.24 for fastapi_14186 whose required test only runs under pydantic v1). `sandbox_deps.py` installs those
+  wheels (`era_wheels/`, fetched by `cpu_prepare.sh`) for the listed snapshot HEADs only; every other task is unchanged.
+  The other 6 cannot be fixed by a package and fail the same way under the scorer's own commands: fastapi_15745/15763/15785
+  (new tests are `@pytest.mark.anyio` but the verification command passes `-p no:anyio`), rich_3486 (its required test is
+  skipped on Python >= 3.11), rich_3472 (Python 3.13's AttributeError text), and the mtls half of requests_6757 (the
+  repo's client certificate expired on 2026-03-13).
 - **Model serving**: same checkpoint, vLLM version, parsers, `reasoning_config` and bf16 KV cache; one GPU instead of
   TP=4, `scheduler_reserve_full_isl` left on (admission only), many tasks in flight (the scorer runs one).
 - **Budgets**: from the bundle's `eval_config.yaml`, except the time budget, which runs on the modelled L4 clock with

@@ -69,6 +69,7 @@ UNGRADED = 'UNGRADED: agent phase only (run --phase grade)'
 NETNS_PRELUDE = ('ip link set lo up 2>/dev/null; ip link add _bh type dummy 2>/dev/null && ip link set _bh up '
                  '&& ip route add 10.255.255.0/24 dev _bh 2>/dev/null\n')
 DEPS_SCRIPT = Path(__file__).with_name('sandbox_deps.py')
+ERA_PINS = Path(__file__).with_name('era_pins.json')
 GITCONFIG = '[user]\n\temail = agent@eval\n\tname = Agent\n[init]\n\tdefaultBranch = main\n[safe]\n\tdirectory = *\n'
 HARNESS_PY = f'{sys.version_info.major}.{sys.version_info.minor}'
 
@@ -253,10 +254,11 @@ def patch_subprocess_sandbox(default_env: TaskEnv | None, gitconfig: Path, netns
             print(f'[warn] sandbox setup.py failed for {repo}: {res.stderr[-500:]}', file=sys.stderr)
         if env.deps:
             docker.copy_to(container_id, DEPS_SCRIPT, '/tmp/sandbox_deps.py')
+            docker.copy_to(container_id, ERA_PINS, '/tmp/era_pins.json')
             res = docker.exec(container_id, f'python3 /tmp/sandbox_deps.py {repo} {env.wheels} /workspace')
             if 'installed' in res.stdout and os.environ.get('SWEGEMMA_COLAB_VERBOSE'):
                 print(f'[deps] {repo}: {res.stdout.strip()[-300:]}', file=sys.stderr)
-        docker.exec(container_id, 'rm -f /tmp/setup.py /tmp/sandbox_deps.py')
+        docker.exec(container_id, 'rm -f /tmp/setup.py /tmp/sandbox_deps.py /tmp/era_pins.json')
 
     cs.install_test_dependencies = install_test_dependencies
     import swegemma.evaluate as ev

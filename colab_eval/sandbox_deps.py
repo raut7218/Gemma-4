@@ -10,12 +10,18 @@ evidently makes these reference patches pass, so each task gets what its own pyp
      specifier, the highest competition wheel that satisfies it (installed --no-deps into the task venv, which shadows
      the shared site).
 
+  3. era pins (era_pins.json, keyed by the workspace HEAD): for the few tasks whose reference patch fails
+     against the newest packages, the versions that were current when the task was written, from `era_wheels/`
+     (next to the wheels dir, or $SWE_ERA_WHEELS; filled by `python -m colab_eval.era_pins fetch`), installed last.
+
   python3 sandbox_deps.py <repo> <wheels_dir> <workspace>
 Always exits 0; prints what it changed.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import re
 import subprocess
 import sys
@@ -35,6 +41,29 @@ def py313(fname: str) -> bool:
     if abi in ('cp38', 'cp39', 'cp310', 'cp311', 'cp312') and py in ('cp38', 'cp39', 'cp310', 'cp311', 'cp312'):
         return False
     return abi == 'none' or 'abi3' in abi or 'cp313' in py
+
+
+def era_wheels(ws: Path, wheels_dir: Path) -> list[Path]:
+    pins = Path(__file__).with_name('era_pins.json')
+    if not pins.exists():  # the script is copied alone into the sandbox: the table travels next to it
+        pins = Path(os.environ.get('SWE_ERA_PINS', ''))
+    try:
+        head = subprocess.run(['git', '-C', str(ws), 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+        entry = json.loads(pins.read_text()).get(head)
+    except Exception:
+        return []
+    if not entry:
+        return []
+    src = Path(os.environ.get('SWE_ERA_WHEELS') or wheels_dir.parent / 'era_wheels')
+    out = []
+    for pkg, ver in entry['pins'].items():
+        stem = norm(pkg).replace('-', '_')
+        hit = sorted(w for w in src.glob('*.whl') if w.name.lower().replace('-', '_').startswith(f'{stem}_{ver}_'))
+        if hit:
+            out.append(hit[0])
+        else:
+            print(f'sandbox_deps: era pin {pkg}=={ver} for {entry["id"]} not in {src}')
+    return out
 
 
 def main() -> int:
@@ -86,10 +115,15 @@ def main() -> int:
         if fit is not None:
             todo.append(fit)
 
+    era = era_wheels(ws, wheels_dir)
     if todo:
         r = subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '--disable-pip-version-check', '--no-deps',
                             '--no-index', *map(str, dict.fromkeys(todo))], capture_output=True, text=True)
         print(f'sandbox_deps: installed {[p.name for p in dict.fromkeys(todo)]} rc={r.returncode} {r.stderr[-300:]}')
+    if era:
+        r = subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '--disable-pip-version-check', '--no-deps',
+                            '--no-index', '--ignore-installed', *map(str, era)], capture_output=True, text=True)
+        print(f'sandbox_deps: era pins {[p.name for p in era]} rc={r.returncode} {r.stderr[-300:]}')
     return 0
 
 

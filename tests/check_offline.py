@@ -181,6 +181,11 @@ def colab_checks(tmp: Path):
 
     tmp.mkdir(parents=True, exist_ok=True)
 
+    # era pins: keyed by a snapshot HEAD, every entry pins at least one package to an exact version
+    pins = json.loads((ROOT / 'colab_eval' / 'era_pins.json').read_text())
+    check("era_pins: well-formed", all(len(k) == 40 and e['pins'] and all(re.fullmatch(r'\d+(\.\d+)+', v) for v in e['pins'].values())
+                                    for k, e in pins.items()))
+
     # compare: only tasks every run has and gold resolves; wins/losses against the base; exact sign test
     rows = compare.compare({"A": {"a": True, "b": False, "c": True, "g": False}, "B": {"a": True, "b": True, "c": False, "g": True}},
                            {"a", "b", "c"}, "A")
@@ -263,6 +268,53 @@ def colab_checks(tmp: Path):
                                                  build_sft.thinking_tokens([7, 8, 101, 48]), build_sft.thinking_tokens([48, 49])), (3, 2, 0))
     build_sft.main(["--runs", str(run), "--out", str(tmp / "sft1"), "--max-thinking-tokens", "1"])
     eq("sft: --max-thinking-tokens drops runs that thought that long", json.loads((tmp / "sft1" / "manifest.json").read_text())["tasks"], 0)
+
+    # hinted attempts (arm H): the hint's tokens are cut back to the unhinted prompt; a reply that mentions it drops the attempt
+    hrun = tmp / "H"
+    (hrun / "requests").mkdir(parents=True)
+
+    def hrow(task, start, p, c, names, reasoning=""):
+        r = row(task, start, p, c, names)
+        r["request"]["messages"] = [{"role": "user", "content": "Problem Statement:\nx\n\n## Hints:\nThe fix belongs in `a.py`.\n"}]
+        r["response"]["choices"][0]["message"]["reasoning_content"] = reasoning
+        return r
+    hp1 = [2, 10, 90, 91, 92, 11]  # p1 with the hint's tokens inserted
+    hp2 = hp1 + c1 + [60, 61, 100]
+    hrows = [hrow("t2", 1, hp1, c1, ["run_command"], "Open a.py first; type hints are fine."),
+             hrow("t2", 2, hp2, c2, ["submit_patch"]),
+             hrow("t5", 1, hp1, c1, ["submit_patch"], "The hint says a.py.")]
+    with gzip.open(hrun / "requests" / "w.jsonl.gz", "wt") as f:
+        f.write("".join(json.dumps(r) + "\n" for r in hrows))
+    with open(hrun / "requests" / "w.jsonl.gz", "ab") as f:
+        f.write(gzip.compress(b'{"task": "t9"}\n')[:15])  # a call still being written when the log is read
+    (hrun / "task_results.jsonl").write_text('{"instance_id": "t2", "resolved": true}\n{"instance_id": "t5", "resolved": true}\n')
+    eq("sft: hint span = the tokens on top of the unhinted prompt", build_sft.hint_span(hp1, p1), (2, 5, []))
+    eq("sft: a merged boundary token comes back", build_sft.hint_span([2, 10, 33, 90, 91, 34, 11], [2, 10, 35, 11]), (2, 6, [35]))
+    eq("sft: no span when the prompts differ elsewhere", build_sft.hint_span([2, 10, 90, 91, 11, 20, 21, 99], p1 + [20, 21, 22]), None)
+    build_sft.main(["--runs", str(run), str(hrun), "--out", str(tmp / "sft2")])
+    seqs = [json.loads(l) for l in (tmp / "sft2" / "sft.jsonl").read_text().splitlines()]
+    t2 = [s for s in seqs if s["task"] == "t2"]
+    eq("sft: hinted attempt kept with the hint cut out", [(s["hinted"], s["input_ids"]) for s in t2],
+       [(True, p1 + c1 + [60, 61, 100] + c2)])
+    eq("sft: spans shift with the cut", t2[0]["label_spans"], [[len(p1), len(p1) + len(c1)], [len(p1) + len(c1) + 3, len(t2[0]["input_ids"])]])
+    m = json.loads((tmp / "sft2" / "manifest.json").read_text())
+    eq("sft: a reply that mentions the hint drops the attempt; t1 stays unhinted",
+       (m["attempts"].get("hinted: a reply mentions the hint"), m["hinted_tasks"], m["tasks"]), (1, 1, 2))
+
+    # external: path hints from the reference patch (no tests), triage of the unhinted arm into done / retry / hint
+    from colab_eval import external
+    gold = ("diff --git a/src/pkg/core.py b/src/pkg/core.py\n--- a/src/pkg/core.py\n+++ b/src/pkg/core.py\n@@ -1 +1,2 @@\n-a\n+b\n+c\n"
+            "diff --git a/CHANGELOG.md b/CHANGELOG.md\n+x\n"
+            "diff --git a/tests/test_core.py b/tests/test_core.py\n+t\n"
+            "diff --git a/src/pkg/util.py b/src/pkg/util.py\n+d\n")
+    eq("hints: changed sources, most-changed first, no tests or docs", external.hint_paths(gold), ["src/pkg/core.py", "src/pkg/util.py"])
+    eq("hints: docs only when no source changed", external.hint_paths("diff --git a/docs/x.rst b/docs/x.rst\n+a\n"), ["docs/x.rst"])
+    with open(run / "task_results.jsonl", "a") as f:
+        f.write('{"instance_id": "t4", "resolved": false, "error": "Unexpected evaluation worker error: boom"}\n')
+    eq("triage: usable -> done, unresolved -> hint, harness error -> retry", external.triage(run, tmp / "R"),
+       {"t1": "done", "t2": "hint", "t4": "retry"})
+    ids = tmp / "H_ids.txt"
+    eq("triage: ids are appended once", (external.append_ids(ids, ["t2"]), external.append_ids(ids, ["t2", "t4"])), (["t2"], ["t4"]))
 
     # variants: settings change in the included files; an adapter is copied and declared
     (tmp / "ad").mkdir()

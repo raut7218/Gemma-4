@@ -1,0 +1,15 @@
+# Ablations on the 129 public tasks (discussion 746250) resolved 48-51 with thinking on and summaries kept,
+# 35 with summaries hidden and 23 with thinking off. Temperatures 0.4 and 1.0 tied, both ahead of 0.2 and 0.0.
+temperature: 0.4
+top_p: 0.95
+top_k: 40
+# Thinking tokens count against this cap, so it has to sit well above thinking_budget or a tool call gets cut off.
+# 8192 = 4096 of thinking (the scorer stops thinking there) + 4096 for the visible tool call, as in every top public
+# bundle. On the full 129-task G4 runs (2026-10-26) v5 with 8192/4096 resolved 49 of 111 against v5's 43 (9 paired
+# wins, 3 losses) for about 4% more L4 time.
+max_output_tokens: 8192
+# Since adk_submission 0.2.13 the budget alone switches thinking on (> 0) or off (0). include_thoughts decides
+# whether earlier thoughts stay in the history; false ran thinking anyway and then threw its text away.
+thinking_config:
+  include_thoughts: true
+  thinking_budget: 4096

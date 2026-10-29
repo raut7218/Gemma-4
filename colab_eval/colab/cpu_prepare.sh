@@ -40,6 +40,12 @@ elif [ ! -s $C/tasks.jsonl ]; then
 fi
 el "data: $(wc -l < $C/tasks.jsonl) tasks, $(ls $C/snapshots | wc -l) snapshots"
 
+# 1b. wheels pinned to the era of the tasks whose reference patch fails against the newest packages (era_pins.json)
+if [ ! -d $G/comp/era_wheels ]; then
+  (cd /content/Gemma-4 && python3 -m colab_eval.era_pins fetch $C/era_wheels) && cp -r $C/era_wheels $G/comp/
+fi
+[ -d $C/era_wheels ] || cp -r $G/comp/era_wheels $C/
+
 # 2. harness env: scorer wheels from the Kaggle wheelhouse + requirements-harness.txt
 if [ ! -s $G/cache/hvenv.tar ]; then
   mkdir -p /content/wh && cd /content/wh

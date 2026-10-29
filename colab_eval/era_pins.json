@@ -1,0 +1,80 @@
+{
+ "ddd9ea20b2ade13be77936c1f80c7c06498c210b": {
+  "id": "rich_3064",
+  "pins": {
+   "pygments": "2.15.1"
+  }
+ },
+ "8db069ab75a179c4ea9f5f5be7ac4967ffabbd55": {
+  "id": "rich_3130",
+  "pins": {
+   "pygments": "2.15.1"
+  }
+ },
+ "87d33db193a77145ea763041b7e80aec119473bb": {
+  "id": "rich_3296",
+  "pins": {
+   "pygments": "2.16.1"
+  }
+ },
+ "6af351e011ceecbdf9e70ac455368910867a5bc4": {
+  "id": "rich_3469",
+  "pins": {
+   "pygments": "2.17.2"
+  }
+ },
+ "3234f58e3bf9afb460de7f8c121440535e556967": {
+  "id": "rich_3782",
+  "pins": {
+   "pygments": "2.19.1"
+  }
+ },
+ "ab1c000bfb9e43dc4f99a4e90d1b89813a54c2a1": {
+  "id": "rich_4079",
+  "pins": {
+   "pygments": "2.19.2"
+  }
+ },
+ "a94a8d3fc6c5c3490749b062094afcb7e9e95fcf": {
+  "id": "requests_6589,requests_6629",
+  "pins": {
+   "werkzeug": "3.0.1",
+   "flask": "3.0.2"
+  }
+ },
+ "42feac7699149f3e6ab7ba48d0e25c7241afdc51": {
+  "id": "requests_6592",
+  "pins": {
+   "werkzeug": "3.0.1",
+   "flask": "3.0.0"
+  }
+ },
+ "40f2c1f13b82759f732083a3f53c972295f74aff": {
+  "id": "requests_6757",
+  "pins": {
+   "werkzeug": "3.0.3",
+   "flask": "3.0.3",
+   "urllib3": "2.2.2"
+  }
+ },
+ "bfd63c3c426a0c12f377fe4e706c83a4b4106c26": {
+  "id": "fastapi_14356",
+  "pins": {
+   "pydantic": "2.12.5",
+   "pydantic-core": "2.41.5",
+   "starlette": "0.50.0"
+  }
+ },
+ "2a1c74c53889f51dd07b86d3e4130654467cf080": {
+  "id": "fastapi_14186",
+  "pins": {
+   "pydantic": "1.10.24"
+  }
+ },
+ "2288c21466f19c0a7358b457ab3f58560b98d0ed": {
+  "id": "rich_4070",
+  "pins": {
+   "pygments": "2.19.2"
+  }
+ }
+}
